@@ -62,8 +62,8 @@ class Settings:
         # check the data folder exists
         self.check_folder_exists(value)
         # set the data folder
-        self.data_folder = value
-        # create any subfolders if they do not exist
+        self._data_folder = value
+        # set and create any subfolders if they do not exist
         self.set_and_create_subfolders()
 
     # ---- input folder (read only) ----
