@@ -1,0 +1,28 @@
+[tool.poetry]
+name = "batch-llm"
+version = "0.1.0"
+description = "Library for facilitating batch processing of experiments stored as jsonl files. by automating querying LLM APIs and logging progress"
+authors = ["rchan <rchan@turing.ac.uk>",
+           "fedenanni <nanni.federico@gmail.com>",
+           "evelinag <evelina@evelinag.com>"]
+readme = "README.md"
+
+[tool.poetry.dependencies]
+python = ">=3.11"
+transformers = "^4.39.3"
+torch = "^2.2.2"
+accelerate = "^0.28.0"
+fastapi = "^0.110.1"
+uvicorn = "^0.29.0"
+tqdm = "^4.66.2"
+
+
+[tool.poetry.group.dev.dependencies]
+black = "^24.3.0"
+isort = "^5.13.2"
+pre-commit = "^3.7.0"
+ipykernel = "^6.29.4"
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
