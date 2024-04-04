@@ -60,18 +60,13 @@ class Experiment:
         )
 
         # read in the experiment data
-        with open(self.in_file_out_path, "r") as f:
+        with open(self.input_file_path, "r") as f:
             self.experiment_prompts = [json.loads(line) for line in f]
         # set the number of queries
         self.number_queries = len(self.experiment_prompts)
 
     def __str__(self) -> str:
         return self.file_name
-
-    # settings is read only
-    @property
-    def settings(self) -> Settings:
-        return self.settings
 
 
 class ExperimentPipeline:
@@ -83,11 +78,6 @@ class ExperimentPipeline:
         self.average_per_query_processing_times: list[float] = []
         self.overall_avg_proc_times: float = 0.0
         self.experiment_files: list[str] = []
-
-    # settings is read only
-    @property
-    def settings(self) -> Settings:
-        return self.settings
 
     def run(self) -> None:
         """

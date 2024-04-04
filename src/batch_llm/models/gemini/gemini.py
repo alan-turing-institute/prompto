@@ -24,7 +24,7 @@ from batch_llm.utils import (
 class Gemini(BaseModel):
     def __init__(self, settings: Settings, log_file: str, *args: Any, **kwargs: Any):
         self.settings: Settings = settings
-        self.experiment: str = log_file
+        self.log_file: str = log_file
 
     def _obtain_model_inputs(self, prompt_dict: dict) -> tuple:
         prompt = prompt_dict["prompt"]
