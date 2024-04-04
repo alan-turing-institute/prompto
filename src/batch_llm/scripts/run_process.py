@@ -1,7 +1,8 @@
 import argparse
 import logging
 
-from batch_llm import ExperimentPipeline, Settings
+from batch_llm.experiment_processing import Experiment
+from batch_llm.settings import Settings
 
 
 def main():
