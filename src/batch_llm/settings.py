@@ -1,6 +1,6 @@
 import os
 
-from src.batch_llm.utils import create_folder
+from batch_llm.utils import create_folder
 
 
 class WriteFolderError(Exception):
@@ -20,11 +20,11 @@ class Settings:
         # check the data folder exists
         self.check_folder_exists(data_folder)
         # set the subfolders (and create if they do not exist)
-        self.set_subfolders()
+        self.set_and_create_subfolders()
         self._max_queries = max_queries
         self._max_attempts = max_attempts
 
-    @classmethod
+    @staticmethod
     def check_folder_exists(data_folder: str) -> tuple[str]:
         """
         Check that the data folder exists.
@@ -34,6 +34,8 @@ class Settings:
         # check if data folder exists
         if not os.path.exists(data_folder):
             raise ValueError(f"Data folder {data_folder} does not exist.")
+
+        return True
 
     def set_subfolders(self) -> None:
         # set the subfolders for the data folder
@@ -55,7 +57,7 @@ class Settings:
 
     @property
     def data_folder(self) -> str:
-        return self.data_folder
+        return self._data_folder
 
     @data_folder.setter
     def data_folder(self, value: str):
@@ -75,7 +77,7 @@ class Settings:
     @input_folder.setter
     def input_folder(self, value: str):
         raise WriteFolderError(
-            "Cannot write to input folder on it's own. Use the 'set_and_create_subfolders'"
+            "Cannot write to input folder on it's own. Use the 'set_and_create_subfolders' "
             "method to set the input folder."
         )
 
@@ -88,7 +90,7 @@ class Settings:
     @output_folder.setter
     def output_folder(self, value: str):
         raise WriteFolderError(
-            "Cannot write to output folder on it's own. Use the 'set_and_create_subfolders'"
+            "Cannot write to output folder on it's own. Use the 'set_and_create_subfolders' "
             "method to set the output folder."
         )
 
@@ -101,7 +103,7 @@ class Settings:
     @media_folder.setter
     def media_folder(self, value: str):
         raise WriteFolderError(
-            "Cannot write to media folder on it's own. Use the 'set_and_create_subfolders'"
+            "Cannot write to media folder on it's own. Use the 'set_and_create_subfolders' "
             "method to set the media folder."
         )
 

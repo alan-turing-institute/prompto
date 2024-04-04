@@ -1,4 +1,3 @@
-import vertexai
 from google.cloud.aiplatform_v1beta1.types import content as gapic_content_types
 from vertexai.preview.generative_models import GenerativeModel, Image, Part
 
@@ -10,10 +9,10 @@ import logging
 import os
 from typing import Any
 
-from batch_llm import Experiment, Settings
 from batch_llm.base import BaseModel
 from batch_llm.models.gemini.gemini_utils import parse_multimedia
-from src.batch_llm.utils import (
+from batch_llm.settings import Settings
+from batch_llm.utils import (
     log_error_response_chat,
     log_error_response_query,
     log_success_response_chat,
@@ -23,11 +22,9 @@ from src.batch_llm.utils import (
 
 
 class Gemini(BaseModel):
-    def __init__(
-        self, settings: Settings, experiment: Experiment, *args: Any, **kwargs: Any
-    ):
+    def __init__(self, settings: Settings, log_file: str, *args: Any, **kwargs: Any):
         self.settings: Settings = settings
-        self.experiment: Experiment = experiment
+        self.experiment: str = log_file
 
     def _obtain_model_inputs(self, prompt_dict: dict) -> tuple:
         prompt = prompt_dict["prompt"]
@@ -35,9 +32,7 @@ class Gemini(BaseModel):
         model_id = prompt_dict.get("model_name", None) or os.environ.get("MODEL_ID")
         if model_id is None:
             log_message = "MODEL_ID environment variable not set"
-            write_log_message(
-                log_file=self.experiment.log_file, log_message=log_message, log=True
-            )
+            write_log_message(log_file=self.log_file, log_message=log_message, log=True)
 
         # define safety settings
         safety_filter = prompt_dict.get("safety_filter", None)
@@ -108,12 +103,12 @@ class Gemini(BaseModel):
 
         return prompt, model_id, safety_settings, generation_config, multimedia
 
-    @classmethod
+    @staticmethod
     def _process_response(response):
         response_text = response.candidates[0].content.parts[0].text
         return response_text
 
-    @classmethod
+    @staticmethod
     def _process_safety_attributes(response):
         safety_attributes = {
             x.category.name: str(x.probability)
@@ -176,7 +171,7 @@ class Gemini(BaseModel):
             )
             if isinstance(err, IndexError):
                 write_log_message(
-                    log_file=self.experiment.log_file, log_message=log_message, log=True
+                    log_file=self.log_file, log_message=log_message, log=True
                 )
                 response_text = ""
                 if len(response.candidates) == 0:
@@ -199,7 +194,7 @@ class Gemini(BaseModel):
                 error_as_string=error_as_string,
             )
             write_log_message(
-                log_file=self.experiment.log_file,
+                log_file=self.log_file,
                 log_message=log_message,
                 log=True,
             )
@@ -261,9 +256,7 @@ class Gemini(BaseModel):
                 f"Response is empty and blocked (i={index}) \nPrompt: {message[:50]}..."
             )
 
-            write_log_message(
-                log_file=self.experiment.log_file, log_message=log_message, log=True
-            )
+            write_log_message(log_file=self.log_file, log_message=log_message, log=True)
             response_text = ""
             if len(response.candidates) == 0:
                 safety_attributes = {
@@ -287,7 +280,7 @@ class Gemini(BaseModel):
                 error_as_string=error_as_string,
             )
             write_log_message(
-                log_file=self.experiment.log_file,
+                log_file=self.log_file,
                 log_message=log_message,
                 log=True,
             )
@@ -364,7 +357,7 @@ class Gemini(BaseModel):
             )
             if isinstance(err, IndexError):
                 write_log_message(
-                    log_file=self.experiment.log_file, log_message=log_message, log=True
+                    log_file=self.log_file, log_message=log_message, log=True
                 )
                 response_text = ""
                 if len(response.candidates) == 0:
@@ -387,7 +380,7 @@ class Gemini(BaseModel):
                 error_as_string=error_as_string,
             )
             write_log_message(
-                log_file=self.experiment.log_file,
+                log_file=self.log_file,
                 log_message=log_message,
                 log=True,
             )
@@ -459,9 +452,7 @@ class Gemini(BaseModel):
                 f"Response is empty and blocked (i={index}) \nPrompt: {message[:50]}..."
             )
 
-            write_log_message(
-                log_file=self.experiment.log_file, log_message=log_message, log=True
-            )
+            write_log_message(log_file=self.log_file, log_message=log_message, log=True)
             response_text = ""
             if len(response.candidates) == 0:
                 safety_attributes = {
@@ -485,7 +476,7 @@ class Gemini(BaseModel):
                 error_as_string=error_as_string,
             )
             write_log_message(
-                log_file=self.experiment.log_file,
+                log_file=self.log_file,
                 log_message=log_message,
                 log=True,
             )
