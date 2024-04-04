@@ -51,10 +51,11 @@ def move_file(source: str, destination: str) -> None:
     destination : str
         File path of the destination of the file.
     """
+    logging.info(f"Moving file from {source} to {destination}")
     os.rename(source, destination)
 
 
-def write_log_message(log_file: str, log_message: str) -> None:
+def write_log_message(log_file: str, log_message: str, log: bool = True) -> None:
     """
     Helper function to write a log message to a log file
     with the current date and time of the log message.
@@ -66,6 +67,50 @@ def write_log_message(log_file: str, log_message: str) -> None:
     log_message : str
         Message to be written to the log file.
     """
+    if log:
+        logging.info(log_message)
+
     now = datetime.now()
     with open(log_file, "a") as log:
         log.write(f"{now.strftime('%d-%m-%Y, %H:%M')}: {log_message}\n")
+
+
+def log_success_response_query(index, model, prompt, response_text):
+    log_message = (
+        f"Response recieved for model {model} (i={index}) \nPrompt: {prompt[:50]}... \n"
+        f"Response: {response_text[:50]}...\n"
+    )
+    logging.info(log_message)
+    return log_message
+
+
+def log_success_response_chat(
+    index, model, message_index, n_messages, message, response_text
+):
+    log_message = (
+        f"Response recieved for model {model} (i={index}, message={message_index+1}/{n_messages}) "
+        f"\nPrompt: {message[:50]}... \nResponse: {response_text[:50]}...\n"
+    )
+    logging.info(log_message)
+    return log_message
+
+
+def log_error_response_query(index, model, prompt, error_as_string):
+    log_message = (
+        f"Error with {model} model (i={index}): "
+        f"\nPrompt: {prompt[:50]}... \nError: {error_as_string}"
+    )
+    logging.info(log_message)
+    return log_message
+
+
+def log_error_response_chat(
+    index, model, message_index, message, responses_so_far, error_as_string
+):
+    log_message = (
+        f"Error with {model} chat model (i={index}, at message {message_index+1}): "
+        f"\nPrompt: {message[:50]}... "
+        f"\nResponses so far: {responses_so_far}... \nError: {error_as_string}"
+    )
+    logging.info(log_message)
+    return log_message

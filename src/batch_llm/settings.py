@@ -1,6 +1,6 @@
 import os
 
-from batch_llm.file_operations import create_folder
+from src.batch_llm.utils import create_folder
 
 
 class WriteFolderError(Exception):
@@ -75,7 +75,8 @@ class Settings:
     @input_folder.setter
     def input_folder(self, value: str):
         raise WriteFolderError(
-            "Cannot write to input folder on it's own. Use the 'set_and_create_subfolders' method to set the input folder."
+            "Cannot write to input folder on it's own. Use the 'set_and_create_subfolders'"
+            "method to set the input folder."
         )
 
     # ---- output folder (read only) ----
@@ -87,7 +88,8 @@ class Settings:
     @output_folder.setter
     def output_folder(self, value: str):
         raise WriteFolderError(
-            "Cannot write to output folder on it's own. Use the 'set_and_create_subfolders' method to set the output folder."
+            "Cannot write to output folder on it's own. Use the 'set_and_create_subfolders'"
+            "method to set the output folder."
         )
 
     # ---- media folder (read only) ----
@@ -99,7 +101,8 @@ class Settings:
     @media_folder.setter
     def media_folder(self, value: str):
         raise WriteFolderError(
-            "Cannot write to media folder on it's own. Use the 'set_and_create_subfolders' method to set the media folder."
+            "Cannot write to media folder on it's own. Use the 'set_and_create_subfolders'"
+            "method to set the media folder."
         )
 
     # ---- max queries ----
