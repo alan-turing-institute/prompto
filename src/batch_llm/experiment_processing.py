@@ -166,7 +166,7 @@ class ExperimentPipeline:
     def process_experiment(
         self,
         experiment: Experiment,
-    ) -> float:
+    ) -> None:
         """
         Function to process the next experiment in the queue.
         """
@@ -225,7 +225,7 @@ class ExperimentPipeline:
         experiment: Experiment,
         prompt_dicts: list[dict],
         attempt: int,
-    ) -> tuple[list[str], list[str | Exception]]:
+    ) -> tuple[list[dict], list[dict | Exception]]:
         """
         Send requests to the API asynchronously.
         """
