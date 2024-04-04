@@ -14,7 +14,7 @@ async def query_model_and_record_response(
     experiment: Experiment,
     index: int | str | None,
     attempt: int = 1,
-) -> str | Exception:
+) -> dict | Exception:
     """
     Send request to generate response from a LLM and record the response in a jsonl file.
 
@@ -37,9 +37,10 @@ async def query_model_and_record_response(
 
     Returns
     -------
-    str | Exception
-        String containing the generated text or an Exception.
-        A string is returned if the response is received successfully or
+    dict | Exception
+        Completed prompt_dict with "response" key storing the response(s)
+        from the LLM.
+        A dictionary is returned if the response is received successfully or
         if the maximum number of attempts is reached (i.e. an Exception
         was caught but we have attempt==max_attempts).
         An Exception is returned if an error is caught and we have
