@@ -5,11 +5,18 @@ import time
 from typing import Any
 
 from batch_llm.base import BaseModel
+from batch_llm.settings import Settings
 
 
 class TestModel(BaseModel):
-    def __init__(self, *args: Any, **kwargs: Any):
-        super().__init__(*args, **kwargs)
+    def __init__(
+        self,
+        settings: Settings,
+        log_file: str,
+        *args: Any,
+        **kwargs: Any,
+    ):
+        super().__init__(settings=settings, log_file=log_file, *args, **kwargs)
 
     def query(index, prompt):
         # return an error 1/5 times
