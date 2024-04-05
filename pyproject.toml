@@ -18,6 +18,7 @@ tqdm = "^4.66.2"
 vertexai = {version = "^1.46.0", extras = ["gemini"]}
 google-cloud-aiplatform = {version = "^1.46.0", extras = ["gemini"]}
 google-generativeai = {version = "^0.4.1", extras = ["gemini"]}
+pillow = "^10.3.0"
 
 
 [tool.poetry.group.dev.dependencies]
@@ -32,3 +33,6 @@ build-backend = "poetry.core.masonry.api"
 
 [tool.poetry.scripts]
 run_pipeline = "batch_llm.scripts.run_pipeline:main"
+run_checks = "batch_llm.scripts.check_json:main"
+obtain_missing_jsonl = "batch_llm.scripts.obtain_missing_jsonl:main"
+convert_images = "batch_llm.scripts.convert_images:main"
