@@ -1,6 +1,6 @@
 import os
 
-from vertexai.preview.generative_models import Image, Part
+from vertexai.generative_models import Image, Part
 
 
 def parse_multimedia_dict(multimedia_dict: dict, media_folder: str) -> Part:

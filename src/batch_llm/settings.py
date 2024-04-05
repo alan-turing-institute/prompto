@@ -24,6 +24,14 @@ class Settings:
         self._max_queries = max_queries
         self._max_attempts = max_attempts
 
+    def __str__(self) -> str:
+        return (
+            f"Settings: data_folder={self.data_folder}, "
+            f"max_queries={self.max_queries}, max_attempts={self.max_attempts}\n"
+            f"Subfolders: input_folder={self.input_folder}, "
+            f"output_folder={self.output_folder}, media_folder={self.media_folder}"
+        )
+
     @staticmethod
     def check_folder_exists(data_folder: str) -> tuple[str]:
         """
@@ -33,7 +41,7 @@ class Settings:
         """
         # check if data folder exists
         if not os.path.exists(data_folder):
-            raise ValueError(f"Data folder {data_folder} does not exist.")
+            raise ValueError(f"Data folder '{data_folder}' does not exist.")
 
         return True
 

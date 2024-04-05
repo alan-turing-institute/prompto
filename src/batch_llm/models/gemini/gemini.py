@@ -1,13 +1,15 @@
-from google.cloud.aiplatform_v1beta1.types import content as gapic_content_types
-from vertexai.preview.generative_models import GenerativeModel, Image, Part
-
-HarmCategory = gapic_content_types.HarmCategory
-HarmBlockThreshold = gapic_content_types.SafetySetting.HarmBlockThreshold
-
 import asyncio
 import logging
 import os
 from typing import Any
+
+import vertexai
+from vertexai.generative_models import (
+    GenerativeModel,
+    HarmBlockThreshold,
+    HarmCategory,
+    Part,
+)
 
 from batch_llm.base import BaseModel
 from batch_llm.models.gemini.gemini_utils import parse_multimedia
@@ -22,22 +24,66 @@ from batch_llm.utils import (
 
 
 class Gemini(BaseModel):
-    def __init__(self, settings: Settings, log_file: str, *args: Any, **kwargs: Any):
-        self.settings: Settings = settings
-        self.log_file: str = log_file
+    def __init__(
+        self,
+        settings: Settings,
+        log_file: str,
+        project_id: str | None = None,
+        location: str | None = None,
+        *args: Any,
+        **kwargs: Any,
+    ):
+        super().__init__(settings=settings, log_file=log_file, *args, **kwargs)
+        vertexai.init(project=project_id, location=location)
+        # try to read the project_id and location from the environment variables if not set
+        if project_id is None:
+            project_id = os.environ.get("GEMINI_PROJECT_ID", None)
+        if location is None:
+            location = os.environ.get("GEMINI_LOCATION", None)
+
+        # raise an error if project_id still not set
+        if project_id is None:
+            log_message = (
+                "project_id is not set. Please set the GEMINI_PROJECT_ID environment variable "
+                "or set the project_id argument when initialising Gemini model"
+            )
+            write_log_message(log_file=self.log_file, log_message=log_message, log=True)
+            raise ValueError(log_message)
+
+        # raise an error if location still not set
+        if location is None:
+            location = os.environ.get("GEMINI_LOCATION")
+            if location is None:
+                log_message = (
+                    "location is not set. Please set the GEMINI_LOCATION environment variable "
+                    "or set the location argument when initialising Gemini model"
+                )
+                write_log_message(
+                    log_file=self.log_file, log_message=log_message, log=True
+                )
+                raise ValueError(log_message)
+
+        # initialise the vertexai project
+        vertexai.init(project=project_id, location=location)
 
     def _obtain_model_inputs(self, prompt_dict: dict) -> tuple:
         prompt = prompt_dict["prompt"]
 
-        model_id = prompt_dict.get("model_name", None) or os.environ.get("MODEL_ID")
-        if model_id is None:
-            log_message = "MODEL_ID environment variable not set"
+        model_name = prompt_dict.get("model_name", None) or os.environ.get(
+            "GEMINI_MODEL_NAME"
+        )
+        if model_name is None:
+            log_message = (
+                "model_name is not set. Please set the GEMINI_MODEL_NAME environment variable "
+                "or pass the model_name in the prompt dictionary"
+            )
             write_log_message(log_file=self.log_file, log_message=log_message, log=True)
+            raise ValueError(log_message)
 
         # define safety settings
         safety_filter = prompt_dict.get("safety_filter", None)
         if safety_filter is None:
-            raise ValueError("safety_filter must be set")
+            safety_filter = "default"
 
         # explicitly set the safety settings
         if safety_filter == "none":
@@ -69,7 +115,10 @@ class Gemini(BaseModel):
                 HarmCategory.HARM_CATEGORY_SEXUALLY_EXPLICIT: HarmBlockThreshold.BLOCK_LOW_AND_ABOVE,
             }
         else:
-            raise ValueError(f"safety_filter '{safety_filter}' not recognised")
+            raise ValueError(
+                f"safety_filter '{safety_filter}' not recognised. Must be one of: "
+                f"none', 'few', 'default'/'some', 'most'"
+            )
 
         # get parameters dict (if any)
         generation_config = prompt_dict.get("parameters", None)
@@ -101,7 +150,7 @@ class Gemini(BaseModel):
         else:
             multimedia = None
 
-        return prompt, model_id, safety_settings, generation_config, multimedia
+        return prompt, model_name, safety_settings, generation_config, multimedia
 
     @staticmethod
     def _process_response(response):
@@ -125,7 +174,7 @@ class Gemini(BaseModel):
         return safety_attributes
 
     def _query_string(self, prompt_dict: dict, index: int | str):
-        prompt, model_id, safety_settings, generation_config, multimedia = (
+        prompt, model_name, safety_settings, generation_config, multimedia = (
             self._obtain_model_inputs(prompt_dict=prompt_dict)
         )
 
@@ -137,7 +186,7 @@ class Gemini(BaseModel):
             contents = [Part.from_text(prompt)]
 
         try:
-            response = GenerativeModel(model_id).generate_content(
+            response = GenerativeModel(model_name).generate_content(
                 contents=contents,
                 generation_config=generation_config,
                 safety_settings=safety_settings,
@@ -148,7 +197,7 @@ class Gemini(BaseModel):
 
             log_success_response_query(
                 index=index,
-                model=f"gemini ({model_id})",
+                model=f"gemini ({model_name})",
                 prompt=prompt,
                 response_text=response_text,
             )
@@ -162,7 +211,7 @@ class Gemini(BaseModel):
             )
             log_message = log_error_response_query(
                 index=index,
-                model=f"gemini ({model_id})",
+                model=f"gemini ({model_name})",
                 prompt=prompt,
                 error_as_string=error_as_string,
             )
@@ -189,7 +238,7 @@ class Gemini(BaseModel):
             error_as_string = f"{type(err).__name__} - {err}"
             log_message = log_error_response_query(
                 index=index,
-                model=f"gemini ({model_id})",
+                model=f"gemini ({model_name})",
                 prompt=prompt,
                 error_as_string=error_as_string,
             )
@@ -201,11 +250,11 @@ class Gemini(BaseModel):
             raise err
 
     def _query_chat(self, prompt_dict: dict, index: int | str):
-        prompt, model_id, safety_settings, generation_config, multimedia = (
+        prompt, model_name, safety_settings, generation_config, multimedia = (
             self._obtain_model_inputs(prompt_dict=prompt_dict)
         )
 
-        model = GenerativeModel(model_id)
+        model = GenerativeModel(model_name)
         chat = model.start_chat(history=[])
 
         response_list = []
@@ -228,7 +277,7 @@ class Gemini(BaseModel):
 
                 log_success_response_chat(
                     index=index,
-                    model=f"gemini ({model_id})",
+                    model=f"gemini ({model_name})",
                     message_index=message_index,
                     n_messages=len(prompt),
                     message=message,
@@ -246,7 +295,7 @@ class Gemini(BaseModel):
             )
             log_message = log_error_response_chat(
                 index=index,
-                model=f"gemini ({model_id})",
+                model=f"gemini ({model_name})",
                 message_index=message_index,
                 message=message,
                 responses_so_far=response_list,
@@ -273,7 +322,7 @@ class Gemini(BaseModel):
             error_as_string = f"{type(err).__name__} - {err}"
             log_message = log_error_response_chat(
                 index=index,
-                model=f"gemini ({model_id})",
+                model=f"gemini ({model_name})",
                 message_index=message_index,
                 message=message,
                 responses_so_far=response_list,
@@ -306,7 +355,7 @@ class Gemini(BaseModel):
         return response_dict
 
     async def _async_query_string(self, prompt_dict: dict, index: int | str):
-        prompt, model_id, safety_settings, generation_config, multimedia = (
+        prompt, model_name, safety_settings, generation_config, multimedia = (
             self._obtain_model_inputs(prompt_dict=prompt_dict)
         )
 
@@ -320,7 +369,7 @@ class Gemini(BaseModel):
         try:
 
             def run_predict():
-                return GenerativeModel(model_id).generate_content(
+                return GenerativeModel(model_name).generate_content(
                     contents=contents,
                     generation_config=generation_config,
                     safety_settings=safety_settings,
@@ -334,7 +383,7 @@ class Gemini(BaseModel):
 
             log_success_response_query(
                 index=index,
-                model=f"gemini ({model_id})",
+                model=f"gemini ({model_name})",
                 prompt=prompt,
                 response_text=response_text,
             )
@@ -348,7 +397,7 @@ class Gemini(BaseModel):
             )
             log_message = log_error_response_query(
                 index=index,
-                model=f"gemini ({model_id})",
+                model=f"gemini ({model_name})",
                 prompt=prompt,
                 error_as_string=error_as_string,
             )
@@ -375,7 +424,7 @@ class Gemini(BaseModel):
             error_as_string = f"{type(err).__name__} - {err}"
             log_message = log_error_response_query(
                 index=index,
-                model=f"gemini ({model_id})",
+                model=f"gemini ({model_name})",
                 prompt=prompt,
                 error_as_string=error_as_string,
             )
@@ -387,11 +436,11 @@ class Gemini(BaseModel):
             raise err
 
     async def _async_query_chat(self, prompt_dict: dict, index: int | str):
-        prompt, model_id, safety_settings, generation_config, multimedia = (
+        prompt, model_name, safety_settings, generation_config, multimedia = (
             self._obtain_model_inputs(prompt_dict=prompt_dict)
         )
 
-        model = GenerativeModel(model_id)
+        model = GenerativeModel(model_name)
         chat = model.start_chat(history=[])
 
         def run_predict(message):
@@ -424,7 +473,7 @@ class Gemini(BaseModel):
 
                 log_success_response_chat(
                     index=index,
-                    model=f"gemini ({model_id})",
+                    model=f"gemini ({model_name})",
                     message_index=message_index,
                     n_messages=len(prompt),
                     message=message,
@@ -442,7 +491,7 @@ class Gemini(BaseModel):
             )
             log_message = log_error_response_chat(
                 index=index,
-                model=f"gemini ({model_id})",
+                model=f"gemini ({model_name})",
                 message_index=message_index,
                 message=message,
                 responses_so_far=response_list,
@@ -469,7 +518,7 @@ class Gemini(BaseModel):
             error_as_string = f"{type(err).__name__} - {err}"
             log_message = log_error_response_chat(
                 index=index,
-                model=f"gemini ({model_id})",
+                model=f"gemini ({model_name})",
                 message_index=message_index,
                 message=message,
                 responses_so_far=response_list,
