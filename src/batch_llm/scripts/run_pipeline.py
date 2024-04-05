@@ -1,7 +1,7 @@
 import argparse
 import logging
 
-from batch_llm.experiment_processing import Experiment
+from batch_llm.experiment_processing import ExperimentPipeline
 from batch_llm.settings import Settings
 
 
@@ -48,7 +48,8 @@ def main():
         max_queries=args.max_queries,
         max_attempts=args.max_attempts,
     )
-
+    # log the settings that are set for the pipeline
+    logging.info(settings)
     logging.info(f"Starting to watch folder at {settings.input_folder}...")
 
     # initialise experiment pipeline

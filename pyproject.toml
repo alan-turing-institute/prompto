@@ -17,6 +17,7 @@ uvicorn = "^0.29.0"
 tqdm = "^4.66.2"
 vertexai = {version = "^1.46.0", extras = ["gemini"]}
 google-cloud-aiplatform = {version = "^1.46.0", extras = ["gemini"]}
+google-generativeai = {version = "^0.4.1", extras = ["gemini"]}
 
 
 [tool.poetry.group.dev.dependencies]
@@ -28,3 +29,6 @@ ipykernel = "^6.29.4"
 [build-system]
 requires = ["poetry-core"]
 build-backend = "poetry.core.masonry.api"
+
+[tool.poetry.scripts]
+run_pipeline = "batch_llm.scripts.run_pipeline:main"
