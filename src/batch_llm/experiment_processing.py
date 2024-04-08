@@ -449,7 +449,7 @@ async def generate_text(
         model = MODELS[prompt_dict["model"]](
             settings=settings, log_file=experiment.log_file
         )
-    except NotImplementedError:
+    except KeyError:
         raise NotImplementedError(
             f"Model {prompt_dict['model']} not recognised or implemented"
         )
