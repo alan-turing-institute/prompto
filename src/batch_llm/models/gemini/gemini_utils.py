@@ -68,3 +68,22 @@ def parse_multimedia(multimedia: list[dict] | dict, media_folder: str) -> list[P
         return [parse_multimedia_dict(multimedia, media_folder=media_folder)]
     else:
         return [parse_multimedia_dict(m, media_folder=media_folder) for m in multimedia]
+
+
+def process_response(response: dict) -> str:
+    response_text = response.candidates[0].content.parts[0].text
+    return response_text
+
+
+def process_safety_attributes(response: dict) -> dict:
+    safety_attributes = {
+        x.category.name: str(x.probability)
+        for x in response.candidates[0].safety_ratings
+    }
+    # list of booleans indicating whether each category is blocked
+    safety_attributes["blocked"] = str(
+        [x.blocked for x in response.candidates[0].safety_ratings]
+    )
+    safety_attributes["finish_reason"] = str(response.candidates[0].finish_reason.name)
+
+    return safety_attributes
