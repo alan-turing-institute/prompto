@@ -36,16 +36,18 @@ def main():
     )
     args = parser.parse_args()
 
-    input_file = args.input_file
+    input_filepath = args.input_file
     judge_location = args.judge_location
     judge = args.judge
     output_folder = args.output_folder
 
     try:
-        with open(input_file, "r", encoding="utf-8") as f:
+        with open(input_filepath, "r", encoding="utf-8") as f:
             responses = f.readlines()
     except FileNotFoundError as exc:
-        raise FileNotFoundError(f"Input file '{input_file}' does not exist.") from exc
+        raise FileNotFoundError(
+            f"Input file '{input_filepath}' does not exist."
+        ) from exc
 
     try:
         template_path = os.path.join(judge_location, "template.txt")
@@ -70,8 +72,12 @@ def main():
 
     settings = judge_settings[judge]
 
-    # open output jsonl file and write the judge prompts
-    with open(output_folder + "judge.jsonl", "w", encoding="utf-8") as f:
+    input_filename = (
+        os.path.basename(input_filepath).split(".")[0].replace("completed-", "")
+    )
+    out_filepath = output_folder + "judge:" + input_filename + ".jsonl"
+
+    with open(out_filepath, "w", encoding="utf-8") as f:
         for _, response in enumerate(responses):
             response = json.loads(response)
             prompt_id = "judge-" + str(response["id"])
