@@ -4,7 +4,7 @@ import random
 import time
 from typing import Any
 
-from batch_llm.base import BaseModel
+from batch_llm.base import AsyncBaseModel, BaseModel
 from batch_llm.settings import Settings
 
 
@@ -31,6 +31,17 @@ class TestModel(BaseModel):
             f"Response recieved (i={index}) \nPrompt: {prompt[:50]}... \nResponse: This is a test response"
         )
         return "This is a test response"
+
+
+class AsyncTestModel(AsyncBaseModel):
+    def __init__(
+        self,
+        settings: Settings,
+        log_file: str,
+        *args: Any,
+        **kwargs: Any,
+    ):
+        super().__init__(settings=settings, log_file=log_file, *args, **kwargs)
 
     async def async_query(index, prompt):
         # return an error 1/5 times
