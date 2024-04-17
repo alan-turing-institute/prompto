@@ -26,6 +26,13 @@ Before running the script, ensure you have the following:
 - Python >= 3.11
 - Poetry (for dependency management)
 
+### Models
+
+- Azure OpenAI
+    - Need to set `OPENAI_API_KEY`, `OPENAI_AZURE_API_ENDPOINT` environment variables. Also recommended to set the `OPENAI_AZURE_MODEL_ID` in the environment variable to either avoid passing in the `model_name` each time if using the same one consistently.
+- Gemini
+    - Need to set `GEMINI_PROJECT_ID`, and `GEMINI_LOCATION` environment variables. Also recommended to set the `GEMINI_MODEL_ID` in the environment variable to either avoid passing in the `model_name` each time if using the same one consistently.
+
 ### Installation
 
 1. **Clone the Repository**
