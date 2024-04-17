@@ -20,7 +20,7 @@ from batch_llm.utils import (
     write_log_message,
 )
 
-AZURE_API_VERSION_DEFAULT = "2023-09-15-preview"
+AZURE_API_VERSION_DEFAULT = "2024-02-01"
 
 
 class AzureOpenAIModel(BaseModel):
@@ -34,29 +34,29 @@ class AzureOpenAIModel(BaseModel):
     ):
         super().__init__(settings=settings, log_file=log_file, *args, **kwargs)
         # try to get the api key and endpoint from the environment variables
-        self.api_key = os.environ.get("OPENAI_AZURE_API_KEY")
-        self.azure_endpoint = os.environ.get("OPENAI_AZURE_API_ENDPOINT")
+        self.api_key = os.environ.get("AZURE_OPENAI_API_KEY")
+        self.azure_endpoint = os.environ.get("AZURE_OPENAI_API_ENDPOINT")
 
         # raise error if the api key or endpoint is not found
         if self.api_key is None:
-            raise ValueError("OPENAI_AZURE_API_KEY environment variable not found")
+            raise ValueError("AZURE_OPENAI_API_KEY environment variable not found")
         if self.azure_endpoint is None:
-            raise ValueError("OPENAI_AZURE_API_ENDPOINT environment variable not found")
+            raise ValueError("AZURE_OPENAI_API_ENDPOINT environment variable not found")
 
         self.api_type = "azure"
-        self.api_version = api_version or os.environ.get("OPENAI_AZURE_API_VERSION")
+        self.api_version = api_version or os.environ.get("AZURE_OPENAI_API_VERSION")
         if self.api_version is None:
             self.api_version = AZURE_API_VERSION_DEFAULT
 
+        openai.api_key = self.api_key
+        openai.azure_endpoint = self.azure_endpoint
+        openai.api_type = self.api_type
+        openai.api_version = self.api_version
         self.client = AzureOpenAI(
             api_key=self.api_key,
             azure_endpoint=self.azure_endpoint,
             api_version=self.api_version,
         )
-        openai.api_key = self.api_key
-        openai.azure_endpoint = self.azure_endpoint
-        openai.api_type = self.api_type
-        openai.api_version = self.api_version
 
     def check_environment_variables(self) -> list[Exception]:
         return check_environment_variables()
@@ -233,30 +233,30 @@ class AsyncAzureOpenAIModel(AsyncBaseModel):
     ):
         super().__init__(settings=settings, log_file=log_file, *args, **kwargs)
         # try to get the api key and endpoint from the environment variables
-        self.api_key = os.environ.get("OPENAI_AZURE_API_KEY")
-        self.azure_endpoint = os.environ.get("OPENAI_AZURE_API_ENDPOINT")
+        self.api_key = os.environ.get("AZURE_OPENAI_API_KEY")
+        self.azure_endpoint = os.environ.get("AZURE_OPENAI_API_ENDPOINT")
 
         # raise error if the api key or endpoint is not found
         if self.api_key is None:
-            raise ValueError("OPENAI_AZURE_API_KEY environment variable not found")
+            raise ValueError("AZURE_OPENAI_API_KEY environment variable not found")
         if self.azure_endpoint is None:
-            raise ValueError("OPENAI_AZURE_API_ENDPOINT environment variable not found")
+            raise ValueError("AZURE_OPENAI_API_ENDPOINT environment variable not found")
 
         self.api_type = "azure"
         self.api_type = "azure"
-        self.api_version = api_version or os.environ.get("OPENAI_AZURE_API_VERSION")
+        self.api_version = api_version or os.environ.get("AZURE_OPENAI_API_VERSION")
         if self.api_version is None:
             self.api_version = AZURE_API_VERSION_DEFAULT
 
+        openai.api_key = self.api_key
+        openai.azure_endpoint = self.azure_endpoint
+        openai.api_type = self.api_type
+        openai.api_version = self.api_version
         self.client = AsyncAzureOpenAI(
             api_key=self.api_key,
             azure_endpoint=self.azure_endpoint,
             api_version=self.api_version,
         )
-        openai.api_key = self.api_key
-        openai.azure_endpoint = self.azure_endpoint
-        openai.api_type = self.api_type
-        openai.api_version = self.api_version
 
     def check_environment_variables(self) -> list[Exception]:
         return check_environment_variables()
