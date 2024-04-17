@@ -102,7 +102,13 @@ def is_valid_jsonl(
     """
     multimedia_path_errors = set()
     valid_indicator = True
+    if log_file is None:
+        log_file = os.path.basename(file_path).replace(".jsonl", "_error_log.txt")
+        logging.info("Log file not provided. Generating one in current directory")
 
+    logging.info(
+        f"Checking {file_path}. Any errors will be saved to log file at {log_file}"
+    )
     with open(file_path, "r") as f:
         for i, line in enumerate(f):
             issues = []
@@ -190,7 +196,7 @@ def main():
     parser.add_argument(
         "--data-folder",
         "-d",
-        help="Path to the folder containing the data.",
+        help="Path to the folder containing the data",
         type=str,
         default="data",
     )
@@ -219,15 +225,15 @@ def main():
 
     # log result
     if valid:
-        logging.info(f"SUCCESS: {args.file} is valid.")
+        logging.info(f"SUCCESS: {args.file} is valid")
         if args.move_to_input:
             new_file_path = f"{args.data_folder}/input/{os.path.basename(args.file)}"
             move_file(args.file, new_file_path)
             logging.info(f"Moved {args.file} to {new_file_path}")
     else:
-        logging.error(f"{args.file} is not valid. Please check logs and fix.")
+        logging.error(f"{args.file} is not valid. Please check logs and fix")
         if args.log_file is not None:
-            logging.error(f"See {args.log_file} for more details.")
+            logging.error(f"See {args.log_file} for more details")
 
 
 if __name__ == "__main__":

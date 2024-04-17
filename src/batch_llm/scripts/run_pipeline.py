@@ -15,21 +15,21 @@ def main():
     parser.add_argument(
         "--data-folder",
         "-d",
-        help="Path to the folder containing the data.",
+        help="Path to the folder containing the data",
         type=str,
         default="data",
     )
     parser.add_argument(
         "--max-queries",
         "-m",
-        help="Maximum number of queries to send within a minute.",
+        help="Maximum number of queries to send within a minute",
         type=int,
         default=30,
     )
     parser.add_argument(
         "--max-attempts",
         "-a",
-        help="Maximum number of attempts to process an experiment.",
+        help="Maximum number of attempts to process an experiment",
         type=int,
         default=5,
     )
