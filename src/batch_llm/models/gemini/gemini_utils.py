@@ -92,7 +92,7 @@ def process_safety_attributes(response: dict) -> dict:
 def check_environment_variables() -> list[Exception]:
     # check the required environment variables are set
     issues = []
-    required_env_vars = ["GEMINI_API_KEY", "GEMINI_PROJECT_ID"]
+    required_env_vars = ["GEMINI_PROJECT_ID", "GEMINI_LOCATION"]
     for var in required_env_vars:
         if var not in os.environ:
             issues.append(ValueError(f"Environment variable {var} is not set"))
@@ -108,10 +108,9 @@ def check_environment_variables() -> list[Exception]:
 def check_prompt_dict(prompt_dict: dict) -> list[Exception]:
     # check the parameter settings are valid
     issues = []
-    parameters = prompt_dict["parameters"]
 
     # if safety_filter is provided, check that it's one of the valid options
-    if "safety_filter" in parameters and parameters["safety_filter"] not in [
+    if "safety_filter" in prompt_dict and prompt_dict["safety_filter"] not in [
         "none",
         "few",
         "some",
@@ -121,9 +120,9 @@ def check_prompt_dict(prompt_dict: dict) -> list[Exception]:
         issues.append(ValueError("Invalid safety_filter value"))
 
     # if generation_config is provided, check that it can create a valid GenerationConfig object
-    if "generation_config" in parameters:
+    if "parameters" in prompt_dict:
         try:
-            GenerationConfig(**parameters["generation_config"])
+            GenerationConfig(**prompt_dict["parameters"])
         except TypeError as err:
             issues.append(TypeError(f"Invalid generation_config parameter: {err}"))
         except Exception as err:
