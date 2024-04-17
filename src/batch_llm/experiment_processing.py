@@ -455,6 +455,6 @@ async def generate_text(
         )
 
     # query the model
-    response = await model.async_query(prompt_dict=prompt_dict)
+    response = await model.async_query(prompt_dict=prompt_dict, index=index)
 
     return response
