@@ -1,4 +1,3 @@
-import asyncio
 import logging
 import os
 from typing import Any
@@ -7,7 +6,11 @@ import openai
 from openai import AsyncAzureOpenAI, AzureOpenAI
 
 from batch_llm.base import AsyncBaseModel, BaseModel
-from batch_llm.models.azure_openai.azure_openai_utils import process_response
+from batch_llm.models.azure_openai.azure_openai_utils import (
+    check_environment_variables,
+    check_prompt_dict,
+    process_response,
+)
 from batch_llm.settings import Settings
 from batch_llm.utils import (
     log_error_response_chat,
@@ -17,13 +20,15 @@ from batch_llm.utils import (
     write_log_message,
 )
 
+AZURE_API_VERSION_DEFAULT = "2023-09-15-preview"
+
 
 class AzureOpenAIModel(BaseModel):
     def __init__(
         self,
         settings: Settings,
         log_file: str,
-        api_version: str = "2023-09-15-preview",
+        api_version: str | None = None,
         *args: Any,
         **kwargs: Any,
     ):
@@ -39,7 +44,10 @@ class AzureOpenAIModel(BaseModel):
             raise ValueError("OPENAI_AZURE_API_ENDPOINT environment variable not found")
 
         self.api_type = "azure"
-        self.api_version = api_version
+        self.api_version = api_version or os.environ.get("OPENAI_AZURE_API_VERSION")
+        if self.api_version is None:
+            self.api_version = AZURE_API_VERSION_DEFAULT
+
         self.client = AzureOpenAI(
             api_key=self.api_key,
             azure_endpoint=self.azure_endpoint,
@@ -49,6 +57,12 @@ class AzureOpenAIModel(BaseModel):
         openai.azure_endpoint = self.azure_endpoint
         openai.api_type = self.api_type
         openai.api_version = self.api_version
+
+    def check_environment_variables(self) -> list[Exception]:
+        return check_environment_variables()
+
+    def check_prompt_dict(self, prompt_dict: dict) -> list[Exception]:
+        return check_prompt_dict(prompt_dict)
 
     def _obtain_model_inputs(self, prompt_dict: dict) -> tuple:
         # obtain the prompt from the prompt dictionary
@@ -213,7 +227,7 @@ class AsyncAzureOpenAIModel(AsyncBaseModel):
         self,
         settings: Settings,
         log_file: str,
-        api_version: str = "2023-09-15-preview",
+        api_version: str | None = None,
         *args: Any,
         **kwargs: Any,
     ):
@@ -229,7 +243,11 @@ class AsyncAzureOpenAIModel(AsyncBaseModel):
             raise ValueError("OPENAI_AZURE_API_ENDPOINT environment variable not found")
 
         self.api_type = "azure"
-        self.api_version = api_version
+        self.api_type = "azure"
+        self.api_version = api_version or os.environ.get("OPENAI_AZURE_API_VERSION")
+        if self.api_version is None:
+            self.api_version = AZURE_API_VERSION_DEFAULT
+
         self.client = AsyncAzureOpenAI(
             api_key=self.api_key,
             azure_endpoint=self.azure_endpoint,
@@ -239,6 +257,12 @@ class AsyncAzureOpenAIModel(AsyncBaseModel):
         openai.azure_endpoint = self.azure_endpoint
         openai.api_type = self.api_type
         openai.api_version = self.api_version
+
+    def check_environment_variables(self) -> list[Exception]:
+        return check_environment_variables()
+
+    def check_prompt_dict(self, prompt_dict: dict) -> list[Exception]:
+        return check_prompt_dict(prompt_dict)
 
     def _obtain_model_inputs(self, prompt_dict: dict) -> tuple:
         # obtain the prompt from the prompt dictionary

@@ -39,7 +39,8 @@ def check_multimedia(
             if m["type"] not in ["image", "video", "text"]:
                 issues.append(
                     ValueError(
-                        "For each \"multimedia\" item provided, \"type\" value must be one of 'image', 'video', 'text'"
+                        'For each "multimedia" item provided, "type" value must be '
+                        "one of 'image', 'video', 'text'"
                     )
                 )
 
@@ -66,7 +67,8 @@ def check_multimedia(
             if "mime_type" not in m:
                 issues.append(
                     KeyError(
-                        'For each "multimedia" item provided with type \'video\', a "mime_type" key must be provided'
+                        "For each \"multimedia\" item provided with type 'video', "
+                        'a "mime_type" key must be provided'
                     )
                 )
 
@@ -157,7 +159,10 @@ def is_valid_jsonl(
         logging.info(f"File {file_path} is a valid jsonl file")
 
     if len(multimedia_path_errors) != 0:
-        log_msg = f"File {file_path} includes the following multimedia paths that do not exist: {multimedia_path_errors}"
+        log_msg = (
+            f"File {file_path} includes the following multimedia paths "
+            f"that do not exist: {multimedia_path_errors}"
+        )
         logging.info(log_msg)
         if log_file is not None:
             write_log_message(log_file=log_file, log_message=log_msg)
