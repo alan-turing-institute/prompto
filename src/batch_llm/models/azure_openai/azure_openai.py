@@ -23,7 +23,6 @@ class AzureOpenAIModel(BaseModel):
         self,
         settings: Settings,
         log_file: str,
-        model_name: str = "reginald-gpt4",
         api_version: str = "2023-09-15-preview",
         *args: Any,
         **kwargs: Any,
@@ -40,7 +39,6 @@ class AzureOpenAIModel(BaseModel):
             raise ValueError("OPENAI_AZURE_API_ENDPOINT environment variable not found")
 
         self.api_type = "azure"
-        self.model_name = model_name  # the deployment name
         self.api_version = api_version
         self.client = AzureOpenAI(
             api_key=self.api_key,
@@ -114,7 +112,7 @@ class AzureOpenAIModel(BaseModel):
 
             log_success_response_query(
                 index=index,
-                model=f"AzureOpenAI ({self.model_name})",
+                model=f"AzureOpenAI ({model_name})",
                 prompt=prompt,
                 response_text=response_text,
             )
@@ -125,7 +123,7 @@ class AzureOpenAIModel(BaseModel):
             error_as_string = f"{type(err).__name__} - {err}"
             log_message = log_error_response_query(
                 index=index,
-                model=f"AzureOpenAI ({self.model_name})",
+                model=f"AzureOpenAI ({model_name})",
                 prompt=prompt,
                 error_as_string=error_as_string,
             )
@@ -162,7 +160,7 @@ class AzureOpenAIModel(BaseModel):
 
                 log_success_response_chat(
                     index=index,
-                    model=f"AzureOpenAI ({self.model_name})",
+                    model=f"AzureOpenAI ({model_name})",
                     message_index=message_index,
                     n_messages=len(prompt),
                     message=message,
@@ -177,7 +175,7 @@ class AzureOpenAIModel(BaseModel):
             error_as_string = f"{type(err).__name__} - {err}"
             log_message = log_error_response_chat(
                 index=index,
-                model=f"AzureOpenAI ({self.model_name})",
+                model=f"AzureOpenAI ({model_name})",
                 message_index=message_index,
                 message=message,
                 responses_so_far=response_list,
@@ -305,7 +303,7 @@ class AsyncAzureOpenAIModel(AsyncBaseModel):
 
             log_success_response_query(
                 index=index,
-                model=f"AzureOpenAI ({self.model_name})",
+                model=f"AzureOpenAI ({model_name})",
                 prompt=prompt,
                 response_text=response_text,
             )
@@ -316,7 +314,7 @@ class AsyncAzureOpenAIModel(AsyncBaseModel):
             error_as_string = f"{type(err).__name__} - {err}"
             log_message = log_error_response_query(
                 index=index,
-                model=f"AzureOpenAI ({self.model_name})",
+                model=f"AzureOpenAI ({model_name})",
                 prompt=prompt,
                 error_as_string=error_as_string,
             )
@@ -353,7 +351,7 @@ class AsyncAzureOpenAIModel(AsyncBaseModel):
 
                 log_success_response_chat(
                     index=index,
-                    model=f"AzureOpenAI ({self.model_name})",
+                    model=f"AzureOpenAI ({model_name})",
                     message_index=message_index,
                     n_messages=len(prompt),
                     message=message,
@@ -368,7 +366,7 @@ class AsyncAzureOpenAIModel(AsyncBaseModel):
             error_as_string = f"{type(err).__name__} - {err}"
             log_message = log_error_response_chat(
                 index=index,
-                model=f"AzureOpenAI ({self.model_name})",
+                model=f"AzureOpenAI ({model_name})",
                 message_index=message_index,
                 message=message,
                 responses_so_far=response_list,
