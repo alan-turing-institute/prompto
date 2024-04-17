@@ -287,7 +287,7 @@ class AsyncAzureOpenAIModel(AsyncBaseModel):
 
         try:
             if mode == "chat":
-                response = self.client.chat.completions.create(
+                response = await self.client.chat.completions.create(
                     model=model_name,
                     messages=[{"role": "user", "content": prompt}],
                     **generation_config,
