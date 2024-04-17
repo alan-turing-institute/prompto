@@ -1,5 +1,5 @@
 from batch_llm.models.azure_openai.azure_openai import (
-    AsyncAzureOpenAI,
+    AsyncAzureOpenAIModel,
     AzureOpenAIModel,
 )
 from batch_llm.models.gemini.gemini import AsyncGeminiModel, GeminiModel
@@ -12,7 +12,7 @@ MODELS = {
 }
 
 ASYNC_MODELS = {
-    "azure_openai": AsyncAzureOpenAI,
+    "azure_openai": AsyncAzureOpenAIModel,
     "gemini": AsyncGeminiModel,
 }
 
