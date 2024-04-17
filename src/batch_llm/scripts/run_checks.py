@@ -168,25 +168,30 @@ def is_valid_jsonl(
     for model in model_environments_to_check:
         environment_issues.extend(ASYNC_MODELS[model].check_environment_variables())
 
-    if not valid_indicator:
-        log_msg = f"File {file_path} is an invalid jsonl file"
+    if len(environment_issues) != 0:
+        if not all(isinstance(item, Warning) for item in environment_issues):
+            valid_indicator = False
+        log_msg = (
+            f"File {file_path} has the following environment variables "
+            f"that aren't set: {environment_issues}"
+        )
         write_log_message(log_file=log_file, log_message=log_msg)
-    else:
-        logging.info(f"File {file_path} is a valid jsonl file")
 
     if len(multimedia_path_errors) != 0:
+        valid_indicator = False
         log_msg = (
             f"File {file_path} includes the following multimedia paths "
             f"that do not exist: {multimedia_path_errors}"
         )
         write_log_message(log_file=log_file, log_message=log_msg)
 
-    if len(environment_issues) != 0:
-        log_msg = (
-            f"File {file_path} has the following environment variables "
-            f"that aren't set: {environment_issues}"
-        )
+    if not valid_indicator:
+        log_msg = f"File {file_path} is an invalid jsonl file"
         write_log_message(log_file=log_file, log_message=log_msg)
+    else:
+        logging.info(
+            f"File {file_path} is a valid jsonl file. But check if there's any warnings in the logs"
+        )
 
     return valid_indicator
 
