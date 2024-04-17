@@ -27,7 +27,7 @@ class Experiment:
         settings: Settings,
     ):
         if not file_name.endswith(".jsonl"):
-            raise ValueError("Experiment file must be a jsonl file.")
+            raise ValueError("Experiment file must be a jsonl file")
 
         self.file_name: str = file_name
         # obtain experiment name from file name
