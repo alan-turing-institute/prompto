@@ -24,7 +24,7 @@ def main():
         required=True,
     )
     parser.add_argument(
-        "--judge", "-j", help="Judge to be used", type=str, default="gemini"
+        "--judge", "-j", help="Judge to be used", type=str, required=True
     )
 
     parser.add_argument(
