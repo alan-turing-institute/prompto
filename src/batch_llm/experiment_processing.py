@@ -8,7 +8,7 @@ from datetime import datetime, timedelta
 from tqdm import tqdm
 from tqdm.asyncio import tqdm_asyncio
 
-from batch_llm.models import MODELS
+from batch_llm.models import ASYNC_MODELS
 from batch_llm.settings import Settings
 from batch_llm.utils import (
     create_folder,
@@ -446,7 +446,7 @@ async def generate_text(
 
     # obtain model
     try:
-        model = MODELS[prompt_dict["model"]](
+        model = ASYNC_MODELS[prompt_dict["model"]](
             settings=settings, log_file=experiment.log_file
         )
     except KeyError:

@@ -19,6 +19,7 @@ vertexai = {version = "^1.46.0", extras = ["gemini"]}
 google-cloud-aiplatform = {version = "^1.46.0", extras = ["gemini"]}
 google-generativeai = {version = "^0.4.1", extras = ["gemini"]}
 pillow = "^10.3.0"
+openai = "^1.19.0"
 
 
 [tool.poetry.group.dev.dependencies]
