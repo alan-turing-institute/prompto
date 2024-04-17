@@ -75,16 +75,16 @@ def main():
     input_filename = (
         os.path.basename(input_filepath).split(".")[0].replace("completed-", "")
     )
-    out_filepath = output_folder + "judge:" + input_filename + ".jsonl"
+    out_filepath = os.path.join(output_folder, f"judge-{judge}-{input_filename}.jsonl")
 
     with open(out_filepath, "w", encoding="utf-8") as f:
         for _, response in enumerate(responses):
             response = json.loads(response)
             prompt_id = "judge-" + str(response["id"])
-            prompt = response["prompt"]
-            response = response["response"]
-            judge_prompt = (
-                f"{template_prompt}\nQUESTION: {prompt}\nRESPONSE: {response}\nCLASS:"
+            input_prompt = response["prompt"]
+            output_response = response["response"]
+            judge_prompt = template_prompt.format(
+                INPUT_PROMPT=input_prompt, OUTPUT_RESPONSE=output_response
             )
             f.write(
                 json.dumps(
