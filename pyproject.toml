@@ -34,7 +34,7 @@ build-backend = "poetry.core.masonry.api"
 
 [tool.poetry.scripts]
 run_pipeline = "batch_llm.scripts.run_pipeline:main"
-run_checks = "batch_llm.scripts.check_json:main"
+run_checks = "batch_llm.scripts.run_checks:main"
 create_judge_file = "batch_llm.scripts.create_judge_file:main"
 obtain_missing_jsonl = "batch_llm.scripts.obtain_missing_jsonl:main"
 convert_images = "batch_llm.scripts.convert_images:main"
