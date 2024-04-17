@@ -124,7 +124,7 @@ class GeminiModel(BaseModel):
         else:
             raise ValueError(
                 f"safety_filter '{safety_filter}' not recognised. Must be one of: "
-                f"none', 'few', 'default'/'some', 'most'"
+                f"'none', 'few', 'default'/'some', 'most'"
             )
 
         # get parameters dict (if any)
