@@ -4,7 +4,7 @@ import random
 import time
 from typing import Any
 
-from batch_llm.base import AsyncBaseModel, BaseModel
+from batch_llm.models.base import AsyncBaseModel, BaseModel
 from batch_llm.settings import Settings
 
 

@@ -11,7 +11,7 @@ from vertexai.generative_models import (
     Part,
 )
 
-from batch_llm.base import AsyncBaseModel, BaseModel
+from batch_llm.models.base import AsyncBaseModel, BaseModel
 from batch_llm.models.gemini.gemini_utils import (
     check_environment_variables,
     check_prompt_dict,
@@ -67,10 +67,12 @@ class GeminiModel(BaseModel):
         # initialise the vertexai project
         vertexai.init(project=project_id, location=location)
 
-    def check_environment_variables(self) -> list[Exception]:
+    @staticmethod
+    def check_environment_variables() -> list[Exception]:
         return check_environment_variables()
 
-    def check_prompt_dict(self, prompt_dict: dict) -> list[Exception]:
+    @staticmethod
+    def check_prompt_dict(prompt_dict: dict) -> list[Exception]:
         return check_prompt_dict(prompt_dict)
 
     def _obtain_model_inputs(self, prompt_dict: dict) -> tuple:
@@ -379,10 +381,12 @@ class AsyncGeminiModel(AsyncBaseModel):
         # initialise the vertexai project
         vertexai.init(project=project_id, location=location)
 
-    def check_environment_variables(self) -> list[Exception]:
+    @staticmethod
+    def check_environment_variables() -> list[Exception]:
         return check_environment_variables()
 
-    def check_prompt_dict(self, prompt_dict: dict) -> list[Exception]:
+    @staticmethod
+    def check_prompt_dict(prompt_dict: dict) -> list[Exception]:
         return check_prompt_dict(prompt_dict)
 
     def _obtain_model_inputs(self, prompt_dict: dict) -> tuple:

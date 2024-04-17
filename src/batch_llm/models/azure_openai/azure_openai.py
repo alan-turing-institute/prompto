@@ -5,12 +5,12 @@ from typing import Any
 import openai
 from openai import AsyncAzureOpenAI, AzureOpenAI
 
-from batch_llm.base import AsyncBaseModel, BaseModel
 from batch_llm.models.azure_openai.azure_openai_utils import (
     check_environment_variables,
     check_prompt_dict,
     process_response,
 )
+from batch_llm.models.base import AsyncBaseModel, BaseModel
 from batch_llm.settings import Settings
 from batch_llm.utils import (
     log_error_response_chat,
@@ -58,10 +58,12 @@ class AzureOpenAIModel(BaseModel):
             api_version=self.api_version,
         )
 
-    def check_environment_variables(self) -> list[Exception]:
+    @staticmethod
+    def check_environment_variables() -> list[Exception]:
         return check_environment_variables()
 
-    def check_prompt_dict(self, prompt_dict: dict) -> list[Exception]:
+    @staticmethod
+    def check_prompt_dict(prompt_dict: dict) -> list[Exception]:
         return check_prompt_dict(prompt_dict)
 
     def _obtain_model_inputs(self, prompt_dict: dict) -> tuple:
@@ -258,10 +260,12 @@ class AsyncAzureOpenAIModel(AsyncBaseModel):
             api_version=self.api_version,
         )
 
-    def check_environment_variables(self) -> list[Exception]:
+    @staticmethod
+    def check_environment_variables() -> list[Exception]:
         return check_environment_variables()
 
-    def check_prompt_dict(self, prompt_dict: dict) -> list[Exception]:
+    @staticmethod
+    def check_prompt_dict(prompt_dict: dict) -> list[Exception]:
         return check_prompt_dict(prompt_dict)
 
     def _obtain_model_inputs(self, prompt_dict: dict) -> tuple:

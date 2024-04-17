@@ -3,6 +3,7 @@ import json
 import logging
 import os
 
+from batch_llm.models import ASYNC_MODELS
 from batch_llm.utils import move_file, write_log_message
 
 
@@ -109,6 +110,7 @@ def is_valid_jsonl(
     logging.info(
         f"Checking {file_path}. Any errors will be saved to log file at {log_file}"
     )
+    model_environments_to_check = set()
     with open(file_path, "r") as f:
         for i, line in enumerate(f):
             issues = []
@@ -145,6 +147,11 @@ def is_valid_jsonl(
                     )
                     issues.extend(multimedia_issues)
                     multimedia_path_errors.add(path_errors)
+
+                # model specific checks
+                issues.extend(ASYNC_MODELS[data["model"]].check_prompt_dict(data))
+                # add model to set of models to check environment variables for
+                model_environments_to_check.add(data["model"])
             except json.JSONDecodeError as err:
                 # if line is not a valid json, add index to list
                 issues.append(err)
@@ -156,11 +163,14 @@ def is_valid_jsonl(
                 if log_file is not None:
                     write_log_message(log_file=log_file, log_message=log_msg, log=True)
 
+    # check environment variables for each model
+    environment_issues = []
+    for model in model_environments_to_check:
+        environment_issues.extend(ASYNC_MODELS[model].check_environment_variables())
+
     if not valid_indicator:
         log_msg = f"File {file_path} is an invalid jsonl file"
-        logging.info(log_msg)
-        if log_file is not None:
-            write_log_message(log_file=log_file, log_message=log_msg)
+        write_log_message(log_file=log_file, log_message=log_msg)
     else:
         logging.info(f"File {file_path} is a valid jsonl file")
 
@@ -169,9 +179,14 @@ def is_valid_jsonl(
             f"File {file_path} includes the following multimedia paths "
             f"that do not exist: {multimedia_path_errors}"
         )
-        logging.info(log_msg)
-        if log_file is not None:
-            write_log_message(log_file=log_file, log_message=log_msg)
+        write_log_message(log_file=log_file, log_message=log_msg)
+
+    if len(environment_issues) != 0:
+        log_msg = (
+            f"File {file_path} has the following environment variables "
+            f"that aren't set: {environment_issues}"
+        )
+        write_log_message(log_file=log_file, log_message=log_msg)
 
     return valid_indicator
 

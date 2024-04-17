@@ -9,12 +9,14 @@ class BaseModel(ABC):
         self.settings = settings
         self.log_file = log_file
 
-    def check_environment_variables(self) -> list[Exception]:
+    @staticmethod
+    def check_environment_variables() -> list[Exception]:
         # method for checking the environment variables
         # returns a list of exceptions or warnings if the environment variables are not set
         raise NotImplementedError
 
-    def check_prompt_dict(self, prompt_dict: dict) -> list[Exception]:
+    @staticmethod
+    def check_prompt_dict(prompt_dict: dict) -> list[Exception]:
         # method for checking the prompt dictionary
         # returns a list of exceptions or warnings if the prompt dictionary is not valid
         raise NotImplementedError
@@ -34,12 +36,14 @@ class AsyncBaseModel(ABC):
         self.settings = settings
         self.log_file = log_file
 
-    def check_environment_variables(self) -> list[Exception]:
+    @staticmethod
+    def check_environment_variables() -> list[Exception]:
         # method for checking the environment variables
         # returns a list of exceptions or warnings if the environment variables are not set
         raise NotImplementedError
 
-    def check_prompt_dict(self, prompt_dict: dict) -> list[Exception]:
+    @staticmethod
+    def check_prompt_dict(prompt_dict: dict) -> list[Exception]:
         # method for checking the prompt dictionary
         # returns a list of exceptions or warnings if the prompt dictionary is not valid
         raise NotImplementedError
