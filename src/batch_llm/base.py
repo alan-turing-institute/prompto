@@ -19,7 +19,9 @@ class BaseModel(ABC):
         # returns a list of exceptions or warnings if the prompt dictionary is not valid
         raise NotImplementedError
 
-    def query(self, prompt_dict: dict, *args: Any, **kwargs: Any) -> dict:
+    def query(
+        self, prompt_dict: dict, index: int | str = "NA", *args: Any, **kwargs: Any
+    ) -> dict:
         # method for querying the model using the prompt and other arguments
         # returns a dictionary/json object which is saved into the output jsonl
         raise NotImplementedError
@@ -42,7 +44,9 @@ class AsyncBaseModel(ABC):
         # returns a list of exceptions or warnings if the prompt dictionary is not valid
         raise NotImplementedError
 
-    async def async_query(self, prompt_dict: dict, *args: Any, **kwargs: Any) -> dict:
+    async def async_query(
+        self, prompt_dict: dict, index: int | str = "NA", *args: Any, **kwargs: Any
+    ) -> dict:
         # async method for querying the model using the prompt and other arguments
         # returns a dictionary/json object which is saved into the output jsonl
         raise NotImplementedError
