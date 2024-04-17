@@ -71,7 +71,9 @@ def main():
         raise ValueError(f"Judge '{judge}' not in judge settings.")
 
     input_filename = (
-        os.path.basename(input_filepath).split(".")[0].replace("completed-", "")
+        os.path.basename(input_filepath)
+        .removesuffix(".jsonl")
+        .replace("completed-", "")
     )
     out_filepath = os.path.join(output_folder, f"judge-{judge}-{input_filename}.jsonl")
 
