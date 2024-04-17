@@ -70,8 +70,6 @@ def main():
     if judge not in judge_settings:
         raise ValueError(f"Judge '{judge}' not in judge settings.")
 
-    settings = judge_settings[judge]
-
     input_filename = (
         os.path.basename(input_filepath).split(".")[0].replace("completed-", "")
     )
@@ -91,8 +89,9 @@ def main():
                     {
                         "id": prompt_id,
                         "prompt": judge_prompt,
-                        "model": judge,
-                        "parameters": settings,
+                        "model": judge_settings[judge]["model"],
+                        "model_name": judge_settings[judge]["model_name"],
+                        "parameters": judge_settings[judge]["parameters"],
                     }
                 )
             )
