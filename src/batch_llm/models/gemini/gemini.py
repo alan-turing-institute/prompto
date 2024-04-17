@@ -13,6 +13,8 @@ from vertexai.generative_models import (
 
 from batch_llm.base import AsyncBaseModel, BaseModel
 from batch_llm.models.gemini.gemini_utils import (
+    check_environment_variables,
+    check_prompt_dict,
     parse_multimedia,
     process_response,
     process_safety_attributes,
@@ -38,7 +40,6 @@ class GeminiModel(BaseModel):
         **kwargs: Any,
     ):
         super().__init__(settings=settings, log_file=log_file, *args, **kwargs)
-        vertexai.init(project=project_id, location=location)
         # try to read the project_id and location from the environment variables if not set
         if project_id is None:
             project_id = os.environ.get("GEMINI_PROJECT_ID", None)
@@ -65,6 +66,12 @@ class GeminiModel(BaseModel):
 
         # initialise the vertexai project
         vertexai.init(project=project_id, location=location)
+
+    def check_environment_variables(self) -> list[Exception]:
+        return check_environment_variables()
+
+    def check_prompt_dict(self, prompt_dict: dict) -> list[Exception]:
+        return check_prompt_dict(prompt_dict)
 
     def _obtain_model_inputs(self, prompt_dict: dict) -> tuple:
         prompt = prompt_dict["prompt"]
@@ -371,6 +378,12 @@ class AsyncGeminiModel(AsyncBaseModel):
 
         # initialise the vertexai project
         vertexai.init(project=project_id, location=location)
+
+    def check_environment_variables(self) -> list[Exception]:
+        return check_environment_variables()
+
+    def check_prompt_dict(self, prompt_dict: dict) -> list[Exception]:
+        return check_prompt_dict(prompt_dict)
 
     def _obtain_model_inputs(self, prompt_dict: dict) -> tuple:
         prompt = prompt_dict["prompt"]
