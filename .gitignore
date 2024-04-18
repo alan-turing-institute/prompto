@@ -163,3 +163,4 @@ cython_debug/
 .vscode/settings.json
 poetry.lock
 *.DS_Store
+*env
