@@ -5,12 +5,15 @@ import pytest
 
 
 @pytest.fixture(autouse=True)
-def change_test_dir(request, monkeypatch):
+def change_test_dir(request: pytest.FixtureRequest, monkeypatch: pytest.MonkeyPatch):
+    """
+    Change to the working directory to that of the test file.
+    """
     monkeypatch.chdir(request.fspath.dirname)
 
 
 @pytest.fixture()
-def temporary_data_folders(tmp_path):
+def temporary_data_folders(tmp_path: Path):
     """
     Creates a temporary folder structure for testing.
 
