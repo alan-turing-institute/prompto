@@ -52,10 +52,7 @@ jobs:
               run: python -m pip install .[test]
 
             - name: Test package
-              run: python -m pytest -ra --cov=batch_llm
-
-            - name: Upload coverage report
-              uses: codecov/codecov-action@v4.1.0
+              run: python -m pytest -ra
 
     # dist:
     #     name: Distribution build
