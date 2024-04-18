@@ -22,6 +22,7 @@ def temporary_data_folders(tmp_path: Path):
     ├── data/
     ├── dummy_data/
     ├── test.txt
+    └── test.jsonl
     """
     # create data folders
     data_dir = Path(tmp_path / "data").mkdir()
@@ -30,6 +31,10 @@ def temporary_data_folders(tmp_path: Path):
     # create a txt file in the folder
     with open(Path(tmp_path / "test.txt"), "w") as f:
         f.write("test line")
+
+    # create a jsonl file in the folder
+    with open(Path(tmp_path / "test.jsonl"), "w") as f:
+        f.write('{"prompt": "test prompt", "model": "test"}\n')
 
     # store current working directory
     cwd = os.getcwd()
