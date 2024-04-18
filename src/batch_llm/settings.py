@@ -40,8 +40,10 @@ class Settings:
         Raises a ValueError if the data folder does not exist.
         """
         # check if data folder exists
-        if not os.path.exists(data_folder):
-            raise ValueError(f"Data folder '{data_folder}' does not exist")
+        if not os.path.isdir(data_folder):
+            raise ValueError(
+                f"Data folder '{data_folder}' must be a valid path to a folder"
+            )
 
         return True
 
@@ -85,8 +87,7 @@ class Settings:
     @input_folder.setter
     def input_folder(self, value: str):
         raise WriteFolderError(
-            "Cannot write to input folder on it's own. Use the 'set_and_create_subfolders' "
-            "method to set the input folder"
+            "Cannot set input folder on it's own. Set the 'data_folder' instead"
         )
 
     # ---- output folder (read only) ----
@@ -98,8 +99,7 @@ class Settings:
     @output_folder.setter
     def output_folder(self, value: str):
         raise WriteFolderError(
-            "Cannot write to output folder on it's own. Use the 'set_and_create_subfolders' "
-            "method to set the output folder"
+            "Cannot set output folder on it's own. Set the 'data_folder' instead"
         )
 
     # ---- media folder (read only) ----
@@ -111,8 +111,7 @@ class Settings:
     @media_folder.setter
     def media_folder(self, value: str):
         raise WriteFolderError(
-            "Cannot write to media folder on it's own. Use the 'set_and_create_subfolders' "
-            "method to set the media folder"
+            "Cannot set media folder on it's own. Set the 'data_folder' instead"
         )
 
     # ---- max queries ----
