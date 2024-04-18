@@ -30,7 +30,7 @@ def main():
     parser.add_argument(
         "--output-folder",
         "-o",
-        help="Location where the judge file will be created.",
+        help="Location where the judge file will be created",
         type=str,
         default="./",
     )
@@ -46,7 +46,7 @@ def main():
             responses = f.readlines()
     except FileNotFoundError as exc:
         raise FileNotFoundError(
-            f"Input file '{input_filepath}' does not exist."
+            f"Input file '{input_filepath}' does not exist"
         ) from exc
 
     try:
@@ -55,7 +55,7 @@ def main():
             template_prompt = f.read()
     except FileNotFoundError as exc:
         raise FileNotFoundError(
-            f"Template file '{template_path}' does not exist."
+            f"Template file '{template_path}' does not exist"
         ) from exc
 
     try:
@@ -64,11 +64,11 @@ def main():
             judge_settings = json.load(f)
     except FileNotFoundError as exc:
         raise FileNotFoundError(
-            f"Settings file '{judge__settings_path}' does not exist."
+            f"Settings file '{judge__settings_path}' does not exist"
         ) from exc
 
     if judge not in judge_settings:
-        raise ValueError(f"Judge '{judge}' not in judge settings.")
+        raise ValueError(f"Judge '{judge}' not in judge settings")
 
     input_filename = (
         os.path.basename(input_filepath)
