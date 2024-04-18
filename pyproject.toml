@@ -19,7 +19,7 @@ vertexai = {version = "^1.46.0", extras = ["gemini"]}
 google-cloud-aiplatform = {version = "^1.46.0", extras = ["gemini"]}
 google-generativeai = {version = "^0.4.1", extras = ["gemini"]}
 pillow = "^10.3.0"
-openai = "^1.19.0"
+openai = {version = "^1.19.0", extras = ["azure_openai", "openai"]}
 
 
 [tool.poetry.group.dev.dependencies]
@@ -27,6 +27,7 @@ black = "^24.3.0"
 isort = "^5.13.2"
 pre-commit = "^3.7.0"
 ipykernel = "^6.29.4"
+pytest = "^8.1.1"
 
 [build-system]
 requires = ["poetry-core"]
