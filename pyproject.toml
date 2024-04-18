@@ -28,9 +28,30 @@ openai = {version = "^1.19.0", optional=true }
 
 
 [tool.poetry.extras]
-dev = ["black", "isort", "pre-commit", "ipykernel", "pytest"]
+all = [
+    "black",
+    "isort",
+    "pre-commit",
+    "ipykernel",
+    "pytest",
+    "vertexai",
+    "google-cloud-aiplatform",
+    "google-generativeai",
+    "openai"
+]
+dev = [
+    "black",
+    "isort",
+    "pre-commit",
+    "ipykernel",
+    "pytest"
+]
 test = ["pytest"]
-gemini = ["vertexai", "google-cloud-aiplatform", "google-generativeai"]
+gemini = [
+    "vertexai",
+    "google-cloud-aiplatform",
+    "google-generativeai"
+]
 azure_openai = ["openai"]
 openai = ["openai"]
 
