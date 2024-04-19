@@ -52,7 +52,10 @@ def temporary_data_folders(tmp_path: Path):
         f.write('{"prompt": "test prompt 1", "model": "test"}\n')
     with open(Path(tmp_path / "utils" / "second.jsonl"), "w") as f:
         f.write('{"prompt": "test prompt 2", "model": "test"}\n')
+        f.write('{"prompt": "test prompt 3", "model": "test"}\n')
     with open(Path(tmp_path / "utils" / "third.jsonl"), "w") as f:
+        f.write('{"prompt": "test prompt 1", "model": "test"}\n')
+        f.write('{"prompt": "test prompt 2", "model": "test"}\n')
         f.write('{"prompt": "test prompt 3", "model": "test"}\n')
 
     # create a folder for testing the experiment pipeline
@@ -66,12 +69,11 @@ def temporary_data_folders(tmp_path: Path):
         Path(tmp_path / "experiment_pipeline" / "input" / "first.jsonl"), "w"
     ) as f:
         f.write('{"prompt": "test prompt 1", "model": "test"}\n')
-        f.write('{"prompt": "test prompt 2", "model": "test"}\n')
-        f.write('{"prompt": "test prompt 3", "model": "test"}\n')
     with open(
         Path(tmp_path / "experiment_pipeline" / "input" / "second.jsonl"), "w"
     ) as f:
         f.write('{"prompt": "test prompt 2", "model": "test"}\n')
+        f.write('{"prompt": "test prompt 3", "model": "test"}\n')
 
     # store current working directory
     cwd = os.getcwd()
