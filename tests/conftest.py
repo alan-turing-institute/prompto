@@ -21,6 +21,10 @@ def temporary_data_folders(tmp_path: Path):
     tmp_path
     ├── data/
     ├── dummy_data/
+    ├── utils/
+        └── first.jsonl
+        └── second.jsonl
+        └── third.jsonl
     ├── test.txt
     └── test.jsonl
     """
@@ -36,13 +40,22 @@ def temporary_data_folders(tmp_path: Path):
     with open(Path(tmp_path / "test.jsonl"), "w") as f:
         f.write('{"prompt": "test prompt", "model": "test"}\n')
 
+    # create utils folder which we use to test the sorting of files
+    utils_dir = Path(tmp_path / "utils").mkdir()
+    with open(Path(tmp_path / "utils" / "first.jsonl"), "w") as f:
+        f.write('{"prompt": "test prompt 1", "model": "test"}\n')
+    with open(Path(tmp_path / "utils" / "second.jsonl"), "w") as f:
+        f.write('{"prompt": "test prompt 2", "model": "test"}\n')
+    with open(Path(tmp_path / "utils" / "third.jsonl"), "w") as f:
+        f.write('{"prompt": "test prompt 3", "model": "test"}\n')
+
     # store current working directory
     cwd = os.getcwd()
 
     # change to temporary directory
     os.chdir(tmp_path)
 
-    yield data_dir, dummy_data_dir
+    yield data_dir, dummy_data_dir, utils_dir
 
     # change back to original directory
     os.chdir(cwd)
