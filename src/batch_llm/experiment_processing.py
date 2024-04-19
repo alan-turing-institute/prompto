@@ -38,20 +38,19 @@ class Experiment:
         self.output_folder: str = os.path.join(
             self.settings.output_folder, self.experiment_name
         )
-        # get the time which the experiment file is created
-        self.creation_time: str = datetime.fromtimestamp(
-            os.path.getctime(os.path.join(self.settings.input_folder, self.file_name))
-        ).strftime("%d-%m-%Y-%H-%M")
-        # log file is a file in the experiment output folder
-        self.log_file: str = os.path.join(
-            self.output_folder, f"{self.creation_time}-log.txt"
-        )
 
         # obtain file paths
         # file path to the original input file
         self.input_file_path: str = os.path.join(
             self.settings.input_folder, self.file_name
         )
+
+        # check that the experiment file exists
+        if not os.path.exists(self.input_file_path):
+            raise FileNotFoundError(
+                f"Experiment file '{self.input_file_path}' does not exist"
+            )
+
         # file path of the completed experiment file in the output experiment folder
         self.output_completed_file_path: str = os.path.join(
             self.output_folder, "completed-" + self.file_name
@@ -64,8 +63,18 @@ class Experiment:
         # read in the experiment data
         with open(self.input_file_path, "r") as f:
             self.experiment_prompts: list[dict] = [dict(json.loads(line)) for line in f]
+
         # set the number of queries
         self.number_queries: int = len(self.experiment_prompts)
+
+        # get the time which the experiment file is created
+        self.creation_time: str = datetime.fromtimestamp(
+            os.path.getctime(self.input_file_path)
+        ).strftime("%d-%m-%Y-%H-%M")
+        # log file is a file in the experiment output folder
+        self.log_file: str = os.path.join(
+            self.output_folder, f"{self.creation_time}-log.txt"
+        )
 
     def __str__(self) -> str:
         return self.file_name
