@@ -245,7 +245,6 @@ class AsyncAzureOpenAIModel(AsyncBaseModel):
             raise ValueError("AZURE_OPENAI_API_ENDPOINT environment variable not found")
 
         self.api_type = "azure"
-        self.api_type = "azure"
         self.api_version = api_version or os.environ.get("AZURE_OPENAI_API_VERSION")
         if self.api_version is None:
             self.api_version = AZURE_API_VERSION_DEFAULT
