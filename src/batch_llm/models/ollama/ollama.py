@@ -51,30 +51,23 @@ class AsyncOllamaModel(AsyncBaseModel):
             raise ValueError(log_message)
 
         # get parameters dict (if any)
-        generation_config = prompt_dict.get("parameters", None)
-        if generation_config is None:
-            generation_config = {}
-        if type(generation_config) is not dict:
-            raise TypeError(
-                f"parameters must be a dictionary, not {type(generation_config)}"
-            )
-        # obtain mode (default is chat)
-        mode = prompt_dict.get("mode", "chat")
+        options = prompt_dict.get("parameters", None)
+        if options is None:
+            options = {}
+        if type(options) is not dict:
+            raise TypeError(f"parameters must be a dictionary, not {type(options)}")
 
-        return prompt, model_name, generation_config, mode
+        return prompt, model_name, options
 
     async def _async_query_string(self, prompt_dict: dict, index: int | str) -> dict:
-        prompt, model_name, generation_config, mode = self._obtain_model_inputs(
-            prompt_dict
-        )
+        prompt, model_name, options = self._obtain_model_inputs(prompt_dict)
 
         try:
-            if mode == "query":
-                response = await self.client.generate(
-                    model=model_name,
-                    prompt=prompt,
-                    **generation_config,
-                )
+            response = await self.client.generate(
+                model=model_name,
+                prompt=prompt,
+                options=options,
+            )
 
             response_text = process_response(response)
 
