@@ -47,7 +47,6 @@ class Experiment:
 
         # check that the experiment file exists
         if not os.path.exists(self.input_file_path):
-            print("24g5413frvt24r")
             raise FileNotFoundError(
                 f"Experiment file '{self.input_file_path}' does not exist"
             )
