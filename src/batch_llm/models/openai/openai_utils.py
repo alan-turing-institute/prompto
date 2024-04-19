@@ -16,12 +16,12 @@ def process_response(response: ChatCompletion | Completion) -> str:
 def check_environment_variables() -> list[Exception]:
     # check the required environment variables are set
     issues = []
-    required_env_vars = ["AZURE_OPENAI_API_KEY", "AZURE_OPENAI_API_ENDPOINT"]
+    required_env_vars = ["OPENAI_API_KEY"]
     for var in required_env_vars:
         if var not in os.environ:
             issues.append(ValueError(f"Environment variable {var} is not set"))
 
-    other_env_vars = ["AZURE_OPENAI_API_VERSION", "AZURE_OPENAI_MODEL_NAME"]
+    other_env_vars = ["OPENAI_MODEL_NAME"]
     for var in other_env_vars:
         if var not in os.environ:
             issues.append(Warning(f"Environment variable {var} is not set"))
