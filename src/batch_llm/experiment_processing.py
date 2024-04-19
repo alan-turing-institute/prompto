@@ -126,21 +126,21 @@ class ExperimentPipeline:
         """
         now = datetime.now()
         if self.overall_avg_proc_times == 0:
+            estimated_completion_time = "[unknown]"
             estimated_completion = "[unknown]"
         else:
+            estimated_completion_time = round(
+                self.overall_avg_proc_times * experiment.number_queries, 3
+            )
             estimated_completion = (
-                now
-                + timedelta(
-                    seconds=round(
-                        self.overall_avg_proc_times * experiment.number_queries, 3
-                    )
-                )
+                now + timedelta(seconds=estimated_completion_time)
             ).strftime("%d-%m-%Y, %H:%M")
 
         # log the estimated time of completion of the next experiment
         log_message = (
             f"Next experiment: {experiment}, "
-            f"Number queries: {experiment.number_queries}, "
+            f"Number of queries: {experiment.number_queries}, "
+            f"Estimated completion time: {estimated_completion_time}, "
             f"Estimated completion by: {estimated_completion}"
         )
         write_log_message(log_file=experiment.log_file, log_message=log_message)

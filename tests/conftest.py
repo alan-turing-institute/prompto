@@ -25,6 +25,12 @@ def temporary_data_folders(tmp_path: Path):
         └── first.jsonl
         └── second.jsonl
         └── third.jsonl
+    ├── experiment_pipeline/
+        ├── input/
+            └── first.jsonl
+            └── second.jsonl
+        ├── output/
+        ├── media/
     ├── test.txt
     └── test.jsonl
     """
@@ -49,13 +55,31 @@ def temporary_data_folders(tmp_path: Path):
     with open(Path(tmp_path / "utils" / "third.jsonl"), "w") as f:
         f.write('{"prompt": "test prompt 3", "model": "test"}\n')
 
+    # create a folder for testing the experiment pipeline
+    experiment_pipeline = Path(tmp_path / "experiment_pipeline").mkdir()
+    # create subfolders for the experiment pipeline
+    Path(tmp_path / "experiment_pipeline" / "input").mkdir()
+    Path(tmp_path / "experiment_pipeline" / "output").mkdir()
+    Path(tmp_path / "experiment_pipeline" / "media").mkdir()
+    # add some dummy jsonl files to the input folder
+    with open(
+        Path(tmp_path / "experiment_pipeline" / "input" / "first.jsonl"), "w"
+    ) as f:
+        f.write('{"prompt": "test prompt 1", "model": "test"}\n')
+        f.write('{"prompt": "test prompt 2", "model": "test"}\n')
+        f.write('{"prompt": "test prompt 3", "model": "test"}\n')
+    with open(
+        Path(tmp_path / "experiment_pipeline" / "input" / "second.jsonl"), "w"
+    ) as f:
+        f.write('{"prompt": "test prompt 2", "model": "test"}\n')
+
     # store current working directory
     cwd = os.getcwd()
 
     # change to temporary directory
     os.chdir(tmp_path)
 
-    yield data_dir, dummy_data_dir, utils_dir
+    yield data_dir, dummy_data_dir, utils_dir, experiment_pipeline
 
     # change back to original directory
     os.chdir(cwd)
