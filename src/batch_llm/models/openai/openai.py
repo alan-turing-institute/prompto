@@ -88,7 +88,7 @@ class OpenAIModel(BaseModel):
         # obtain mode (default is chat)
         mode = prompt_dict.get("mode", "chat")
 
-        return prompt, generation_config, mode
+        return prompt, model_name, generation_config, mode
 
     def _query_string(self, prompt_dict: dict, index: int | str) -> dict:
         prompt, model_name, generation_config, mode = self._obtain_model_inputs(
