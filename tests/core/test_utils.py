@@ -115,6 +115,10 @@ def test_write_log_message(caplog):
     assert "new log message" in open("new_log.txt").read()
     assert "new log message" not in caplog.text
 
+    # remove the log files
+    os.remove("log.txt")
+    os.remove("new_log.txt")
+
 
 def test_log_success_response_query(caplog):
     caplog.set_level(logging.INFO)
@@ -185,7 +189,8 @@ def test_log_error_response_query(caplog):
 def test_log_error_response_chat(caplog):
     caplog.set_level(logging.INFO)
 
-    # raise error if no index, model, message_index, n_messages, message, responses_so_far, error_as_string is passed
+    # raise error if no index, model, message_index, n_messages, message,
+    # responses_so_far, error_as_string is passed
     with pytest.raises(TypeError, match="missing 7 required positional arguments"):
         log_error_response_chat()
 
