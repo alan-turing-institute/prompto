@@ -23,10 +23,9 @@ def sort_jsonl_files_by_creation_time(input_folder: str) -> list[str]:
             f"Input folder '{input_folder}' must be a valid path to a folder"
         )
 
-    return sorted(
-        [f for f in os.listdir(input_folder) if f.endswith(".jsonl")],
-        key=lambda f: os.path.getmtime(os.path.join(input_folder, f)),
-    )
+    jsonl_files = [f for f in os.listdir(input_folder) if f.endswith(".jsonl")]
+    jsonl_files.sort(key=lambda f: os.path.getctime(os.path.join(input_folder, f)))
+    return jsonl_files
 
 
 def create_folder(folder: str) -> None:
