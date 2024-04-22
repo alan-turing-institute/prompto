@@ -69,7 +69,7 @@ class Experiment:
 
         # get the time which the experiment file is created
         self.creation_time: str = datetime.fromtimestamp(
-            os.path.getctime(self.input_file_path)
+            os.path.getmtime(self.input_file_path)
         ).strftime("%d-%m-%Y-%H-%M")
         # log file is a file in the experiment output folder
         self.log_file: str = os.path.join(

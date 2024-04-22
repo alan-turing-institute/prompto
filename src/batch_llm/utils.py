@@ -25,7 +25,7 @@ def sort_jsonl_files_by_creation_time(input_folder: str) -> list[str]:
 
     return sorted(
         [f for f in os.listdir(input_folder) if f.endswith(".jsonl")],
-        key=lambda f: os.path.getctime(os.path.join(input_folder, f)),
+        key=lambda f: os.path.getmtime(os.path.join(input_folder, f)),
     )
 
 
