@@ -36,7 +36,10 @@ def test_sort_jsonl_files_by_creation_time(temporary_data_folders, caplog):
     # sort the jsonl files in the utils folder by creation time
     logging.info(
         {
-            os.path.join("utils", f): os.path.getctime(os.path.join("utils", f))
+            os.path.join("utils", f): {
+                "ctime": os.path.getctime(os.path.join("utils", f)),
+                "mtime": os.path.getmtime(os.path.join("utils", f)),
+            }
             for f in os.listdir("utils")
             if f.endswith(".jsonl")
         }
