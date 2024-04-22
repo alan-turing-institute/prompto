@@ -14,6 +14,55 @@ def change_test_dir(request: pytest.FixtureRequest, monkeypatch: pytest.MonkeyPa
 
 
 @pytest.fixture()
+def temporary_utils_folder(tmp_path: Path):
+    """
+    Creates a temporary folder structure for testing.
+
+    Has the following structure:
+    tmp_path
+    ├── data/
+    ├── dummy_data/
+    ├── utils/
+        └── first.jsonl
+        └── second.jsonl
+        └── third.jsonl
+    ├── experiment_pipeline/
+        ├── input/
+            └── first.jsonl
+            └── second.jsonl
+        ├── output/
+        ├── media/
+    ├── test.txt
+    └── test.jsonl
+    """
+    # create a txt file in the folder
+    with open(Path(tmp_path / "test.txt"), "w") as f:
+        f.write("test line")
+
+    # create utils folder which we use to test the sorting of files
+    utils_dir = Path(tmp_path / "utils").mkdir()
+    with open(Path(tmp_path / "utils" / "first.jsonl"), "w") as f:
+        f.write('{"prompt": "test prompt 1", "model": "test"}\n')
+    time.sleep(0.01)
+    with open(Path(tmp_path / "utils" / "second.jsonl"), "w") as f:
+        f.write('{"prompt": "test prompt 2", "model": "test"}\n')
+    time.sleep(0.01)
+    with open(Path(tmp_path / "utils" / "third.jsonl"), "w") as f:
+        f.write('{"prompt": "test prompt 3", "model": "test"}\n')
+
+    # store current working directory
+    cwd = os.getcwd()
+
+    # change to temporary directory
+    os.chdir(tmp_path)
+
+    yield utils_dir
+
+    # change back to original directory
+    os.chdir(cwd)
+
+
+@pytest.fixture()
 def temporary_data_folders(tmp_path: Path):
     """
     Creates a temporary folder structure for testing.
