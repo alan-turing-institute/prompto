@@ -33,6 +33,13 @@ def test_sort_jsonl_files_by_creation_time(temporary_data_folders):
         sort_jsonl_files_by_creation_time(input_folder="test.txt")
 
     # sort the jsonl files in the utils folder by creation time
+    logging.info(
+        {
+            os.path.join("utils", f): os.path.getctime(os.path.join("utils", f))
+            for f in os.listdir("utils")
+            if f.endswith(".jsonl")
+        }
+    )
     sorted_files = sort_jsonl_files_by_creation_time(input_folder="utils")
     assert sorted_files == ["first.jsonl", "second.jsonl", "third.jsonl"]
 
