@@ -57,6 +57,10 @@ gemini = [
 azure_openai = ["openai"]
 openai = ["openai"]
 
+[tool.pytest.ini_options]
+log_format = "%(asctime)s %(levelname)s %(message)s"
+log_date_format = "%Y-%m-%d %H:%M:%S"
+
 [build-system]
 requires = ["poetry-core"]
 build-backend = "poetry.core.masonry.api"
