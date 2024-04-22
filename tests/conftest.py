@@ -1,4 +1,5 @@
 import os
+import time
 from pathlib import Path
 
 import pytest
@@ -50,8 +51,10 @@ def temporary_data_folders(tmp_path: Path):
     utils_dir = Path(tmp_path / "utils").mkdir()
     with open(Path(tmp_path / "utils" / "first.jsonl"), "w") as f:
         f.write('{"prompt": "test prompt 1", "model": "test"}\n')
+    time.sleep(0.001)
     with open(Path(tmp_path / "utils" / "second.jsonl"), "w") as f:
         f.write('{"prompt": "test prompt 2", "model": "test"}\n')
+    time.sleep(0.001)
     with open(Path(tmp_path / "utils" / "third.jsonl"), "w") as f:
         f.write('{"prompt": "test prompt 3", "model": "test"}\n')
 
@@ -68,6 +71,7 @@ def temporary_data_folders(tmp_path: Path):
         f.write('{"prompt": "test prompt 1", "model": "test"}\n')
         f.write('{"prompt": "test prompt 2", "model": "test"}\n')
         f.write('{"prompt": "test prompt 3", "model": "test"}\n')
+    time.sleep(0.001)
     with open(
         Path(tmp_path / "experiment_pipeline" / "input" / "second.jsonl"), "w"
     ) as f:
