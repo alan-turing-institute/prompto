@@ -15,7 +15,8 @@ from batch_llm.utils import (
 )
 
 
-def test_sort_jsonl_files_by_creation_time(temporary_data_folders):
+def test_sort_jsonl_files_by_creation_time(temporary_data_folders, caplog):
+    caplog.set_level(logging.INFO)
     # raise error if no input folder is passed
     with pytest.raises(TypeError, match="missing 1 required positional argument"):
         sort_jsonl_files_by_creation_time()
@@ -42,7 +43,7 @@ def test_sort_jsonl_files_by_creation_time(temporary_data_folders):
     )
     sorted_files = sort_jsonl_files_by_creation_time(input_folder="utils")
     assert sorted_files == ["first.jsonl", "second.jsonl", "third.jsonl"]
-
+    assert 0
     # sort empty folder should return empty list
     empty_folder = sort_jsonl_files_by_creation_time(input_folder="data")
     assert empty_folder == []
