@@ -1,7 +1,7 @@
 import os
 from typing import Any
 
-from ollama import AsyncClient
+from ollama import AsyncClient, Client, ResponseError
 
 from batch_llm.models.base import AsyncBaseModel
 from batch_llm.models.ollama.ollama_utils import process_response
@@ -27,7 +27,69 @@ class AsyncOllamaModel(AsyncBaseModel):
         if self.ollama_endpoint is None:
             raise ValueError("OLLAMA_API_ENDPOINT environment variable not found")
 
-        self.client = AsyncClient(host=self.ollama_endpoint)
+        self.client = Client(host=self.ollama_endpoint)
+        self.async_client = AsyncClient(host=self.ollama_endpoint)
+
+    @staticmethod
+    def check_environment_variables() -> list[Exception]:
+        issues = []
+
+        # check the required environment variables are set
+        required_env_vars = ["OLLAMA_API_ENDPOINT"]
+        for var in required_env_vars:
+            if var not in os.environ:
+                issues.append(ValueError(f"Environment variable {var} is not set"))
+
+        # check if the API endpoint is a valid endpoint
+        if "OLLAMA_API_ENDPOINT" in os.environ:
+            client = Client(host=os.environ["OLLAMA_API_ENDPOINT"])
+            try:
+                # try to just get the list of models to check if the endpoint is valid
+                client.list()
+            except Exception as err:
+                issues.append(
+                    ValueError(
+                        f"OLLAMA_API_ENDPOINT is not a valid endpoint: {type(err).__name__} - {err}"
+                    )
+                )
+
+        # check the optional environment variables are set and warn if not
+        other_env_vars = ["OLLAMA_MODEL_NAME"]
+        for var in other_env_vars:
+            if var not in os.environ:
+                issues.append(Warning(f"Environment variable {var} is not set"))
+
+        # check the default model name is a valid model and is downloaded
+        if "OLLAMA_MODEL_NAME" in os.environ:
+            client = Client(host=os.environ["OLLAMA_API_ENDPOINT"])
+            try:
+                client.show(model=os.environ["OLLAMA_MODEL_NAME"])
+            except Exception as err:
+                issues.append(
+                    ValueError(
+                        f"OLLAMA_MODEL_NAME is not a valid model: {type(err).__name__} - {err}"
+                    )
+                )
+
+        return issues
+
+    @staticmethod
+    def check_prompt_dict(prompt_dict: dict) -> list[Exception]:
+        issues = []
+
+        # check if the model_name (if provided) is a valid model
+        if "model_name" in prompt_dict:
+            client = Client(host=os.environ["OLLAMA_API_ENDPOINT"])
+            try:
+                client.show(model=prompt_dict["model_name"])
+            except Exception as err:
+                issues.append(
+                    ValueError(
+                        f"model_name is not a valid model: {type(err).__name__} - {err}"
+                    )
+                )
+
+        return issues
 
     def _obtain_model_inputs(self, prompt_dict: dict) -> tuple:
         # obtain the prompt from the prompt dictionary
@@ -57,7 +119,7 @@ class AsyncOllamaModel(AsyncBaseModel):
         prompt, model_name, options = self._obtain_model_inputs(prompt_dict)
 
         try:
-            response = await self.client.generate(
+            response = await self.async_client.generate(
                 model=model_name,
                 prompt=prompt,
                 options=options,
@@ -74,6 +136,12 @@ class AsyncOllamaModel(AsyncBaseModel):
 
             prompt_dict["response"] = response_text
             return prompt_dict
+        except ResponseError as err:
+            # if there's a response error due to a model not being downloaded,
+            # raise a NotImplementedError so that it doesn't get retried
+            raise NotImplementedError(
+                f"Model {model_name} is not downloaded: {type(err).__name__} - {err}"
+            )
         except Exception as err:
             error_as_string = f"{type(err).__name__} - {err}"
             log_message = log_error_response_query(
