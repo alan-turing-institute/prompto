@@ -35,8 +35,8 @@ def test_experiment_init(temporary_data_folders):
 
     # create a jsonl file in the input folder (which is created when initialising Settings object)
     with open("data/input/test_in_input.jsonl", "w") as f:
-        f.write('{"id": 0, "prompt": "test prompt 0", "model": "test"}\n')
-        f.write('{"id": 1, "prompt": "test prompt 1", "model": "test"}\n')
+        f.write('{"id": 0, "prompt": "test prompt 0", "api": "test"}\n')
+        f.write('{"id": 1, "prompt": "test prompt 1", "api": "test"}\n')
 
     # create an experiment object
     experiment = Experiment("test_in_input.jsonl", settings=settings)
@@ -56,8 +56,8 @@ def test_experiment_init(temporary_data_folders):
         == f"data/output/test_in_input/{experiment.creation_time}-input-test_in_input.jsonl"
     )
     assert experiment.experiment_prompts == [
-        {"id": 0, "prompt": "test prompt 0", "model": "test"},
-        {"id": 1, "prompt": "test prompt 1", "model": "test"},
+        {"id": 0, "prompt": "test prompt 0", "api": "test"},
+        {"id": 1, "prompt": "test prompt 1", "api": "test"},
     ]
     assert experiment.number_queries == 2
     assert isinstance(experiment.creation_time, str)
