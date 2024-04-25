@@ -14,7 +14,11 @@ class Settings:
     # - max_attempts (maximum number of attempts when retrying)
 
     def __init__(
-        self, data_folder: str = "data", max_queries: int = 10, max_attempts: int = 3
+        self,
+        data_folder: str = "data",
+        max_queries: int = 10,
+        max_attempts: int = 3,
+        parallel: bool = False,
     ):
         self._data_folder = data_folder
         # check the data folder exists
@@ -23,11 +27,13 @@ class Settings:
         self.set_and_create_subfolders()
         self._max_queries = max_queries
         self._max_attempts = max_attempts
+        self.parallel = parallel
 
     def __str__(self) -> str:
         return (
             f"Settings: data_folder={self.data_folder}, "
-            f"max_queries={self.max_queries}, max_attempts={self.max_attempts}\n"
+            f"max_queries={self.max_queries}, max_attempts={self.max_attempts}, "
+            f"parallel={self.parallel}\n"
             f"Subfolders: input_folder={self.input_folder}, "
             f"output_folder={self.output_folder}, media_folder={self.media_folder}"
         )
