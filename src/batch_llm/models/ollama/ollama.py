@@ -137,11 +137,18 @@ class AsyncOllamaModel(AsyncBaseModel):
             prompt_dict["response"] = response_text
             return prompt_dict
         except ResponseError as err:
-            # if there's a response error due to a model not being downloaded,
-            # raise a NotImplementedError so that it doesn't get retried
-            raise NotImplementedError(
-                f"Model {model_name} is not downloaded: {type(err).__name__} - {err}"
-            )
+            if "try pulling it first" in str(err):
+                # if there's a response error due to a model not being downloaded,
+                # raise a NotImplementedError so that it doesn't get retried
+                raise NotImplementedError(
+                    f"Model {model_name} is not downloaded: {type(err).__name__} - {err}"
+                )
+            elif "invalid options" in str(err):
+                # if there's a response error due to invalid options, raise a ValueError
+                # so that it doesn't get retried
+                raise ValueError(
+                    f"Invalid options for model {model_name}: {type(err).__name__} - {err}"
+                )
         except Exception as err:
             error_as_string = f"{type(err).__name__} - {err}"
             log_message = log_error_response_query(
