@@ -8,9 +8,7 @@ from batch_llm.models.base import AsyncBaseModel
 from batch_llm.models.ollama.ollama_utils import process_response
 from batch_llm.settings import Settings
 from batch_llm.utils import (
-    log_error_response_chat,
     log_error_response_query,
-    log_success_response_chat,
     log_success_response_query,
     write_log_message,
 )
@@ -21,7 +19,6 @@ class AsyncOllamaModel(AsyncBaseModel):
         self,
         settings: Settings,
         log_file: str,
-        api_version: str | None = None,
         *args: Any,
         **kwargs: Any,
     ):
@@ -30,8 +27,6 @@ class AsyncOllamaModel(AsyncBaseModel):
 
         if self.ollama_endpoint is None:
             raise ValueError("OLLAMA_API_ENDPOINT environment variable not found")
-
-        self.api_type = "ollama"
 
         self.client = AsyncClient(host=self.ollama_endpoint)
 
