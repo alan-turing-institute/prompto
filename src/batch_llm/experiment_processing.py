@@ -498,9 +498,7 @@ async def generate_text(
     if index is None:
         index = "NA"
     if "api" not in prompt_dict:
-        raise KeyError(
-            "Model is not specified in the prompt_dict. Must have 'model' key"
-        )
+        raise KeyError("Model is not specified in the prompt_dict. Must have 'api' key")
 
     # obtain model
     try:
@@ -509,7 +507,7 @@ async def generate_text(
         )
     except KeyError:
         raise NotImplementedError(
-            f"Model {prompt_dict['model']} not recognised or implemented"
+            f"Model {prompt_dict['api']} not recognised or implemented"
         )
 
     # query the model
