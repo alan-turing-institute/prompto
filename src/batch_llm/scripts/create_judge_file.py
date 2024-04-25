@@ -91,7 +91,7 @@ def main():
                     {
                         "id": prompt_id,
                         "prompt": judge_prompt,
-                        "model": judge_settings[judge]["model"],
+                        "api": judge_settings[judge]["api"],
                         "model_name": judge_settings[judge]["model_name"],
                         "parameters": judge_settings[judge]["parameters"],
                     }

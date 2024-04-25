@@ -45,18 +45,18 @@ def temporary_data_folders(tmp_path: Path):
 
     # create a jsonl file in the folder
     with open(Path(tmp_path / "test.jsonl"), "w") as f:
-        f.write('{"prompt": "test prompt", "model": "test"}\n')
+        f.write('{"prompt": "test prompt", "api": "test"}\n')
 
     # create utils folder which we use to test the sorting of files
     utils_dir = Path(tmp_path / "utils").mkdir()
     with open(Path(tmp_path / "utils" / "first.jsonl"), "w") as f:
-        f.write('{"prompt": "test prompt 1", "model": "test"}\n')
+        f.write('{"prompt": "test prompt 1", "api": "test"}\n')
     time.sleep(0.01)
     with open(Path(tmp_path / "utils" / "second.jsonl"), "w") as f:
-        f.write('{"prompt": "test prompt 2", "model": "test"}\n')
+        f.write('{"prompt": "test prompt 2", "api": "test"}\n')
     time.sleep(0.01)
     with open(Path(tmp_path / "utils" / "third.jsonl"), "w") as f:
-        f.write('{"prompt": "test prompt 3", "model": "test"}\n')
+        f.write('{"prompt": "test prompt 3", "api": "test"}\n')
 
     # create a folder for testing the experiment pipeline
     experiment_pipeline = Path(tmp_path / "experiment_pipeline").mkdir()
@@ -68,14 +68,14 @@ def temporary_data_folders(tmp_path: Path):
     with open(
         Path(tmp_path / "experiment_pipeline" / "input" / "first.jsonl"), "w"
     ) as f:
-        f.write('{"prompt": "test prompt 1", "model": "test"}\n')
-        f.write('{"prompt": "test prompt 2", "model": "test"}\n')
-        f.write('{"prompt": "test prompt 3", "model": "test"}\n')
+        f.write('{"prompt": "test prompt 1", "api": "test"}\n')
+        f.write('{"prompt": "test prompt 2", "api": "test"}\n')
+        f.write('{"prompt": "test prompt 3", "api": "test"}\n')
     time.sleep(0.01)
     with open(
         Path(tmp_path / "experiment_pipeline" / "input" / "second.jsonl"), "w"
     ) as f:
-        f.write('{"prompt": "test prompt 2", "model": "test"}\n')
+        f.write('{"prompt": "test prompt 2", "api": "test"}\n')
 
     # store current working directory
     cwd = os.getcwd()
