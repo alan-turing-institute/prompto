@@ -76,8 +76,28 @@ class Experiment:
             self.output_folder, f"{self.creation_time}-log.txt"
         )
 
+        # grouped experiment prompts by model
+        self.grouped_experiment_prompts: dict[str, list[dict]] = (
+            self.group_prompts_by_model()
+        )
+
     def __str__(self) -> str:
         return self.file_name
+
+    def group_prompts_by_model(self) -> dict[str, list[dict]]:
+        # return self.grouped_experiment_prompts if it exists
+        if hasattr(self, "grouped_experiment_prompts"):
+            return self.grouped_experiment_prompts
+
+        grouped_dict = {}
+        for item in self.experiment_prompts:
+            model = item.get("model")
+            if model not in grouped_dict:
+                grouped_dict[model] = [item]
+
+            grouped_dict[model].append(item)
+
+        return grouped_dict
 
 
 class ExperimentPipeline:
@@ -190,10 +210,34 @@ class ExperimentPipeline:
         self.log_estimate(experiment=experiment)
 
         # run the experiment asynchronously
-        logging.info(f"Sending {experiment.number_queries} queries...")
-        await self.send_requests_retry(
-            experiment=experiment,
-        )
+        if self.settings.parallel:
+            logging.info(
+                f"Sending {experiment.number_queries} queries in parallel by grouping models..."
+            )
+            queries_per_model = {
+                model: len(prompts)
+                for model, prompts in experiment.grouped_experiment_prompts.items()
+            }
+            logging.info(f"Queries per model: {queries_per_model}")
+
+            tasks = [
+                asyncio.create_task(
+                    self.send_requests_retry(
+                        experiment=experiment, prompt_dicts=prompt_dicts, model=model
+                    )
+                )
+                for model, prompt_dicts in experiment.grouped_experiment_prompts.items()
+            ]
+            await tqdm_asyncio.gather(
+                *tasks, desc="Waiting for all models to complete", unit="model"
+            )
+        else:
+            logging.info(f"Sending {experiment.number_queries} queries...")
+            await self.send_requests_retry(
+                experiment=experiment,
+                prompt_dicts=experiment.experiment_prompts,
+                model=None,
+            )
 
         # calculate average processing time per query for the experiment
         end_time = time.time()
@@ -223,17 +267,19 @@ class ExperimentPipeline:
         experiment: Experiment,
         prompt_dicts: list[dict],
         attempt: int,
+        model: str | None = None,
     ) -> tuple[list[dict], list[dict | Exception]]:
         """
         Send requests to the API asynchronously.
         """
         request_interval = 60 / self.settings.max_queries
         tasks = []
+        for_model_string = f"for model {model} " if model is not None else ""
 
         for index, item in enumerate(
             tqdm(
                 prompt_dicts,
-                desc=f"Sending {len(prompt_dicts)} queries",
+                desc=f"Sending {len(prompt_dicts)} queries {for_model_string}",
                 unit="query",
             )
         ):
@@ -254,7 +300,7 @@ class ExperimentPipeline:
 
         # wait for all tasks to complete before returning
         responses = await tqdm_asyncio.gather(
-            *tasks, desc="Waiting for responses", unit="query"
+            *tasks, desc=f"Waiting for responses {for_model_string}", unit="query"
         )
 
         return prompt_dicts, responses
@@ -262,6 +308,8 @@ class ExperimentPipeline:
     async def send_requests_retry(
         self,
         experiment: Experiment,
+        prompt_dicts: list[dict],
+        model: str | None = None,
     ) -> None:
         """
         Send requests to the API asynchronously and retry failed queries
@@ -273,8 +321,9 @@ class ExperimentPipeline:
         # send off the requests
         remaining_prompt_dicts, responses = await self.send_requests(
             experiment=experiment,
-            prompt_dicts=experiment.experiment_prompts,
+            prompt_dicts=prompt_dicts,
             attempt=attempt,
+            model=model,
         )
 
         while True:
@@ -300,6 +349,7 @@ class ExperimentPipeline:
                         experiment=experiment,
                         prompt_dicts=remaining_prompt_dicts,
                         attempt=attempt,
+                        model=model,
                     )
                 else:
                     # if there are no failed queries, break out of the loop
