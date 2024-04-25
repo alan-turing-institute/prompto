@@ -90,8 +90,9 @@ def process_safety_attributes(response: dict) -> dict:
 
 
 def check_environment_variables() -> list[Exception]:
-    # check the required environment variables are set
     issues = []
+
+    # check the required environment variables are set
     required_env_vars = ["GEMINI_PROJECT_ID", "GEMINI_LOCATION"]
     for var in required_env_vars:
         if var not in os.environ:
@@ -106,9 +107,9 @@ def check_environment_variables() -> list[Exception]:
 
 
 def check_prompt_dict(prompt_dict: dict) -> list[Exception]:
-    # check the parameter settings are valid
     issues = []
 
+    # check the parameter settings are valid
     # if safety_filter is provided, check that it's one of the valid options
     if "safety_filter" in prompt_dict and prompt_dict["safety_filter"] not in [
         "none",
