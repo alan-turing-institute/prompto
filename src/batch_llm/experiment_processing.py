@@ -90,7 +90,7 @@ class Experiment:
 
         grouped_dict = {}
         for item in self.experiment_prompts:
-            model = item.get("model")
+            model = item.get("api")
             if model not in grouped_dict:
                 grouped_dict[model] = [item]
 
@@ -372,7 +372,7 @@ async def query_model_and_record_response(
     ----------
     prompt_dict : dict
         Dictionary containing the prompt and other parameters to be
-        used for text generation. Required keys are "prompt" and "model".
+        used for text generation. Required keys are "prompt" and "api".
         Some models may have other required keys.
     settings : Settings
         Settings for the pipeline
@@ -478,7 +478,7 @@ async def generate_text(
     ----------
     prompt_dict : dict
         Dictionary containing the prompt and other parameters to be
-        used for text generation. Required keys are "prompt" and "model".
+        used for text generation. Required keys are "prompt" and "api".
         Some models may have other required keys.
     settings : Settings
         Settings for the pipeline
@@ -497,19 +497,17 @@ async def generate_text(
     """
     if index is None:
         index = "NA"
-    if "model" not in prompt_dict:
-        raise KeyError(
-            "Model is not specified in the prompt_dict. Must have 'model' key"
-        )
+    if "api" not in prompt_dict:
+        raise KeyError("API is not specified in the prompt_dict. Must have 'api' key")
 
     # obtain model
     try:
-        model = ASYNC_MODELS[prompt_dict["model"]](
+        model = ASYNC_MODELS[prompt_dict["api"]](
             settings=settings, log_file=experiment.log_file
         )
     except KeyError:
         raise NotImplementedError(
-            f"Model {prompt_dict['model']} not recognised or implemented"
+            f"Model {prompt_dict['api']} not recognised or implemented"
         )
 
     # query the model
