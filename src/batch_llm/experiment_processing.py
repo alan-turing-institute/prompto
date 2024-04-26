@@ -498,7 +498,7 @@ async def generate_text(
     if index is None:
         index = "NA"
     if "api" not in prompt_dict:
-        raise KeyError("Model is not specified in the prompt_dict. Must have 'api' key")
+        raise KeyError("API is not specified in the prompt_dict. Must have 'api' key")
 
     # obtain model
     try:
