@@ -12,6 +12,7 @@ def test_settings_default_init(temporary_data_folders):
     assert settings.data_folder == "data"
     assert settings.max_queries == 10
     assert settings.max_attempts == 3
+    assert settings.parallel is False
 
     # check the subfolders
     assert settings.input_folder == "data/input"
@@ -25,12 +26,15 @@ def test_settings_default_init(temporary_data_folders):
 
 
 def test_settings_custom_init(temporary_data_folders):
-    settings = Settings(data_folder="dummy_data", max_queries=20, max_attempts=5)
+    settings = Settings(
+        data_folder="dummy_data", max_queries=20, max_attempts=5, parallel=True
+    )
 
     # check the custom values
     assert settings.data_folder == "dummy_data"
     assert settings.max_queries == 20
     assert settings.max_attempts == 5
+    assert settings.parallel is True
 
     # check the subfolders
     assert settings.input_folder == "dummy_data/input"
@@ -48,7 +52,7 @@ def test_settings_str(temporary_data_folders):
 
     # when printing, it should show the settings and subfolders
     assert str(settings) == (
-        "Settings: data_folder=data, max_queries=10, max_attempts=3\n"
+        "Settings: data_folder=data, max_queries=10, max_attempts=3, parallel=False\n"
         "Subfolders: input_folder=data/input, output_folder=data/output, media_folder=data/media"
     )
 
@@ -256,3 +260,14 @@ def test_max_attempts_setter(temporary_data_folders):
     # set it to a different value
     settings.max_attempts = 5
     assert settings.max_attempts == 5
+
+
+def test_parallel_getter_and_setter(temporary_data_folders):
+    settings = Settings()
+
+    # check the default value
+    assert settings.parallel is False
+
+    # set it to a different value
+    settings.parallel = True
+    assert settings.parallel is True
