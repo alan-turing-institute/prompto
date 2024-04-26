@@ -1,3 +1,3 @@
-{"id": 9, "prompt": "Hello, my name is Bob and I'm 6 years old. How old am I next year?", "model": "ollama", "model_name": "gemma", "parameters": {"temperature": 1}}
-{"id": 10, "prompt": "Can you give me a random number between 1-10?", "model": "ollama", "model_name": "llama", "parameters": {"temperature": 0.5}}
-{"id": 11, "prompt": "How many theaters are there in London's South End?", "model": "ollama"}
+{"id": 9, "prompt": "Hello, my name is Bob and I'm 6 years old. How old am I next year?", "api": "ollama", "model_name": "gemma", "parameters": {"temperature": 1}}
+{"id": 10, "prompt": "Can you give me a random number between 1-10?", "api": "ollama", "model_name": "llama", "parameters": {"temperature": 0.5}}
+{"id": 11, "prompt": "How many theaters are there in London's South End?", "api": "ollama"}
