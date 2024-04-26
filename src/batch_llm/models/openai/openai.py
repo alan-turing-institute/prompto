@@ -10,6 +10,7 @@ from batch_llm.models.openai.openai_utils import (
     check_environment_variables,
     check_prompt_dict,
     process_response,
+    ChatRoles,
 )
 from batch_llm.settings import Settings
 from batch_llm.utils import (
@@ -428,8 +429,13 @@ class AsyncOpenAIModel(AsyncBaseModel):
                     prompt_dict=prompt_dict,
                     index=index,
                 )
-            case [{"role": _, "content": _}, *rest]:
-                if all([set(d.keys()) == {"role", "content"} for d in rest]):
+            case [{"role": role, "content": _}, *rest]:
+                if role in ChatRoles and all(
+                    [
+                        set(d.keys()) == {"role", "content"} and d["role"] in ChatRoles
+                        for d in rest
+                    ]
+                ):
                     return await self._async_query_history(
                         prompt_dict=prompt_dict,
                         index=index,
@@ -438,7 +444,8 @@ class AsyncOpenAIModel(AsyncBaseModel):
                 pass
 
         raise TypeError(
-            "If model == 'openai', then prompt must be a str, list[str], or "
+            "If model == 'openai', then the prompt must be a str, list[str], or "
             "list[dict[str,str]] where the dictionary contains the keys 'role' and "
-            f"'content' only, not {type(prompt_dict['prompt'])}"
+            "'content' only, and the values for 'role' must be one of 'system', 'user' or "
+            "'assistant'."
         )
