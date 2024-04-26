@@ -49,11 +49,11 @@ def test_experiment_init(temporary_data_folders):
     assert experiment.input_file_path == "data/input/test_in_input.jsonl"
     assert (
         experiment.output_completed_file_path
-        == "data/output/test_in_input/completed-test_in_input.jsonl"
+        == f"data/output/test_in_input/{experiment.creation_time}-completed-test_in_input.jsonl"
     )
     assert (
         experiment.output_input_file_out_path
-        == "data/output/test_in_input/input-test_in_input.jsonl"
+        == f"data/output/test_in_input/{experiment.creation_time}-input-test_in_input.jsonl"
     )
     assert experiment.experiment_prompts == [
         {"id": 0, "prompt": "test prompt 0", "model": "test"},
