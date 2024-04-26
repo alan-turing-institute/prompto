@@ -98,7 +98,7 @@ def check_environment_variables() -> list[Exception]:
         if var not in os.environ:
             issues.append(ValueError(f"Environment variable {var} is not set"))
 
-    other_env_vars = ["GEMINI_MODEL_ID"]
+    other_env_vars = ["GEMINI_MODEL_NAME"]
     for var in other_env_vars:
         if var not in os.environ:
             issues.append(Warning(f"Environment variable {var} is not set"))
