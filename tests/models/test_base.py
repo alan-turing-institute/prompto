@@ -152,7 +152,7 @@ async def test_async_base_model_methods(temporary_data_folders):
     with pytest.raises(
         AttributeError, match="'AsyncBaseModel' object has no attribute 'query'"
     ):
-        await async_base_model.query(prompt_dict={})
+        async_base_model.query(prompt_dict={})
 
     # check .async_query()
     # raises NotImplementedError as instance method
