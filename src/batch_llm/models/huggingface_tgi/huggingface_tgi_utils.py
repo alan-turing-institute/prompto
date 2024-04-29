@@ -83,13 +83,13 @@ def obtain_model_inputs(
 
     if async_client:
         client = AsyncOpenAI(
+            base_url=API_ENDPOINT,
             api_key=API_KEY,
-            api_endpoint=API_ENDPOINT,
         )
     else:
         client = OpenAI(
+            base_url=API_ENDPOINT,
             api_key=API_KEY,
-            api_endpoint=API_ENDPOINT,
         )
 
     # get parameters dict (if any)
