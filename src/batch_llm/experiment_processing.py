@@ -379,7 +379,7 @@ async def query_model_and_record_response(
         # fill in response with error message
         completed_prompt_dict = prompt_dict
         completed_prompt_dict["response"] = f"{type(err).__name__} - {err}"
-    except Exception as err:
+    except (Exception, asyncio.CancelledError, asyncio.TimeoutError) as err:
         if attempt == settings.max_attempts:
             # we've already tried max_attempts times, so log the error and save an error response
             log_message = (
