@@ -7,10 +7,10 @@ from openai import AsyncOpenAI, OpenAI
 
 from batch_llm.models.base import AsyncBaseModel, BaseModel
 from batch_llm.models.openai.openai_utils import (
+    ChatRoles,
     check_environment_variables,
     check_prompt_dict,
     process_response,
-    ChatRoles,
 )
 from batch_llm.settings import Settings
 from batch_llm.utils import (
@@ -277,6 +277,8 @@ class AsyncOpenAIModel(AsyncBaseModel):
 
         # obtain mode (default is chat)
         mode = prompt_dict.get("mode", "chat")
+        if mode not in ["chat", "query"]:
+            raise ValueError(f"mode must be one of 'chat' or 'query', not {mode}")
 
         return prompt, model_name, generation_config, mode
 
@@ -447,5 +449,5 @@ class AsyncOpenAIModel(AsyncBaseModel):
             "If model == 'openai', then the prompt must be a str, list[str], or "
             "list[dict[str,str]] where the dictionary contains the keys 'role' and "
             "'content' only, and the values for 'role' must be one of 'system', 'user' or "
-            "'assistant'."
+            "'assistant'"
         )
