@@ -50,28 +50,6 @@ class AsyncQuartModel(AsyncBaseModel):
             response = requests.get(os.environ["QUART_API_ENDPOINT"])
 
             if response.status_code != 200:
-                print("The endpoint is working.")
-
-                # check the default model name is a valid model and is downloaded
-                if "QUART_MODEL_NAME" in os.environ:
-                    headers = {"Content-Type": "application/json"}
-                    data = {"text": "Test", "model": os.environ["QUART_MODEL_NAME"]}
-
-                    response = requests.post(
-                        os.environ["QUART_API_ENDPOINT"],
-                        headers=headers,
-                        data=json.dumps(data),
-                        timeout=10,  # Add a timeout argument to prevent indefinite hanging
-                    )
-                    if response.status_code != 200:
-                        issues.append(
-                            ValueError(
-                                f"QUART_MODEL_NAME is not a valid model: {response.status_code}"
-                            )
-                        )
-
-            else:
-                print("The endpoint is not working. Status code:", response.status_code)
 
                 issues.append(
                     ValueError(
@@ -95,6 +73,20 @@ class AsyncQuartModel(AsyncBaseModel):
             write_log_message(log_file=self.log_file, log_message=log_message, log=True)
             raise ValueError(log_message)
 
+        else:
+            headers = {"Content-Type": "application/json"}
+            data = {"text": "Test", "model": model_name}
+
+            response = requests.post(
+                os.environ["QUART_API_ENDPOINT"], headers=headers, data=json.dumps(data)
+            )
+            if response.status_code != 200:
+                log_message = f"{model_name} is not a valid model."
+                write_log_message(
+                    log_file=self.log_file, log_message=log_message, log=True
+                )
+                raise ValueError(log_message)
+
         # get parameters dict (if any)
         options = prompt_dict.get("parameters", None)
         if options is None:
@@ -108,7 +100,7 @@ class AsyncQuartModel(AsyncBaseModel):
         prompt, model_name, options = self._obtain_model_inputs(prompt_dict)
 
         try:
-            response = await async_client_generate.async_client_generate(
+            response = await async_client_generate(
                 data={"text": prompt, "model": model_name, "options": options},
                 url=self.quart_endpoint,
                 headers={"Content-Type": "application/json"},
