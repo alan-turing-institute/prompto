@@ -124,10 +124,10 @@ def is_valid_jsonl(
                     issues.append(KeyError('"prompt" key not found'))
                     valid_indicator = False
 
-                # check if "model" is a key in the json
-                if "model" not in data:
-                    # if "model" is not a key, add index to list
-                    issues.append(KeyError('"model" key not found'))
+                # check if "api" is a key in the json
+                if "api" not in data:
+                    # if "api" is not a key, add index to list
+                    issues.append(KeyError('"api" key not found'))
                     valid_indicator = False
 
                 # if parameters is passed, check its a dictionary
@@ -149,9 +149,9 @@ def is_valid_jsonl(
                     multimedia_path_errors.add(path_errors)
 
                 # model specific checks
-                issues.extend(ASYNC_MODELS[data["model"]].check_prompt_dict(data))
+                issues.extend(ASYNC_MODELS[data["api"]].check_prompt_dict(data))
                 # add model to set of models to check environment variables for
-                model_environments_to_check.add(data["model"])
+                model_environments_to_check.add(data["api"])
             except json.JSONDecodeError as err:
                 # if line is not a valid json, add index to list
                 issues.append(err)

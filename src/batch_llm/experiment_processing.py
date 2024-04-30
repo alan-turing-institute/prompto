@@ -51,15 +51,6 @@ class Experiment:
                 f"Experiment file '{self.input_file_path}' does not exist"
             )
 
-        # file path of the completed experiment file in the output experiment folder
-        self.output_completed_file_path: str = os.path.join(
-            self.output_folder, "completed-" + self.file_name
-        )
-        # file path of the input file in the output experiment folder (for logging purposes)
-        self.output_input_file_out_path: str = os.path.join(
-            self.output_folder, "input-" + self.file_name
-        )
-
         # read in the experiment data
         with open(self.input_file_path, "r") as f:
             self.experiment_prompts: list[dict] = [dict(json.loads(line)) for line in f]
@@ -70,14 +61,42 @@ class Experiment:
         # get the time which the experiment file is created
         self.creation_time: str = datetime.fromtimestamp(
             os.path.getctime(self.input_file_path)
-        ).strftime("%d-%m-%Y-%H-%M")
+        ).strftime("%d-%m-%Y-%H-%M-%S")
         # log file is a file in the experiment output folder
         self.log_file: str = os.path.join(
             self.output_folder, f"{self.creation_time}-log.txt"
         )
+        # file path of the completed experiment file in the output experiment folder
+        self.output_completed_file_path: str = os.path.join(
+            self.output_folder, f"{self.creation_time}-completed-" + self.file_name
+        )
+        # file path of the input file in the output experiment folder (for logging purposes)
+        self.output_input_file_out_path: str = os.path.join(
+            self.output_folder, f"{self.creation_time}-input-" + self.file_name
+        )
+
+        # grouped experiment prompts by model
+        self.grouped_experiment_prompts: dict[str, list[dict]] = (
+            self.group_prompts_by_model()
+        )
 
     def __str__(self) -> str:
         return self.file_name
+
+    def group_prompts_by_model(self) -> dict[str, list[dict]]:
+        # return self.grouped_experiment_prompts if it exists
+        if hasattr(self, "grouped_experiment_prompts"):
+            return self.grouped_experiment_prompts
+
+        grouped_dict = {}
+        for item in self.experiment_prompts:
+            model = item.get("api")
+            if model not in grouped_dict:
+                grouped_dict[model] = [item]
+
+            grouped_dict[model].append(item)
+
+        return grouped_dict
 
 
 class ExperimentPipeline:
@@ -126,21 +145,21 @@ class ExperimentPipeline:
         """
         now = datetime.now()
         if self.overall_avg_proc_times == 0:
+            estimated_completion_time = "[unknown]"
             estimated_completion = "[unknown]"
         else:
+            estimated_completion_time = round(
+                self.overall_avg_proc_times * experiment.number_queries, 3
+            )
             estimated_completion = (
-                now
-                + timedelta(
-                    seconds=round(
-                        self.overall_avg_proc_times * experiment.number_queries, 3
-                    )
-                )
+                now + timedelta(seconds=estimated_completion_time)
             ).strftime("%d-%m-%Y, %H:%M")
 
         # log the estimated time of completion of the next experiment
         log_message = (
             f"Next experiment: {experiment}, "
-            f"Number queries: {experiment.number_queries}, "
+            f"Number of queries: {experiment.number_queries}, "
+            f"Estimated completion time: {estimated_completion_time}, "
             f"Estimated completion by: {estimated_completion}"
         )
         write_log_message(log_file=experiment.log_file, log_message=log_message)
@@ -190,10 +209,34 @@ class ExperimentPipeline:
         self.log_estimate(experiment=experiment)
 
         # run the experiment asynchronously
-        logging.info(f"Sending {experiment.number_queries} queries...")
-        await self.send_requests_retry(
-            experiment=experiment,
-        )
+        if self.settings.parallel:
+            logging.info(
+                f"Sending {experiment.number_queries} queries in parallel by grouping models..."
+            )
+            queries_per_model = {
+                model: len(prompts)
+                for model, prompts in experiment.grouped_experiment_prompts.items()
+            }
+            logging.info(f"Queries per model: {queries_per_model}")
+
+            tasks = [
+                asyncio.create_task(
+                    self.send_requests_retry(
+                        experiment=experiment, prompt_dicts=prompt_dicts, model=model
+                    )
+                )
+                for model, prompt_dicts in experiment.grouped_experiment_prompts.items()
+            ]
+            await tqdm_asyncio.gather(
+                *tasks, desc="Waiting for all models to complete", unit="model"
+            )
+        else:
+            logging.info(f"Sending {experiment.number_queries} queries...")
+            await self.send_requests_retry(
+                experiment=experiment,
+                prompt_dicts=experiment.experiment_prompts,
+                model=None,
+            )
 
         # calculate average processing time per query for the experiment
         end_time = time.time()
@@ -223,17 +266,19 @@ class ExperimentPipeline:
         experiment: Experiment,
         prompt_dicts: list[dict],
         attempt: int,
+        model: str | None = None,
     ) -> tuple[list[dict], list[dict | Exception]]:
         """
         Send requests to the API asynchronously.
         """
         request_interval = 60 / self.settings.max_queries
         tasks = []
+        for_model_string = f"for model {model} " if model is not None else ""
 
         for index, item in enumerate(
             tqdm(
                 prompt_dicts,
-                desc=f"Sending {len(prompt_dicts)} queries",
+                desc=f"Sending {len(prompt_dicts)} queries {for_model_string}",
                 unit="query",
             )
         ):
@@ -254,7 +299,7 @@ class ExperimentPipeline:
 
         # wait for all tasks to complete before returning
         responses = await tqdm_asyncio.gather(
-            *tasks, desc="Waiting for responses", unit="query"
+            *tasks, desc=f"Waiting for responses {for_model_string}", unit="query"
         )
 
         return prompt_dicts, responses
@@ -262,6 +307,8 @@ class ExperimentPipeline:
     async def send_requests_retry(
         self,
         experiment: Experiment,
+        prompt_dicts: list[dict],
+        model: str | None = None,
     ) -> None:
         """
         Send requests to the API asynchronously and retry failed queries
@@ -273,8 +320,9 @@ class ExperimentPipeline:
         # send off the requests
         remaining_prompt_dicts, responses = await self.send_requests(
             experiment=experiment,
-            prompt_dicts=experiment.experiment_prompts,
+            prompt_dicts=prompt_dicts,
             attempt=attempt,
+            model=model,
         )
 
         while True:
@@ -300,6 +348,7 @@ class ExperimentPipeline:
                         experiment=experiment,
                         prompt_dicts=remaining_prompt_dicts,
                         attempt=attempt,
+                        model=model,
                     )
                 else:
                     # if there are no failed queries, break out of the loop
@@ -323,7 +372,7 @@ async def query_model_and_record_response(
     ----------
     prompt_dict : dict
         Dictionary containing the prompt and other parameters to be
-        used for text generation. Required keys are "prompt" and "model".
+        used for text generation. Required keys are "prompt" and "api".
         Some models may have other required keys.
     settings : Settings
         Settings for the pipeline
@@ -429,7 +478,7 @@ async def generate_text(
     ----------
     prompt_dict : dict
         Dictionary containing the prompt and other parameters to be
-        used for text generation. Required keys are "prompt" and "model".
+        used for text generation. Required keys are "prompt" and "api".
         Some models may have other required keys.
     settings : Settings
         Settings for the pipeline
@@ -448,19 +497,17 @@ async def generate_text(
     """
     if index is None:
         index = "NA"
-    if "model" not in prompt_dict:
-        raise KeyError(
-            "Model is not specified in the prompt_dict. Must have 'model' key"
-        )
+    if "api" not in prompt_dict:
+        raise KeyError("API is not specified in the prompt_dict. Must have 'api' key")
 
     # obtain model
     try:
-        model = ASYNC_MODELS[prompt_dict["model"]](
+        model = ASYNC_MODELS[prompt_dict["api"]](
             settings=settings, log_file=experiment.log_file
         )
     except KeyError:
         raise NotImplementedError(
-            f"Model {prompt_dict['model']} not recognised or implemented"
+            f"Model {prompt_dict['api']} not recognised or implemented"
         )
 
     # query the model

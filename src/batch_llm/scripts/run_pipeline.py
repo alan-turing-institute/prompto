@@ -33,6 +33,13 @@ def main():
         type=int,
         default=5,
     )
+    parser.add_argument(
+        "--parallel",
+        "-p",
+        help="Run the pipeline in parallel",
+        action="store_true",
+        default=False,
+    )
     args = parser.parse_args()
 
     # initialise logging
@@ -47,6 +54,7 @@ def main():
         data_folder=args.data_folder,
         max_queries=args.max_queries,
         max_attempts=args.max_attempts,
+        parallel=args.parallel,
     )
     # log the settings that are set for the pipeline
     logging.info(settings)
