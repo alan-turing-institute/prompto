@@ -148,7 +148,7 @@ class HuggingfaceTGIModel(BaseModel):
             )
         else:
             raise TypeError(
-                f"If model == 'huggingface-tgi', then prompt must be a string or a list, "
+                f"if api == 'huggingface-tgi', then prompt must be a string or a list, "
                 f"not {type(prompt_dict['prompt'])}"
             )
 
@@ -285,7 +285,7 @@ class AsyncHuggingfaceTGIModel(AsyncBaseModel):
             )
         else:
             raise TypeError(
-                f"If model == 'huggingface-tgi', then prompt must be a string or a list, "
+                f"if api == 'huggingface-tgi', then prompt must be a string or a list, "
                 f"not {type(prompt_dict['prompt'])}"
             )
 
