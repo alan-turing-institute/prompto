@@ -109,6 +109,20 @@ def check_environment_variables() -> list[Exception]:
 def check_prompt_dict(prompt_dict: dict) -> list[Exception]:
     issues = []
 
+    # check prompt is of the right type (string or list of strings)
+    match prompt_dict["prompt"]:
+        case str(_):
+            pass
+        case [str(_)]:
+            pass
+        case _:
+            issues.append(
+                TypeError(
+                    f"if api == 'gemini', then prompt must be a string or a list, "
+                    f"not {type(prompt_dict['prompt'])}"
+                )
+            )
+
     # check the parameter settings are valid
     # if safety_filter is provided, check that it's one of the valid options
     if "safety_filter" in prompt_dict and prompt_dict["safety_filter"] not in [

@@ -203,7 +203,7 @@ class OpenAIModel(BaseModel):
             )
         else:
             raise TypeError(
-                f"If model == 'openai', then prompt must be a string or a list, "
+                f"if api == 'openai', then prompt must be a string or a list, "
                 f"not {type(prompt_dict['prompt'])}"
             )
 
@@ -446,7 +446,7 @@ class AsyncOpenAIModel(AsyncBaseModel):
                 pass
 
         raise TypeError(
-            "If model == 'openai', then the prompt must be a str, list[str], or "
+            "if api == 'openai', then the prompt must be a str, list[str], or "
             "list[dict[str,str]] where the dictionary contains the keys 'role' and "
             "'content' only, and the values for 'role' must be one of 'system', 'user' or "
             "'assistant'"
