@@ -92,7 +92,7 @@ class Experiment:
         for item in self.experiment_prompts:
             model = item.get("api")
             if model not in grouped_dict:
-                grouped_dict[model] = [item]
+                grouped_dict[model] = []
 
             grouped_dict[model].append(item)
 

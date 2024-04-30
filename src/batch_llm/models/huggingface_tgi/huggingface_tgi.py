@@ -43,18 +43,28 @@ class HuggingfaceTGIModel(BaseModel):
         return obtain_model_inputs(prompt_dict, async_client=False)
 
     def _query_string(self, prompt_dict: dict, index: int | str) -> dict:
-        prompt, model_name, generation_config, client = self._obtain_model_inputs(
+        prompt, model_name, generation_config, client, mode = self._obtain_model_inputs(
             prompt_dict
         )
 
         try:
-            response = client.chat.completions.create(
-                model=self.api_type,
-                messages=[{"role": "user", "content": prompt}],
-                **generation_config,
-            )
+            if mode == "chat":
+                response = client.chat.completions.create(
+                    model=self.api_type,
+                    messages=[{"role": "user", "content": prompt}],
+                    **generation_config,
+                )
+            elif mode == "query":
+                response = client.completions.create(
+                    model=self.api_type,
+                    prompt=prompt,
+                    **generation_config,
+                )
 
             response_text = process_response(response)
+
+            # obtain model name
+            prompt_dict["model"] = response.model
 
             log_success_response_query(
                 index=index,
@@ -81,7 +91,7 @@ class HuggingfaceTGIModel(BaseModel):
             raise err
 
     def _query_chat(self, prompt_dict: dict, index: int | str) -> dict:
-        prompt, model_name, generation_config, client = self._obtain_model_inputs(
+        prompt, model_name, generation_config, client, mode = self._obtain_model_inputs(
             prompt_dict
         )
 
@@ -180,18 +190,28 @@ class AsyncHuggingfaceTGIModel(AsyncBaseModel):
         return obtain_model_inputs(prompt_dict, async_client=True)
 
     async def _async_query_string(self, prompt_dict: dict, index: int | str) -> dict:
-        prompt, model_name, generation_config, client = self._obtain_model_inputs(
+        prompt, model_name, generation_config, client, mode = self._obtain_model_inputs(
             prompt_dict
         )
 
         try:
-            response = await client.chat.completions.create(
-                model=self.api_type,
-                messages=[{"role": "user", "content": prompt}],
-                **generation_config,
-            )
+            if mode == "chat":
+                response = await client.chat.completions.create(
+                    model=self.api_type,
+                    messages=[{"role": "user", "content": prompt}],
+                    **generation_config,
+                )
+            elif mode == "query":
+                response = await client.completions.create(
+                    model=self.api_type,
+                    prompt=prompt,
+                    **generation_config,
+                )
 
             response_text = process_response(response)
+
+            # obtain model name
+            prompt_dict["model"] = response.model
 
             log_success_response_query(
                 index=index,
@@ -218,7 +238,7 @@ class AsyncHuggingfaceTGIModel(AsyncBaseModel):
             raise err
 
     async def _async_query_chat(self, prompt_dict: dict, index: int | str) -> dict:
-        prompt, model_name, generation_config, client = self._obtain_model_inputs(
+        prompt, model_name, generation_config, client, mode = self._obtain_model_inputs(
             prompt_dict
         )
 

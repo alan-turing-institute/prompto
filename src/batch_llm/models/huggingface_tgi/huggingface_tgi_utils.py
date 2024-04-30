@@ -37,27 +37,40 @@ def check_prompt_dict(prompt_dict: dict) -> list[Exception]:
     if "model_name" not in prompt_dict:
         # use the default API endpoint and endpoint that must be provided as environment variables
         # check the required environment variables are set
-        required_env_vars = ["HUGGINGFACE_TGI_API_KEY", "HUGGINGFACE_TGI_API_ENDPOINT"]
+        required_env_vars = ["HUGGINGFACE_TGI_API_ENDPOINT"]
         for var in required_env_vars:
             if var not in os.environ:
                 issues.append(ValueError(f"Environment variable {var} is not set"))
+
+        # check the optional environment variables are set and warn if not
+        other_env_vars = ["HUGGINGFACE_TGI_API_KEY"]
+        for var in other_env_vars:
+            if var not in os.environ:
+                issues.append(Warning(f"Environment variable {var} is not set"))
     else:
         model_name = prompt_dict["model_name"]
         # check the required environment variables are set
         required_env_vars = [
-            f"HUGGINGFACE_TGI_API_KEY_{model_name}",
             f"HUGGINGFACE_TGI_API_ENDPOINT_{model_name}",
         ]
         for var in required_env_vars:
             if var not in os.environ:
                 issues.append(ValueError(f"Environment variable {var} is not set"))
 
+        # check the optional environment variables are set and warn if not
+        other_env_vars = [
+            f"HUGGINGFACE_TGI_API_KEY_{model_name}",
+        ]
+        for var in other_env_vars:
+            if var not in os.environ:
+                issues.append(Warning(f"Environment variable {var} is not set"))
+
     return issues
 
 
 def obtain_model_inputs(
     prompt_dict: dict, async_client: bool
-) -> tuple[str, str, dict, OpenAI | AsyncOpenAI]:
+) -> tuple[str, str, dict, OpenAI | AsyncOpenAI, str]:
     # obtain the prompt from the prompt dictionary
     prompt = prompt_dict["prompt"]
 
@@ -73,8 +86,6 @@ def obtain_model_inputs(
     API_KEY = os.environ.get(api_key_env_var)
     API_ENDPOINT = os.environ.get(api_endpoint_env_var)
 
-    if API_KEY is None:
-        raise ValueError(f"{api_key_env_var} environment variable not found")
     if API_ENDPOINT is None:
         raise ValueError(f"{api_endpoint_env_var} environment variable not found")
 
@@ -83,12 +94,12 @@ def obtain_model_inputs(
 
     if async_client:
         client = AsyncOpenAI(
-            base_url=API_ENDPOINT,
+            base_url=f"{API_ENDPOINT}/v1/",
             api_key=API_KEY,
         )
     else:
         client = OpenAI(
-            base_url=API_ENDPOINT,
+            base_url=f"{API_ENDPOINT}/v1/",
             api_key=API_KEY,
         )
 
@@ -111,4 +122,9 @@ def obtain_model_inputs(
         if key not in generation_config:
             generation_config[key] = value
 
-    return prompt, model_name, generation_config, client
+    # obtain mode (default is chat)
+    mode = prompt_dict.get("mode", "query")
+    if mode not in ["query", "chat"]:
+        raise ValueError(f"mode must be 'query' or 'chat', not {mode}")
+
+    return prompt, model_name, generation_config, client, mode
