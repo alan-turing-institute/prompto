@@ -11,6 +11,7 @@ from batch_llm.models.azure_openai.azure_openai_utils import (
     process_response,
 )
 from batch_llm.models.base import AsyncBaseModel, BaseModel
+from batch_llm.models.openai.openai_utils import ChatRoles
 from batch_llm.settings import Settings
 from batch_llm.utils import (
     log_error_response_chat,
@@ -408,21 +409,73 @@ class AsyncAzureOpenAIModel(AsyncBaseModel):
             )
             raise err
 
-    async def async_query(self, prompt_dict: dict, index: int | str = "NA") -> dict:
-        if isinstance(prompt_dict["prompt"], str):
-            response_dict = await self._async_query_string(
-                prompt_dict=prompt_dict,
-                index=index,
-            )
-        elif isinstance(prompt_dict["prompt"], list):
-            response_dict = await self._async_query_chat(
-                prompt_dict=prompt_dict,
-                index=index,
-            )
-        else:
-            raise TypeError(
-                f"If model == 'azure-openai', then prompt must be a string or a list, "
-                f"not {type(prompt_dict['prompt'])}"
+    async def _async_query_history(self, prompt_dict: dict, index: int | str) -> dict:
+        prompt, model_name, generation_config, mode = self._obtain_model_inputs(
+            prompt_dict
+        )
+
+        try:
+            response = await self.client.chat.completions.create(
+                model=model_name,
+                messages=prompt,
+                **generation_config,
             )
 
-        return response_dict
+            response_text = process_response(response)
+
+            log_success_response_query(
+                index=index,
+                model=f"AzureOpenAI ({model_name})",
+                prompt=prompt,
+                response_text=response_text,
+            )
+
+            prompt_dict["response"] = response_text
+            return prompt_dict
+        except Exception as err:
+            error_as_string = f"{type(err).__name__} - {err}"
+            log_message = log_error_response_query(
+                index=index,
+                model=f"AzureOpenAI ({model_name})",
+                prompt=prompt,
+                error_as_string=error_as_string,
+            )
+            write_log_message(
+                log_file=self.log_file,
+                log_message=log_message,
+                log=True,
+            )
+            raise err
+
+    async def async_query(self, prompt_dict: dict, index: int | str = "NA") -> dict:
+        match prompt_dict["prompt"]:
+            case str(_):
+                return await self._async_query_string(
+                    prompt_dict=prompt_dict,
+                    index=index,
+                )
+            case [str(_)]:
+                return await self._async_query_chat(
+                    prompt_dict=prompt_dict,
+                    index=index,
+                )
+            case [{"role": role, "content": _}, *rest]:
+                if role in ChatRoles and all(
+                    [
+                        set(d.keys()) == {"role", "content"} and d["role"] in ChatRoles
+                        for d in rest
+                    ]
+                ):
+                    return await self._async_query_history(
+                        prompt_dict=prompt_dict,
+                        index=index,
+                    )
+            case _:
+                pass
+
+        raise TypeError(
+            "If model == 'azure-openai', then the prompt must be a str, list[str], or "
+            "list[dict[str,str]] where the dictionary contains the keys 'role' and "
+            "'content' only, and the values for 'role' must be one of 'system', 'user' or "
+            "'assistant'"
+        )
