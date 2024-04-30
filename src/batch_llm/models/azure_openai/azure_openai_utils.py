@@ -53,7 +53,7 @@ def check_prompt_dict(prompt_dict: dict) -> list[Exception]:
         case _:
             issues.append(
                 TypeError(
-                    "If model == 'azure-openai', then the prompt must be a str, list[str], or "
+                    "if api == 'azure-openai', then the prompt must be a str, list[str], or "
                     "list[dict[str,str]] where the dictionary contains the keys 'role' and "
                     "'content' only, and the values for 'role' must be one of 'system', 'user' or "
                     "'assistant'"
