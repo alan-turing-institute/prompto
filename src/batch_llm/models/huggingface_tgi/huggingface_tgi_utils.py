@@ -86,6 +86,10 @@ def obtain_model_inputs(
     API_KEY = os.environ.get(api_key_env_var)
     API_ENDPOINT = os.environ.get(api_endpoint_env_var)
 
+    if API_KEY is None:
+        # need pass string to initialise OpenAI client
+        API_KEY = "-"
+
     if API_ENDPOINT is None:
         raise ValueError(f"{api_endpoint_env_var} environment variable not found")
 
