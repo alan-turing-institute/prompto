@@ -85,7 +85,7 @@ class AsyncOllamaModel(AsyncBaseModel):
             except Exception as err:
                 issues.append(
                     ValueError(
-                        f"model_name {prompt_dict['model_name']} is not a valid model: {type(err).__name__} - {err}"
+                        f"model_name '{prompt_dict['model_name']}' is not a valid model: {type(err).__name__} - {err}"
                     )
                 )
 
