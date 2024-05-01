@@ -20,6 +20,8 @@ from prompto.models.gemini.gemini_utils import (
 )
 from prompto.settings import Settings
 from prompto.utils import (
+    check_optional_env_variables_set,
+    check_required_env_variables_set,
     log_error_response_chat,
     log_error_response_query,
     log_success_response_chat,
@@ -27,60 +29,31 @@ from prompto.utils import (
     write_log_message,
 )
 
+PROJECT_VAR_NAME = "GEMINI_PROJECT_ID"
+LOCATION_VAR_NAME = "GEMINI_LOCATION"
+MODEL_NAME_VAR_NAME = "GEMINI_MODEL_NAME"
+
 
 class AsyncGeminiModel(AsyncBaseModel):
     def __init__(
         self,
         settings: Settings,
         log_file: str,
-        project_id: str | None = None,
-        location: str | None = None,
         *args: Any,
         **kwargs: Any,
     ):
         super().__init__(settings=settings, log_file=log_file, *args, **kwargs)
-        vertexai.init(project=project_id, location=location)
-        # try to read the project_id and location from the environment variables if not set
-        if project_id is None:
-            project_id = os.environ.get("GEMINI_PROJECT_ID", None)
-        if location is None:
-            location = os.environ.get("GEMINI_LOCATION", None)
-
-        # raise an error if project_id still not set
-        if project_id is None:
-            log_message = (
-                "project_id is not set. Please set the GEMINI_PROJECT_ID environment variable "
-                "or set the project_id argument when initialising Gemini model"
-            )
-            write_log_message(log_file=self.log_file, log_message=log_message, log=True)
-            raise ValueError(log_message)
-
-        # raise an error if location still not set
-        if location is None:
-            log_message = (
-                "location is not set. Please set the GEMINI_LOCATION environment variable "
-                "or set the location argument when initialising Gemini model"
-            )
-            write_log_message(log_file=self.log_file, log_message=log_message, log=True)
-            raise ValueError(log_message)
-
-        # initialise the vertexai project
-        vertexai.init(project=project_id, location=location)
 
     @staticmethod
     def check_environment_variables() -> list[Exception]:
         issues = []
 
-        # check the required environment variables are set
-        required_env_vars = ["GEMINI_PROJECT_ID", "GEMINI_LOCATION"]
-        for var in required_env_vars:
-            if var not in os.environ:
-                issues.append(ValueError(f"Environment variable {var} is not set"))
-
-        other_env_vars = ["GEMINI_MODEL_NAME"]
-        for var in other_env_vars:
-            if var not in os.environ:
-                issues.append(Warning(f"Environment variable {var} is not set"))
+        # check the optional environment variables are set and warn if not
+        issues.extend(
+            check_optional_env_variables_set(
+                [PROJECT_VAR_NAME, LOCATION_VAR_NAME, MODEL_NAME_VAR_NAME]
+            )
+        )
 
         return issues
 
@@ -102,15 +75,30 @@ class AsyncGeminiModel(AsyncBaseModel):
                     )
                 )
 
-        # check if the model_name is set as an environment variable if not provided in the prompt_dict
         if "model_name" not in prompt_dict:
-            req_var = "GEMINI_MODEL_NAME"
-            if req_var not in os.environ:
-                issues.append(
-                    ValueError(
-                        f"model_name is not set and environment variable {req_var} is not set"
-                    )
+            # use the default environment variables
+            # check the required environment variables are set
+            issues.extend(check_required_env_variables_set([MODEL_NAME_VAR_NAME]))
+
+            # check the optional environment variables are set and warn if not
+            issues.extend(
+                check_optional_env_variables_set([PROJECT_VAR_NAME, LOCATION_VAR_NAME])
+            )
+        else:
+            # use the model specific environment variables
+            model_name = prompt_dict["model_name"]
+
+            # check the optional environment variables are set and warn if not
+            issues.extend(
+                check_optional_env_variables_set(
+                    [
+                        f"PROJECT_VAR_NAME_{model_name}",
+                        PROJECT_VAR_NAME,
+                        f"LOCATION_VAR_NAME_{model_name}",
+                        LOCATION_VAR_NAME,
+                    ]
                 )
+            )
 
         # check the parameter settings are valid
         # if safety_filter is provided, check that it's one of the valid options
@@ -137,8 +125,35 @@ class AsyncGeminiModel(AsyncBaseModel):
     def _obtain_model_inputs(self, prompt_dict: dict) -> tuple:
         prompt = prompt_dict["prompt"]
 
+        # obtain model name
+        model_name = prompt_dict.get("model_name", None)
+        if model_name is None:
+            # use the default environment variables
+            model_name = os.environ.get(MODEL_NAME_VAR_NAME)
+            if model_name is None:
+                log_message = (
+                    f"model_name is not set. Please set the {MODEL_NAME_VAR_NAME} "
+                    "environment variable or pass the model_name in the prompt dictionary"
+                )
+                write_log_message(
+                    log_file=self.log_file, log_message=log_message, log=True
+                )
+                raise ValueError(log_message)
+
+            project_id = PROJECT_VAR_NAME
+            location_id = LOCATION_VAR_NAME
+        else:
+            # use the model specific environment variables if they exist
+            project_id = f"{PROJECT_VAR_NAME}_{model_name}"
+            if project_id not in os.environ:
+                project_id = PROJECT_VAR_NAME
+
+            location_id = f"{LOCATION_VAR_NAME}_{model_name}"
+            if location_id not in os.environ:
+                location_id = LOCATION_VAR_NAME
+
         model_name = prompt_dict.get("model_name", None) or os.environ.get(
-            "GEMINI_MODEL_NAME"
+            MODEL_NAME_VAR_NAME
         )
         if model_name is None:
             log_message = (
@@ -147,6 +162,14 @@ class AsyncGeminiModel(AsyncBaseModel):
             )
             write_log_message(log_file=self.log_file, log_message=log_message, log=True)
             raise ValueError(log_message)
+
+        if project_id is None:
+            project_id = os.environ.get(PROJECT_VAR_NAME, None)
+        if location is None:
+            location = os.environ.get(LOCATION_VAR_NAME, None)
+
+        # initialise the vertexai project
+        vertexai.init(project=project_id, location=location)
 
         # define safety settings
         safety_filter = prompt_dict.get("safety_filter", None)
