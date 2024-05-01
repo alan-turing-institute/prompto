@@ -3,10 +3,10 @@ from typing import Any
 
 from ollama import AsyncClient, Client, ResponseError
 
-from batch_llm.models.base import AsyncBaseModel
-from batch_llm.models.ollama.ollama_utils import process_response
-from batch_llm.settings import Settings
-from batch_llm.utils import (
+from prompto.models.base import AsyncBaseModel
+from prompto.models.ollama.ollama_utils import process_response
+from prompto.settings import Settings
+from prompto.utils import (
     log_error_response_query,
     log_success_response_query,
     write_log_message,

@@ -3,7 +3,7 @@ import os
 
 import pytest
 
-from batch_llm.utils import (
+from prompto.utils import (
     create_folder,
     log_error_response_chat,
     log_error_response_query,

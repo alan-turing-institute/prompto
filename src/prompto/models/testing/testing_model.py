@@ -3,9 +3,9 @@ import random
 import time
 from typing import Any
 
-from batch_llm.models.base import AsyncBaseModel
-from batch_llm.settings import Settings
-from batch_llm.utils import log_error_response_query, log_success_response_query
+from prompto.models.base import AsyncBaseModel
+from prompto.settings import Settings
+from prompto.utils import log_error_response_query, log_success_response_query
 
 
 class AsyncTestModel(AsyncBaseModel):
