@@ -3,8 +3,8 @@ import json
 import logging
 import os
 
-from batch_llm.models import ASYNC_MODELS
-from batch_llm.utils import move_file, write_log_message
+from prompto.models import ASYNC_MODELS
+from prompto.utils import move_file, write_log_message
 
 
 def check_multimedia(

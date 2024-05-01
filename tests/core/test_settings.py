@@ -2,7 +2,7 @@ import os
 
 import pytest
 
-from batch_llm.settings import Settings, WriteFolderError
+from prompto.settings import Settings, WriteFolderError
 
 
 def test_settings_default_init(temporary_data_folders):
