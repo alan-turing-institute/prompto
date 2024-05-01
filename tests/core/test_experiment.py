@@ -1,7 +1,7 @@
 import pytest
 
-from batch_llm.experiment_processing import Experiment
-from batch_llm.settings import Settings
+from prompto.experiment_processing import Experiment
+from prompto.settings import Settings
 
 
 def test_experiment_init_errors(temporary_data_folders):

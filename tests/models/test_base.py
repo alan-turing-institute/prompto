@@ -2,8 +2,8 @@ import pytest
 
 pytest_plugins = ("pytest_asyncio",)
 
-from batch_llm.models import AsyncBaseModel
-from batch_llm.settings import Settings
+from prompto.models import AsyncBaseModel
+from prompto.settings import Settings
 
 
 def test_async_base_model_init_errors(temporary_data_folders):

@@ -1,6 +1,6 @@
 import os
 
-from batch_llm.utils import create_folder
+from prompto.utils import create_folder
 
 
 class WriteFolderError(Exception):

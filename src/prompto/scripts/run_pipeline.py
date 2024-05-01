@@ -1,8 +1,8 @@
 import argparse
 import logging
 
-from batch_llm.experiment_processing import ExperimentPipeline
-from batch_llm.settings import Settings
+from prompto.experiment_processing import ExperimentPipeline
+from prompto.settings import Settings
 
 
 def main():

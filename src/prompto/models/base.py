@@ -1,7 +1,7 @@
 from abc import ABC
 from typing import Any
 
-from batch_llm.settings import Settings
+from prompto.settings import Settings
 
 
 class AsyncBaseModel(ABC):

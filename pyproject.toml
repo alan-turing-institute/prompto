@@ -1,7 +1,7 @@
 [tool.poetry]
-name = "batch-llm"
+name = "prompto"
 version = "0.1.0"
-description = "Library for facilitating batch processing of experiments stored as jsonl files. by automating querying LLM APIs and logging progress"
+description = "Library for facilitating batch processing of experiments stored as jsonl files by automating querying LLM APIs and logging progress"
 authors = [
     "rchan <rchan@turing.ac.uk>",
     "fedenanni <nanni.federico@gmail.com>",
@@ -70,8 +70,8 @@ requires = ["poetry-core"]
 build-backend = "poetry.core.masonry.api"
 
 [tool.poetry.scripts]
-run_pipeline = "batch_llm.scripts.run_pipeline:main"
-run_checks = "batch_llm.scripts.run_checks:main"
-create_judge_file = "batch_llm.scripts.create_judge_file:main"
-obtain_missing_jsonl = "batch_llm.scripts.obtain_missing_jsonl:main"
-convert_images = "batch_llm.scripts.convert_images:main"
+prompto_run_pipeline = "prompto.scripts.run_pipeline:main"
+prompto_run_checks = "prompto.scripts.run_checks:main"
+prompto_create_judge_file = "prompto.scripts.create_judge_file:main"
+prompto_obtain_missing_jsonl = "prompto.scripts.obtain_missing_jsonl:main"
+prompto_convert_images = "prompto.scripts.convert_images:main"

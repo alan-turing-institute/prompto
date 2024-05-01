@@ -8,9 +8,9 @@ from datetime import datetime, timedelta
 from tqdm import tqdm
 from tqdm.asyncio import tqdm_asyncio
 
-from batch_llm.models import ASYNC_MODELS
-from batch_llm.settings import Settings
-from batch_llm.utils import (
+from prompto.models import ASYNC_MODELS
+from prompto.settings import Settings
+from prompto.utils import (
     create_folder,
     move_file,
     sort_jsonl_files_by_creation_time,
