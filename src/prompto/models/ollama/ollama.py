@@ -7,10 +7,16 @@ from prompto.models.base import AsyncBaseModel
 from prompto.models.ollama.ollama_utils import process_response
 from prompto.settings import Settings
 from prompto.utils import (
+    check_either_required_env_variables_set,
+    check_optional_env_variables_set,
+    check_required_env_variables_set,
     log_error_response_query,
     log_success_response_query,
     write_log_message,
 )
+
+API_ENDPOINT_VAR_NAME = "OLLAMA_OPENAI_API_ENDPOINT"
+MODEL_NAME_VAR_NAME = "OLLAMA_OPENAI_MODEL_NAME"
 
 
 class AsyncOllamaModel(AsyncBaseModel):
@@ -22,52 +28,40 @@ class AsyncOllamaModel(AsyncBaseModel):
         **kwargs: Any,
     ):
         super().__init__(settings=settings, log_file=log_file, *args, **kwargs)
-        self.ollama_endpoint = os.environ.get("OLLAMA_API_ENDPOINT")
-
-        if self.ollama_endpoint is None:
-            raise ValueError("OLLAMA_API_ENDPOINT environment variable not found")
-
-        self.client = Client(host=self.ollama_endpoint)
-        self.async_client = AsyncClient(host=self.ollama_endpoint)
 
     @staticmethod
     def check_environment_variables() -> list[Exception]:
         issues = []
 
-        # check the required environment variables are set
-        required_env_vars = ["OLLAMA_API_ENDPOINT"]
-        for var in required_env_vars:
-            if var not in os.environ:
-                issues.append(ValueError(f"Environment variable {var} is not set"))
+        # check the optional environment variables are set and warn if not
+        issues.extend(
+            check_optional_env_variables_set(
+                [API_ENDPOINT_VAR_NAME, MODEL_NAME_VAR_NAME]
+            )
+        )
 
         # check if the API endpoint is a valid endpoint
-        if "OLLAMA_API_ENDPOINT" in os.environ:
-            client = Client(host=os.environ["OLLAMA_API_ENDPOINT"])
+        if API_ENDPOINT_VAR_NAME in os.environ:
+            client = Client(host=os.environ[API_ENDPOINT_VAR_NAME])
             try:
                 # try to just get the list of models to check if the endpoint is valid
                 client.list()
             except Exception as err:
                 issues.append(
                     ValueError(
-                        f"OLLAMA_API_ENDPOINT is not a valid endpoint: {type(err).__name__} - {err}"
+                        f"{API_ENDPOINT_VAR_NAME} is not a valid endpoint: {type(err).__name__} - {err}"
                     )
                 )
 
-        # check the optional environment variables are set and warn if not
-        other_env_vars = ["OLLAMA_MODEL_NAME"]
-        for var in other_env_vars:
-            if var not in os.environ:
-                issues.append(Warning(f"Environment variable {var} is not set"))
-
         # check the default model name is a valid model and is downloaded
-        if "OLLAMA_MODEL_NAME" in os.environ:
-            client = Client(host=os.environ["OLLAMA_API_ENDPOINT"])
+        if MODEL_NAME_VAR_NAME in os.environ:
+            client = Client(host=os.environ[API_ENDPOINT_VAR_NAME])
             try:
-                client.show(model=os.environ["OLLAMA_MODEL_NAME"])
+                client.show(model=os.environ[MODEL_NAME_VAR_NAME])
             except Exception as err:
                 issues.append(
                     ValueError(
-                        f"OLLAMA_MODEL_NAME is not a valid model: {type(err).__name__} - {err}"
+                        f"{MODEL_NAME_VAR_NAME} is not a valid model: {type(err).__name__} - {err}"
                     )
                 )
 
@@ -77,52 +71,85 @@ class AsyncOllamaModel(AsyncBaseModel):
     def check_prompt_dict(prompt_dict: dict) -> list[Exception]:
         issues = []
 
-        # check if the model_name (if provided) is a valid model
-        if "model_name" in prompt_dict:
-            client = Client(host=os.environ["OLLAMA_API_ENDPOINT"])
-            try:
-                client.show(model=prompt_dict["model_name"])
-            except Exception as err:
-                issues.append(
-                    ValueError(
-                        f"model_name '{prompt_dict['model_name']}' is not a valid model: {type(err).__name__} - {err}"
-                    )
+        if "model_name" not in prompt_dict:
+            # use the default environment variables
+            # check the required environment variables are set
+            issues.extend(
+                check_required_env_variables_set(
+                    [API_ENDPOINT_VAR_NAME, MODEL_NAME_VAR_NAME]
                 )
+            )
+        else:
+            # use the model specific environment variables
+            model_name = prompt_dict["model_name"]
+
+            # check the required environment variables are set
+            # must either have the model specific endpoint or the default endpoint set
+            issues.extend(
+                check_either_required_env_variables_set(
+                    [[f"{API_ENDPOINT_VAR_NAME}_{model_name}", API_ENDPOINT_VAR_NAME]]
+                )
+            )
 
         return issues
 
-    def _obtain_model_inputs(self, prompt_dict: dict) -> tuple:
+    def _obtain_model_inputs(
+        self, prompt_dict: dict
+    ) -> tuple[str, str, AsyncClient, dict]:
         # obtain the prompt from the prompt dictionary
         prompt = prompt_dict["prompt"]
 
-        model_name = prompt_dict.get("model_name", None) or os.environ.get(
-            "OLLAMA_MODEL_NAME"
-        )
+        # obtain model name
+        model_name = prompt_dict.get("model_name", None)
         if model_name is None:
-            log_message = (
-                "model_name is not set. Please set the OLLAMA_MODEL_NAME environment variable "
-                "or pass the model_name in the prompt dictionary"
-            )
-            write_log_message(log_file=self.log_file, log_message=log_message, log=True)
-            raise ValueError(log_message)
+            # use the default environment variables
+            model_name = os.environ.get(MODEL_NAME_VAR_NAME)
+            if model_name is None:
+                log_message = (
+                    f"model_name is not set. Please set the {MODEL_NAME_VAR_NAME} "
+                    "environment variable or pass the model_name in the prompt dictionary"
+                )
+                write_log_message(
+                    log_file=self.log_file, log_message=log_message, log=True
+                )
+                raise ValueError(log_message)
+
+            api_endpoint_env_var = API_ENDPOINT_VAR_NAME
+        else:
+            # use the model specific environment variables if they exist
+            api_endpoint_env_var = f"{API_ENDPOINT_VAR_NAME}_{model_name}"
+            if api_endpoint_env_var not in os.environ:
+                api_endpoint_env_var = API_ENDPOINT_VAR_NAME
+
+        API_ENDPOINT = os.environ.get(api_endpoint_env_var)
+
+        # raise error if the api endpoint is not found
+        if API_ENDPOINT is None:
+            raise ValueError(f"{api_endpoint_env_var} environment variable not found")
+
+        client = AsyncClient(host=API_ENDPOINT)
 
         # get parameters dict (if any)
-        options = prompt_dict.get("parameters", None)
-        if options is None:
-            options = {}
-        if type(options) is not dict:
-            raise TypeError(f"parameters must be a dictionary, not {type(options)}")
+        generation_config = prompt_dict.get("parameters", None)
+        if generation_config is None:
+            generation_config = {}
+        if type(generation_config) is not dict:
+            raise TypeError(
+                f"parameters must be a dictionary, not {type(generation_config)}"
+            )
 
-        return prompt, model_name, options
+        return prompt, model_name, client, generation_config
 
     async def _async_query_string(self, prompt_dict: dict, index: int | str) -> dict:
-        prompt, model_name, options = self._obtain_model_inputs(prompt_dict)
+        prompt, model_name, client, generation_config = self._obtain_model_inputs(
+            prompt_dict
+        )
 
         try:
-            response = await self.async_client.generate(
+            response = await client.generate(
                 model=model_name,
                 prompt=prompt,
-                options=options,
+                options=generation_config,
             )
 
             response_text = process_response(response)

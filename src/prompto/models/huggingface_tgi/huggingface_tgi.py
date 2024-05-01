@@ -9,12 +9,18 @@ from prompto.models.base import AsyncBaseModel
 from prompto.models.openai.openai import process_response
 from prompto.settings import Settings
 from prompto.utils import (
+    check_either_required_env_variables_set,
+    check_optional_env_variables_set,
+    check_required_env_variables_set,
     log_error_response_chat,
     log_error_response_query,
     log_success_response_chat,
     log_success_response_query,
     write_log_message,
 )
+
+API_ENDPOINT_VAR_NAME = "HUGGINGFACE_TGI_API_ENDPOINT"
+API_KEY_VAR_NAME = "HUGGINGFACE_TGI_API_KEY"
 
 
 class AsyncHuggingfaceTGIModel(AsyncBaseModel):
@@ -30,15 +36,12 @@ class AsyncHuggingfaceTGIModel(AsyncBaseModel):
 
     @staticmethod
     def check_environment_variables() -> list[Exception]:
-        # only check for the optional environment variables to define the "default" model
-        # which is used if the model name is not provided in the prompt dictionary
         issues = []
 
         # check the optional environment variables are set and warn if not
-        other_env_vars = ["HUGGINGFACE_TGI_API_KEY", "HUGGINGFACE_TGI_API_ENDPOINT"]
-        for var in other_env_vars:
-            if var not in os.environ:
-                issues.append(Warning(f"Environment variable {var} is not set"))
+        issues.extend(
+            check_optional_env_variables_set([API_ENDPOINT_VAR_NAME, API_KEY_VAR_NAME])
+        )
 
         return issues
 
@@ -49,52 +52,54 @@ class AsyncHuggingfaceTGIModel(AsyncBaseModel):
         issues = []
 
         if "model_name" not in prompt_dict:
-            # use the default API endpoint and endpoint that must be provided as environment variables
+            # use the default environment variables
             # check the required environment variables are set
-            required_env_vars = ["HUGGINGFACE_TGI_API_ENDPOINT"]
-            for var in required_env_vars:
-                if var not in os.environ:
-                    issues.append(ValueError(f"Environment variable {var} is not set"))
+            issues.extend(check_required_env_variables_set([API_ENDPOINT_VAR_NAME]))
 
             # check the optional environment variables are set and warn if not
-            other_env_vars = ["HUGGINGFACE_TGI_API_KEY"]
-            for var in other_env_vars:
-                if var not in os.environ:
-                    issues.append(Warning(f"Environment variable {var} is not set"))
+            issues.extend(check_optional_env_variables_set([API_KEY_VAR_NAME]))
         else:
+            # use the model specific environment variables
             model_name = prompt_dict["model_name"]
+
             # check the required environment variables are set
-            required_env_vars = [
-                f"HUGGINGFACE_TGI_API_ENDPOINT_{model_name}",
-            ]
-            for var in required_env_vars:
-                if var not in os.environ:
-                    issues.append(ValueError(f"Environment variable {var} is not set"))
+            # must either have the model specific endpoint or the default endpoint set
+            issues.extend(
+                check_either_required_env_variables_set(
+                    [[f"{API_ENDPOINT_VAR_NAME}_{model_name}", API_ENDPOINT_VAR_NAME]]
+                )
+            )
 
             # check the optional environment variables are set and warn if not
-            other_env_vars = [
-                f"HUGGINGFACE_TGI_API_KEY_{model_name}",
-            ]
-            for var in other_env_vars:
-                if var not in os.environ:
-                    issues.append(Warning(f"Environment variable {var} is not set"))
+            issues.extend(
+                check_optional_env_variables_set(
+                    [f"{API_KEY_VAR_NAME}_{model_name}", API_KEY_VAR_NAME]
+                )
+            )
 
         return issues
 
     def _obtain_model_inputs(
         self, prompt_dict: dict
-    ) -> tuple[str, str, dict, AsyncOpenAI]:
+    ) -> tuple[str, str, AsyncOpenAI, dict, str]:
         # obtain the prompt from the prompt dictionary
         prompt = prompt_dict["prompt"]
 
         # obtain model name
         model_name = prompt_dict.get("model_name", None)
         if model_name is None:
-            api_key_env_var = "HUGGINGFACE_TGI_API_KEY"
-            api_endpoint_env_var = "HUGGINGFACE_TGI_API_ENDPOINT"
+            # use the default environment variables
+            api_key_env_var = API_KEY_VAR_NAME
+            api_endpoint_env_var = API_ENDPOINT_VAR_NAME
         else:
-            api_key_env_var = f"HUGGINGFACE_TGI_API_KEY_{model_name}"
-            api_endpoint_env_var = f"HUGGINGFACE_TGI_API_ENDPOINT_{model_name}"
+            # use the model specific environment variables if they exist
+            api_key_env_var = f"{API_KEY_VAR_NAME}_{model_name}"
+            if api_key_env_var not in os.environ:
+                api_key_env_var = API_KEY_VAR_NAME
+
+            api_endpoint_env_var = f"{API_ENDPOINT_VAR_NAME}_{model_name}"
+            if api_endpoint_env_var not in os.environ:
+                api_endpoint_env_var = API_ENDPOINT_VAR_NAME
 
         API_KEY = os.environ.get(api_key_env_var)
         API_ENDPOINT = os.environ.get(api_endpoint_env_var)
@@ -138,10 +143,10 @@ class AsyncHuggingfaceTGIModel(AsyncBaseModel):
         if mode not in ["query", "chat"]:
             raise ValueError(f"mode must be 'query' or 'chat', not {mode}")
 
-        return prompt, model_name, generation_config, client, mode
+        return prompt, model_name, client, generation_config, mode
 
     async def _async_query_string(self, prompt_dict: dict, index: int | str) -> dict:
-        prompt, model_name, generation_config, client, mode = self._obtain_model_inputs(
+        prompt, model_name, client, generation_config, mode = self._obtain_model_inputs(
             prompt_dict
         )
 
@@ -189,7 +194,7 @@ class AsyncHuggingfaceTGIModel(AsyncBaseModel):
             raise err
 
     async def _async_query_chat(self, prompt_dict: dict, index: int | str) -> dict:
-        prompt, model_name, generation_config, client, mode = self._obtain_model_inputs(
+        prompt, model_name, client, generation_config, _ = self._obtain_model_inputs(
             prompt_dict
         )
 
@@ -211,6 +216,9 @@ class AsyncHuggingfaceTGIModel(AsyncBaseModel):
                 response_list.append(response_text)
                 # add the response message to the list of messages
                 messages.append({"role": "assistant", "content": response_text})
+
+                # obtain model name
+                prompt_dict["model"] = response.model
 
                 log_success_response_chat(
                     index=index,
