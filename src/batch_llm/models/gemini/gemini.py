@@ -325,23 +325,24 @@ class GeminiModel(BaseModel):
             raise err
 
     def query(self, prompt_dict: dict, index: int | str = "NA") -> dict:
-        if isinstance(prompt_dict["prompt"], str):
-            response_dict = self._query_string(
-                prompt_dict=prompt_dict,
-                index=index,
-            )
-        elif isinstance(prompt_dict["prompt"], list):
-            response_dict = self._query_chat(
-                prompt_dict=prompt_dict,
-                index=index,
-            )
-        else:
-            raise TypeError(
-                f"If model == 'gemini', then prompt must be a string or a list, "
-                f"not {type(prompt_dict['prompt'])}"
-            )
+        match prompt_dict["prompt"]:
+            case str(_):
+                return self._query_string(
+                    prompt_dict=prompt_dict,
+                    index=index,
+                )
+            case [str(_)]:
+                return self._query_chat(
+                    prompt_dict=prompt_dict,
+                    index=index,
+                )
+            case _:
+                pass
 
-        return response_dict
+        raise TypeError(
+            f"if api == 'gemini', then prompt must be a string or a list, "
+            f"not {type(prompt_dict['prompt'])}"
+        )
 
 
 class AsyncGeminiModel(AsyncBaseModel):
@@ -656,20 +657,21 @@ class AsyncGeminiModel(AsyncBaseModel):
             raise err
 
     async def async_query(self, prompt_dict: dict, index: int | str = "NA") -> dict:
-        if isinstance(prompt_dict["prompt"], str):
-            response_dict = await self._async_query_string(
-                prompt_dict=prompt_dict,
-                index=index,
-            )
-        elif isinstance(prompt_dict["prompt"], list):
-            response_dict = await self._async_query_chat(
-                prompt_dict=prompt_dict,
-                index=index,
-            )
-        else:
-            raise TypeError(
-                f"If model == 'gemini', then prompt must be a string or a list, "
-                f"not {type(prompt_dict['prompt'])}"
-            )
+        match prompt_dict["prompt"]:
+            case str(_):
+                return await self._async_query_string(
+                    prompt_dict=prompt_dict,
+                    index=index,
+                )
+            case [str(_)]:
+                return await self._async_query_chat(
+                    prompt_dict=prompt_dict,
+                    index=index,
+                )
+            case _:
+                pass
 
-        return response_dict
+        raise TypeError(
+            f"if api == 'gemini', then prompt must be a string or a list, "
+            f"not {type(prompt_dict['prompt'])}"
+        )

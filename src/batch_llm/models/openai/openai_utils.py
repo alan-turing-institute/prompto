@@ -1,9 +1,14 @@
 import os
+from enum import Enum
 
 from openai.types.chat import ChatCompletion
 from openai.types.completion import Completion
 
-from batch_llm.models.openai.openai_utils import ChatRoles
+
+class ChatRoles(Enum):
+    SYSTEM = "system"
+    USER = "user"
+    ASSISTANT = "assistant"
 
 
 def process_response(response: ChatCompletion | Completion) -> str:
@@ -16,16 +21,14 @@ def process_response(response: ChatCompletion | Completion) -> str:
 
 
 def check_environment_variables() -> list[Exception]:
-    issues = []
-
     # check the required environment variables are set
-    required_env_vars = ["AZURE_OPENAI_API_KEY", "AZURE_OPENAI_API_ENDPOINT"]
+    issues = []
+    required_env_vars = ["OPENAI_API_KEY"]
     for var in required_env_vars:
         if var not in os.environ:
             issues.append(ValueError(f"Environment variable {var} is not set"))
 
-    # check the optional environment variables are set and warn if not
-    other_env_vars = ["AZURE_OPENAI_API_VERSION", "AZURE_OPENAI_MODEL_NAME"]
+    other_env_vars = ["OPENAI_MODEL_NAME"]
     for var in other_env_vars:
         if var not in os.environ:
             issues.append(Warning(f"Environment variable {var} is not set"))
@@ -53,7 +56,7 @@ def check_prompt_dict(prompt_dict: dict) -> list[Exception]:
         case _:
             issues.append(
                 TypeError(
-                    "if api == 'azure-openai', then the prompt must be a str, list[str], or "
+                    "if api == 'openai', then the prompt must be a str, list[str], or "
                     "list[dict[str,str]] where the dictionary contains the keys 'role' and "
                     "'content' only, and the values for 'role' must be one of 'system', 'user' or "
                     "'assistant'"
@@ -62,7 +65,7 @@ def check_prompt_dict(prompt_dict: dict) -> list[Exception]:
 
     # check if the model_name is set as an environment variable if not provided in the prompt_dict
     if "model_name" not in prompt_dict:
-        req_var = "AZURE_OPENAI_MODEL_NAME"
+        req_var = "OPENAI_MODEL_NAME"
         if req_var not in os.environ:
             issues.append(
                 ValueError(

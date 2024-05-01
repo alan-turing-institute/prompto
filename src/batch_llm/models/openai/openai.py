@@ -3,15 +3,15 @@ import os
 from typing import Any
 
 import openai
-from openai import AsyncAzureOpenAI, AzureOpenAI
+from openai import AsyncOpenAI, OpenAI
 
-from batch_llm.models.azure_openai.azure_openai_utils import (
+from batch_llm.models.base import AsyncBaseModel, BaseModel
+from batch_llm.models.openai.openai_utils import (
+    ChatRoles,
     check_environment_variables,
     check_prompt_dict,
     process_response,
 )
-from batch_llm.models.base import AsyncBaseModel, BaseModel
-from batch_llm.models.openai.openai_utils import ChatRoles
 from batch_llm.settings import Settings
 from batch_llm.utils import (
     log_error_response_chat,
@@ -21,43 +21,28 @@ from batch_llm.utils import (
     write_log_message,
 )
 
-AZURE_API_VERSION_DEFAULT = "2024-02-01"
 
-
-class AzureOpenAIModel(BaseModel):
+class OpenAIModel(BaseModel):
     def __init__(
         self,
         settings: Settings,
         log_file: str,
-        api_version: str | None = None,
         *args: Any,
         **kwargs: Any,
     ):
         super().__init__(settings=settings, log_file=log_file, *args, **kwargs)
         # try to get the api key and endpoint from the environment variables
-        self.api_key = os.environ.get("AZURE_OPENAI_API_KEY")
-        self.azure_endpoint = os.environ.get("AZURE_OPENAI_API_ENDPOINT")
+        self.api_key = os.environ.get("OPENAI_API_KEY")
 
         # raise error if the api key or endpoint is not found
         if self.api_key is None:
-            raise ValueError("AZURE_OPENAI_API_KEY environment variable not found")
-        if self.azure_endpoint is None:
-            raise ValueError("AZURE_OPENAI_API_ENDPOINT environment variable not found")
+            raise ValueError("OPENAI_API_KEY environment variable not found")
 
-        self.api_type = "azure"
-        self.api_version = api_version or os.environ.get("AZURE_OPENAI_API_VERSION")
-        if self.api_version is None:
-            self.api_version = AZURE_API_VERSION_DEFAULT
+        self.api_type = "openai"
 
         openai.api_key = self.api_key
-        openai.azure_endpoint = self.azure_endpoint
         openai.api_type = self.api_type
-        openai.api_version = self.api_version
-        self.client = AzureOpenAI(
-            api_key=self.api_key,
-            azure_endpoint=self.azure_endpoint,
-            api_version=self.api_version,
-        )
+        self.client = OpenAI(api_key=self.api_key)
 
     @staticmethod
     def check_environment_variables() -> list[Exception]:
@@ -72,11 +57,11 @@ class AzureOpenAIModel(BaseModel):
         prompt = prompt_dict["prompt"]
 
         model_name = prompt_dict.get("model_name", None) or os.environ.get(
-            "AZURE_OPENAI_MODEL_NAME"
+            "OPENAI_MODEL_NAME"
         )
         if model_name is None:
             log_message = (
-                "model_name is not set. Please set the AZURE_OPENAI_MODEL_NAME environment variable "
+                "model_name is not set. Please set the OPENAI_MODEL_NAME environment variable "
                 "or pass the model_name in the prompt dictionary"
             )
             write_log_message(log_file=self.log_file, log_message=log_message, log=True)
@@ -104,7 +89,7 @@ class AzureOpenAIModel(BaseModel):
         # obtain mode (default is chat)
         mode = prompt_dict.get("mode", "chat")
 
-        return prompt, generation_config, mode
+        return prompt, model_name, generation_config, mode
 
     def _query_string(self, prompt_dict: dict, index: int | str) -> dict:
         prompt, model_name, generation_config, mode = self._obtain_model_inputs(
@@ -129,7 +114,7 @@ class AzureOpenAIModel(BaseModel):
 
             log_success_response_query(
                 index=index,
-                model=f"AzureOpenAI ({model_name})",
+                model=f"OpenAI ({model_name})",
                 prompt=prompt,
                 response_text=response_text,
             )
@@ -140,7 +125,7 @@ class AzureOpenAIModel(BaseModel):
             error_as_string = f"{type(err).__name__} - {err}"
             log_message = log_error_response_query(
                 index=index,
-                model=f"AzureOpenAI ({model_name})",
+                model=f"OpenAI ({model_name})",
                 prompt=prompt,
                 error_as_string=error_as_string,
             )
@@ -177,7 +162,7 @@ class AzureOpenAIModel(BaseModel):
 
                 log_success_response_chat(
                     index=index,
-                    model=f"AzureOpenAI ({model_name})",
+                    model=f"OpenAI ({model_name})",
                     message_index=message_index,
                     n_messages=len(prompt),
                     message=message,
@@ -192,9 +177,8 @@ class AzureOpenAIModel(BaseModel):
             error_as_string = f"{type(err).__name__} - {err}"
             log_message = log_error_response_chat(
                 index=index,
-                model=f"AzureOpenAI ({model_name})",
+                model=f"OpenAI ({model_name})",
                 message_index=message_index,
-                n_messages=len(prompt),
                 message=message,
                 responses_so_far=response_list,
                 error_as_string=error_as_string,
@@ -219,47 +203,34 @@ class AzureOpenAIModel(BaseModel):
             )
         else:
             raise TypeError(
-                f"if api == 'azure-openai', then prompt must be a string or a list, "
+                f"if api == 'openai', then prompt must be a string or a list, "
                 f"not {type(prompt_dict['prompt'])}"
             )
 
         return response_dict
 
 
-class AsyncAzureOpenAIModel(AsyncBaseModel):
+class AsyncOpenAIModel(AsyncBaseModel):
     def __init__(
         self,
         settings: Settings,
         log_file: str,
-        api_version: str | None = None,
         *args: Any,
         **kwargs: Any,
     ):
         super().__init__(settings=settings, log_file=log_file, *args, **kwargs)
         # try to get the api key and endpoint from the environment variables
-        self.api_key = os.environ.get("AZURE_OPENAI_API_KEY")
-        self.azure_endpoint = os.environ.get("AZURE_OPENAI_API_ENDPOINT")
+        self.api_key = os.environ.get("OPENAI_API_KEY")
 
         # raise error if the api key or endpoint is not found
         if self.api_key is None:
-            raise ValueError("AZURE_OPENAI_API_KEY environment variable not found")
-        if self.azure_endpoint is None:
-            raise ValueError("AZURE_OPENAI_API_ENDPOINT environment variable not found")
+            raise ValueError("OPENAI_API_KEY environment variable not found")
 
-        self.api_type = "azure"
-        self.api_version = api_version or os.environ.get("AZURE_OPENAI_API_VERSION")
-        if self.api_version is None:
-            self.api_version = AZURE_API_VERSION_DEFAULT
+        self.api_type = "openai"
 
         openai.api_key = self.api_key
-        openai.azure_endpoint = self.azure_endpoint
         openai.api_type = self.api_type
-        openai.api_version = self.api_version
-        self.client = AsyncAzureOpenAI(
-            api_key=self.api_key,
-            azure_endpoint=self.azure_endpoint,
-            api_version=self.api_version,
-        )
+        self.client = AsyncOpenAI(api_key=self.api_key)
 
     @staticmethod
     def check_environment_variables() -> list[Exception]:
@@ -275,11 +246,11 @@ class AsyncAzureOpenAIModel(AsyncBaseModel):
 
         # obtain model name
         model_name = prompt_dict.get("model_name", None) or os.environ.get(
-            "AZURE_OPENAI_MODEL_NAME"
+            "OPENAI_MODEL_NAME"
         )
         if model_name is None:
             log_message = (
-                "model_name is not set. Please set the AZURE_OPENAI_MODEL_NAME environment variable "
+                "model_name is not set. Please set the OPENAI_MODEL_NAME environment variable "
                 "or pass the model_name in the prompt dictionary"
             )
             write_log_message(log_file=self.log_file, log_message=log_message, log=True)
@@ -306,6 +277,8 @@ class AsyncAzureOpenAIModel(AsyncBaseModel):
 
         # obtain mode (default is chat)
         mode = prompt_dict.get("mode", "chat")
+        if mode not in ["chat", "query"]:
+            raise ValueError(f"mode must be one of 'chat' or 'query', not {mode}")
 
         return prompt, model_name, generation_config, mode
 
@@ -332,7 +305,7 @@ class AsyncAzureOpenAIModel(AsyncBaseModel):
 
             log_success_response_query(
                 index=index,
-                model=f"AzureOpenAI ({model_name})",
+                model=f"OpenAI ({model_name})",
                 prompt=prompt,
                 response_text=response_text,
             )
@@ -343,7 +316,7 @@ class AsyncAzureOpenAIModel(AsyncBaseModel):
             error_as_string = f"{type(err).__name__} - {err}"
             log_message = log_error_response_query(
                 index=index,
-                model=f"AzureOpenAI ({model_name})",
+                model=f"OpenAI ({model_name})",
                 prompt=prompt,
                 error_as_string=error_as_string,
             )
@@ -380,7 +353,7 @@ class AsyncAzureOpenAIModel(AsyncBaseModel):
 
                 log_success_response_chat(
                     index=index,
-                    model=f"AzureOpenAI ({model_name})",
+                    model=f"OpenAI ({model_name})",
                     message_index=message_index,
                     n_messages=len(prompt),
                     message=message,
@@ -395,9 +368,8 @@ class AsyncAzureOpenAIModel(AsyncBaseModel):
             error_as_string = f"{type(err).__name__} - {err}"
             log_message = log_error_response_chat(
                 index=index,
-                model=f"AzureOpenAI ({model_name})",
+                model=f"OpenAI ({model_name})",
                 message_index=message_index,
-                n_messages=len(prompt),
                 message=message,
                 responses_so_far=response_list,
                 error_as_string=error_as_string,
@@ -425,7 +397,7 @@ class AsyncAzureOpenAIModel(AsyncBaseModel):
 
             log_success_response_query(
                 index=index,
-                model=f"AzureOpenAI ({model_name})",
+                model=f"OpenAI ({model_name})",
                 prompt=prompt,
                 response_text=response_text,
             )
@@ -436,7 +408,7 @@ class AsyncAzureOpenAIModel(AsyncBaseModel):
             error_as_string = f"{type(err).__name__} - {err}"
             log_message = log_error_response_query(
                 index=index,
-                model=f"AzureOpenAI ({model_name})",
+                model=f"OpenAI ({model_name})",
                 prompt=prompt,
                 error_as_string=error_as_string,
             )
@@ -474,7 +446,7 @@ class AsyncAzureOpenAIModel(AsyncBaseModel):
                 pass
 
         raise TypeError(
-            "if api == 'azure-openai', then the prompt must be a str, list[str], or "
+            "if api == 'openai', then the prompt must be a str, list[str], or "
             "list[dict[str,str]] where the dictionary contains the keys 'role' and "
             "'content' only, and the values for 'role' must be one of 'system', 'user' or "
             "'assistant'"
