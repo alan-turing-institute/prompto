@@ -5,10 +5,10 @@ from typing import Any
 import openai
 from openai import AsyncOpenAI
 
-from batch_llm.models.base import AsyncBaseModel
-from batch_llm.models.openai.openai import process_response
-from batch_llm.settings import Settings
-from batch_llm.utils import (
+from prompto.models.base import AsyncBaseModel
+from prompto.models.openai.openai import process_response
+from prompto.settings import Settings
+from prompto.utils import (
     log_error_response_chat,
     log_error_response_query,
     log_success_response_chat,

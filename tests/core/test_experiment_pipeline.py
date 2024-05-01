@@ -3,8 +3,8 @@ import os
 
 import pytest
 
-from batch_llm.experiment_processing import Experiment, ExperimentPipeline
-from batch_llm.settings import Settings
+from prompto.experiment_processing import Experiment, ExperimentPipeline
+from prompto.settings import Settings
 
 
 def test_experiment_pipeline_init_errors(temporary_data_folders):
