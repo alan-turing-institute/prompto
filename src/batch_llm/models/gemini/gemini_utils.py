@@ -109,6 +109,30 @@ def check_environment_variables() -> list[Exception]:
 def check_prompt_dict(prompt_dict: dict) -> list[Exception]:
     issues = []
 
+    # check prompt is of the right type (string or list of strings)
+    match prompt_dict["prompt"]:
+        case str(_):
+            pass
+        case [str(_)]:
+            pass
+        case _:
+            issues.append(
+                TypeError(
+                    f"if api == 'gemini', then prompt must be a string or a list, "
+                    f"not {type(prompt_dict['prompt'])}"
+                )
+            )
+
+    # check if the model_name is set as an environment variable if not provided in the prompt_dict
+    if "model_name" not in prompt_dict:
+        req_var = "GEMINI_MODEL_NAME"
+        if req_var not in os.environ:
+            issues.append(
+                ValueError(
+                    f"model_name is not set and environment variable {req_var} is not set"
+                )
+            )
+
     # check the parameter settings are valid
     # if safety_filter is provided, check that it's one of the valid options
     if "safety_filter" in prompt_dict and prompt_dict["safety_filter"] not in [

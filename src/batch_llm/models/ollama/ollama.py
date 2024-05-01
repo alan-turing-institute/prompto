@@ -172,7 +172,7 @@ class AsyncOllamaModel(AsyncBaseModel):
             )
         else:
             raise TypeError(
-                f"If model == 'ollama', then prompt must be a string, "
+                f"if api == 'ollama', then prompt must be a string, "
                 f"not {type(prompt_dict['prompt'])}"
             )
 

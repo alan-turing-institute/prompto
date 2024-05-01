@@ -2,9 +2,12 @@
 name = "batch-llm"
 version = "0.1.0"
 description = "Library for facilitating batch processing of experiments stored as jsonl files. by automating querying LLM APIs and logging progress"
-authors = ["rchan <rchan@turing.ac.uk>",
-           "fedenanni <nanni.federico@gmail.com>",
-           "evelinag <evelina@evelinag.com>"]
+authors = [
+    "rchan <rchan@turing.ac.uk>",
+    "fedenanni <nanni.federico@gmail.com>",
+    "evelinag <evelina@evelinag.com>",
+    "edchapman88 <echapman@turing.ac.uk>"
+]
 readme = "README.md"
 
 [tool.poetry.dependencies]
@@ -15,18 +18,18 @@ accelerate = "^0.28.0"
 fastapi = "^0.110.1"
 uvicorn = "^0.29.0"
 tqdm = "^4.66.2"
-black = {version = "^24.3.0", optional = true}
-isort = {version = "^5.13.2", optional = true}
-pre-commit = {version = "^3.7.0", optional = true}
-ipykernel = {version = "^6.29.4", optional = true}
-pytest = {version = "^8.1.1",   optional = true}
-pytest-asyncio = {version = "^0.23.6", optional = true}
-vertexai = {version = "^1.46.0", optional = true}
-google-cloud-aiplatform = {version = "^1.46.0", optional = true}
-google-generativeai = {version = "^0.4.1", optional = true}
 pillow = "^10.3.0"
-openai = {version = "^1.19.0", optional = true}
-ollama = {version = "^0.1.8", optional = true}
+black = { version = "^24.3.0", optional = true }
+isort = { version = "^5.13.2", optional = true }
+pre-commit = { version = "^3.7.0", optional = true }
+ipykernel = { version = "^6.29.4", optional = true }
+pytest = { version = "^8.1.1", optional = true }
+pytest-asyncio = { version = "^0.23.6", optional = true }
+vertexai = { version = "^1.46.0", optional = true }
+google-cloud-aiplatform = { version = "^1.46.0", optional = true }
+google-generativeai = { version = "^0.4.1", optional = true }
+openai = { version = "^1.19.0", optional = true }
+ollama = { version = "^0.1.8", optional = true }
 huggingface-hub = { version = "^0.22.2", optional = true }
 
 
@@ -50,13 +53,9 @@ dev = [
     "pre-commit",
     "ipykernel",
     "pytest",
-    "pytest-asyncio"
+    "pytest-asyncio",
 ]
-gemini = [
-    "vertexai",
-    "google-cloud-aiplatform",
-    "google-generativeai"
-]
+gemini = ["vertexai", "google-cloud-aiplatform", "google-generativeai"]
 azure_openai = ["openai"]
 openai = ["openai"]
 ollama = ["ollama"]
