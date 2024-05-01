@@ -122,13 +122,11 @@ def is_valid_jsonl(
                 if "prompt" not in data:
                     # if "prompt" is not a key, add index to list
                     issues.append(KeyError('"prompt" key not found'))
-                    valid_indicator = False
 
                 # check if "api" is a key in the json
                 if "api" not in data:
                     # if "api" is not a key, add index to list
                     issues.append(KeyError('"api" key not found'))
-                    valid_indicator = False
 
                 # if parameters is passed, check its a dictionary
                 if "parameters" in data:
@@ -138,7 +136,6 @@ def is_valid_jsonl(
                                 '"parameters" value must be a dictionary if provided'
                             )
                         )
-                        valid_indicator = False
 
                 # if multimedia is passed, check its a dictionary
                 if "multimedia" in data:
@@ -148,16 +145,26 @@ def is_valid_jsonl(
                     issues.extend(multimedia_issues)
                     multimedia_path_errors.add(path_errors)
 
-                # model specific checks
-                issues.extend(ASYNC_MODELS[data["api"]].check_prompt_dict(data))
-                # add model to set of models to check environment variables for
-                model_environments_to_check.add(data["api"])
+                if "api" in data:
+                    if data["api"] not in ASYNC_MODELS:
+                        issues.append(
+                            NotImplementedError(
+                                f"Model {data['api']} is not a valid model. "
+                                f"Please check the model name"
+                            )
+                        )
+                    else:
+                        # model specific checks
+                        issues.extend(ASYNC_MODELS[data["api"]].check_prompt_dict(data))
+                        # add model to set of models to check environment variables for
+                        model_environments_to_check.add(data["api"])
             except json.JSONDecodeError as err:
                 # if line is not a valid json, add index to list
                 issues.append(err)
-                valid_indicator = False
 
             if len(issues) != 0:
+                if not all(isinstance(item, Warning) for item in issues):
+                    valid_indicator = False
                 # log the issues
                 log_msg = f"Line {i} has the following issues: {issues}"
                 if log_file is not None:
