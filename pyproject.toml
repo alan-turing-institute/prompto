@@ -30,6 +30,7 @@ google-cloud-aiplatform = { version = "^1.46.0", optional = true }
 google-generativeai = { version = "^0.4.1", optional = true }
 openai = { version = "^1.19.0", optional = true }
 ollama = { version = "^0.1.8", optional = true }
+huggingface-hub = { version = "^0.22.2", optional = true }
 
 
 [tool.poetry.extras]
@@ -58,6 +59,7 @@ gemini = ["vertexai", "google-cloud-aiplatform", "google-generativeai"]
 azure_openai = ["openai"]
 openai = ["openai"]
 ollama = ["ollama"]
+huggingface_tgi = ["openai", "huggingface-hub"]
 
 [tool.pytest.ini_options]
 log_format = "%(asctime)s %(levelname)s %(message)s"
