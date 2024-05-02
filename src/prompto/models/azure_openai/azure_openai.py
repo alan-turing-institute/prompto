@@ -159,6 +159,7 @@ class AsyncAzureOpenAIModel(AsyncBaseModel):
 
             api_key_env_var = API_KEY_VAR_NAME
             api_endpoint_env_var = API_ENDPOINT_VAR_NAME
+            api_version_env_var = API_VERSION_VAR_NAME
         else:
             # use the model specific environment variables if they exist
             api_key_env_var = f"{API_KEY_VAR_NAME}_{model_name}"
@@ -169,27 +170,30 @@ class AsyncAzureOpenAIModel(AsyncBaseModel):
             if api_endpoint_env_var not in os.environ:
                 api_endpoint_env_var = API_ENDPOINT_VAR_NAME
 
+            api_version_env_var = f"{API_VERSION_VAR_NAME}_{model_name}"
+            if api_version_env_var not in os.environ:
+                api_version_env_var = API_VERSION_VAR_NAME
+
         API_KEY = os.environ.get(api_key_env_var)
         API_ENDPOINT = os.environ.get(api_endpoint_env_var)
+        API_VERSION = os.environ.get(api_version_env_var)
 
         # raise error if the api key or endpoint is not found
         if API_KEY is None:
             raise ValueError(f"{api_key_env_var} environment variable not found")
         if API_ENDPOINT is None:
             raise ValueError(f"{api_endpoint_env_var} environment variable not found")
-
-        api_version = os.environ.get(API_VERSION_VAR_NAME)
-        if api_version is None:
-            api_version = AZURE_API_VERSION_DEFAULT
+        if API_VERSION is None:
+            API_VERSION = AZURE_API_VERSION_DEFAULT
 
         openai.api_key = API_KEY
         openai.azure_endpoint = API_ENDPOINT
         openai.api_type = self.api_type
-        openai.api_version = api_version
+        openai.api_version = API_VERSION
         client = AsyncAzureOpenAI(
             api_key=API_KEY,
             azure_endpoint=API_ENDPOINT,
-            api_version=api_version,
+            api_version=API_VERSION,
         )
 
         # get parameters dict (if any)
@@ -213,6 +217,8 @@ class AsyncAzureOpenAIModel(AsyncBaseModel):
 
         # obtain mode (default is chat)
         mode = prompt_dict.get("mode", "chat")
+        if mode not in ["chat", "completion"]:
+            raise ValueError(f"mode must be one of 'chat' or 'completion', not {mode}")
 
         return prompt, model_name, client, generation_config, mode
 
@@ -228,7 +234,7 @@ class AsyncAzureOpenAIModel(AsyncBaseModel):
                     messages=[{"role": "user", "content": prompt}],
                     **generation_config,
                 )
-            elif mode == "query":
+            elif mode == "completion":
                 response = await client.completions.create(
                     model=model_name,
                     prompt=prompt,

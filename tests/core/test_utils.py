@@ -362,12 +362,17 @@ def test_check_either_required_env_variables_set():
 
     # check passes
     assert check_either_required_env_variables_set([["TEST_VAR", "TEST_VAR_ALT"]]) == []
-    assert (
-        check_either_required_env_variables_set([["TEST_VAR_2", "TEST_VAR_2_ALT"]])
-        == []
-    )
 
-    # check ValueErrors are being returned within the list
+    # check Warnings and ValueErrors are being returned within the list
+    test_case = check_either_required_env_variables_set(
+        [["TEST_VAR_2", "TEST_VAR_2_ALT"]]
+    )
+    assert len(test_case) == 1
+    with pytest.raises(
+        Warning, match="Environment variable 'TEST_VAR_2_ALT' is not set"
+    ):
+        raise test_case[0]
+
     test_case = check_either_required_env_variables_set(
         [["TEST_VAR_3", "TEST_VAR_3_ALT"]]
     )
@@ -387,35 +392,48 @@ def test_check_either_required_env_variables_set():
             ["TEST_VAR_3", "TEST_VAR_3_ALT"],
         ]
     )
-    assert len(test_case) == 1
+    assert len(test_case) == 2
+    with pytest.raises(
+        Warning, match="Environment variable 'TEST_VAR_2_ALT' is not set"
+    ):
+        raise test_case[0]
     with pytest.raises(
         ValueError,
         match=re.escape(
             "At least one of the environment variables '['TEST_VAR_3', 'TEST_VAR_3_ALT']' must be set"
         ),
     ):
-        raise test_case[0]
+        raise test_case[1]
 
     test_case = check_either_required_env_variables_set(
         [
             ["TEST_VAR", "TEST_VAR_ALT"],
             ["TEST_VAR_2", "TEST_VAR_2_ALT"],
+            ["TEST_VAR", "TEST_VAR_ALT", "TEST_VAR_2", "TEST_VAR_2_ALT"],
             ["TEST_VAR_3", "TEST_VAR_3_ALT"],
             ["TEST_VAR_4", "TEST_VAR_4_ALT"],
         ]
     )
-    assert len(test_case) == 2
+    assert len(test_case) == 4
+    with pytest.raises(
+        Warning, match="Environment variable 'TEST_VAR_2_ALT' is not set"
+    ):
+        raise test_case[0]
+    with pytest.raises(
+        Warning, match="Environment variable 'TEST_VAR_2_ALT' is not set"
+    ):
+        raise test_case[1]
     with pytest.raises(
         ValueError,
         match=re.escape(
             "At least one of the environment variables '['TEST_VAR_3', 'TEST_VAR_3_ALT']' must be set"
         ),
     ):
-        raise test_case[0]
+        raise test_case[2]
     with pytest.raises(
         ValueError,
         match=re.escape(
             "At least one of the environment variables '['TEST_VAR_4', 'TEST_VAR_4_ALT']' must be set"
         ),
     ):
-        raise test_case[1]
+        raise test_case[3]

@@ -139,9 +139,9 @@ class AsyncHuggingfaceTGIModel(AsyncBaseModel):
                 generation_config[key] = value
 
         # obtain mode (default is chat)
-        mode = prompt_dict.get("mode", "query")
-        if mode not in ["query", "chat"]:
-            raise ValueError(f"mode must be 'query' or 'chat', not {mode}")
+        mode = prompt_dict.get("mode", "completion")
+        if mode not in ["chat", "completion"]:
+            raise ValueError(f"mode must be 'chat' or 'completion', not {mode}")
 
         return prompt, model_name, client, generation_config, mode
 
@@ -157,7 +157,7 @@ class AsyncHuggingfaceTGIModel(AsyncBaseModel):
                     messages=[{"role": "user", "content": prompt}],
                     **generation_config,
                 )
-            elif mode == "query":
+            elif mode == "completion":
                 response = await client.completions.create(
                     model=self.api_type,
                     prompt=prompt,

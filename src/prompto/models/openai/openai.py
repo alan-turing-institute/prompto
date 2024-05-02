@@ -166,8 +166,8 @@ class AsyncOpenAIModel(AsyncBaseModel):
 
         # obtain mode (default is chat)
         mode = prompt_dict.get("mode", "chat")
-        if mode not in ["chat", "query"]:
-            raise ValueError(f"mode must be one of 'chat' or 'query', not {mode}")
+        if mode not in ["chat", "completion"]:
+            raise ValueError(f"mode must be one of 'chat' or 'completion', not {mode}")
 
         return prompt, model_name, client, generation_config, mode
 
@@ -183,7 +183,7 @@ class AsyncOpenAIModel(AsyncBaseModel):
                     messages=[{"role": "user", "content": prompt}],
                     **generation_config,
                 )
-            elif mode == "query":
+            elif mode == "completion":
                 response = await client.completions.create(
                     model=model_name,
                     prompt=prompt,
