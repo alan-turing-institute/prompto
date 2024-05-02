@@ -282,6 +282,14 @@ def check_either_required_env_variables_set(
     required_env_variables : list[list[str]]
         List of lists of environment variables where at least one of the environment variables must be set.
     """
+    # check required environment variables is a list of lists
+    if not all(
+        isinstance(env_variables, list) for env_variables in required_env_variables
+    ):
+        raise TypeError(
+            "The 'required_env_variables' parameter must be a list of lists of environment variables"
+        )
+
     return [
         ValueError(
             f"At least one of the environment variables '{env_variables}' must be set"
