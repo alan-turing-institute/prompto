@@ -110,6 +110,12 @@ def is_valid_jsonl(
     logging.info(
         f"Checking {file_path}. Any errors will be saved to log file at {log_file}"
     )
+
+    if log_file is not None:
+        with open(log_file, "a") as log:
+            log.write("\n")
+        write_log_message(log_file=log_file, log_message="Running checks...", log=True)
+
     model_environments_to_check = set()
     with open(file_path, "r") as f:
         for i, line in enumerate(f):

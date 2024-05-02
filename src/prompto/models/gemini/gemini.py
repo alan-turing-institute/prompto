@@ -92,9 +92,9 @@ class AsyncGeminiModel(AsyncBaseModel):
             issues.extend(
                 check_optional_env_variables_set(
                     [
-                        f"PROJECT_VAR_NAME_{model_name}",
+                        f"{PROJECT_VAR_NAME}_{model_name}",
                         PROJECT_VAR_NAME,
-                        f"LOCATION_VAR_NAME_{model_name}",
+                        f"{LOCATION_VAR_NAME}_{model_name}",
                         LOCATION_VAR_NAME,
                     ]
                 )
@@ -152,24 +152,11 @@ class AsyncGeminiModel(AsyncBaseModel):
             if location_id not in os.environ:
                 location_id = LOCATION_VAR_NAME
 
-        model_name = prompt_dict.get("model_name", None) or os.environ.get(
-            MODEL_NAME_VAR_NAME
-        )
-        if model_name is None:
-            log_message = (
-                "model_name is not set. Please set the GEMINI_MODEL_NAME environment variable "
-                "or pass the model_name in the prompt dictionary"
-            )
-            write_log_message(log_file=self.log_file, log_message=log_message, log=True)
-            raise ValueError(log_message)
-
-        if project_id is None:
-            project_id = os.environ.get(PROJECT_VAR_NAME, None)
-        if location is None:
-            location = os.environ.get(LOCATION_VAR_NAME, None)
+        PROJECT_ID = os.environ.get(PROJECT_VAR_NAME, None)
+        LOCATION_ID = os.environ.get(LOCATION_VAR_NAME, None)
 
         # initialise the vertexai project
-        vertexai.init(project=project_id, location=location)
+        vertexai.init(project=PROJECT_ID, location=LOCATION_ID)
 
         # define safety settings
         safety_filter = prompt_dict.get("safety_filter", None)

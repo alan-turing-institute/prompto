@@ -15,8 +15,8 @@ from prompto.utils import (
     write_log_message,
 )
 
-API_ENDPOINT_VAR_NAME = "OLLAMA_OPENAI_API_ENDPOINT"
-MODEL_NAME_VAR_NAME = "OLLAMA_OPENAI_MODEL_NAME"
+API_ENDPOINT_VAR_NAME = "OLLAMA_API_ENDPOINT"
+MODEL_NAME_VAR_NAME = "OLLAMA_MODEL_NAME"
 
 
 class AsyncOllamaModel(AsyncBaseModel):
