@@ -1,0 +1,2 @@
+23-04-2024, 17:38: Next experiment: experiment_data.jsonl, Number queries: 5, Estimated completion by: [unknown]
+23-04-2024, 17:38: Completed experiment experiment_data.jsonl! Experiment processing time: 2.678 seconds, Average time per query: 0.536 seconds

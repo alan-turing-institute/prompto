@@ -3,8 +3,8 @@ import json
 import logging
 import os
 
-from batch_llm.models import ASYNC_MODELS
-from batch_llm.utils import move_file, write_log_message
+from prompto.models import ASYNC_MODELS
+from prompto.utils import move_file, write_log_message
 
 
 def check_multimedia(
@@ -110,6 +110,12 @@ def is_valid_jsonl(
     logging.info(
         f"Checking {file_path}. Any errors will be saved to log file at {log_file}"
     )
+
+    if log_file is not None:
+        with open(log_file, "a") as log:
+            log.write("\n")
+        write_log_message(log_file=log_file, log_message="Running checks...", log=True)
+
     model_environments_to_check = set()
     with open(file_path, "r") as f:
         for i, line in enumerate(f):
@@ -122,13 +128,11 @@ def is_valid_jsonl(
                 if "prompt" not in data:
                     # if "prompt" is not a key, add index to list
                     issues.append(KeyError('"prompt" key not found'))
-                    valid_indicator = False
 
                 # check if "api" is a key in the json
                 if "api" not in data:
                     # if "api" is not a key, add index to list
                     issues.append(KeyError('"api" key not found'))
-                    valid_indicator = False
 
                 # if parameters is passed, check its a dictionary
                 if "parameters" in data:
@@ -138,7 +142,6 @@ def is_valid_jsonl(
                                 '"parameters" value must be a dictionary if provided'
                             )
                         )
-                        valid_indicator = False
 
                 # if multimedia is passed, check its a dictionary
                 if "multimedia" in data:
@@ -148,16 +151,26 @@ def is_valid_jsonl(
                     issues.extend(multimedia_issues)
                     multimedia_path_errors.add(path_errors)
 
-                # model specific checks
-                issues.extend(ASYNC_MODELS[data["api"]].check_prompt_dict(data))
-                # add model to set of models to check environment variables for
-                model_environments_to_check.add(data["api"])
+                if "api" in data:
+                    if data["api"] not in ASYNC_MODELS:
+                        issues.append(
+                            NotImplementedError(
+                                f"Model {data['api']} is not a valid model. "
+                                f"Please check the model name"
+                            )
+                        )
+                    else:
+                        # model specific checks
+                        issues.extend(ASYNC_MODELS[data["api"]].check_prompt_dict(data))
+                        # add model to set of models to check environment variables for
+                        model_environments_to_check.add(data["api"])
             except json.JSONDecodeError as err:
                 # if line is not a valid json, add index to list
                 issues.append(err)
-                valid_indicator = False
 
             if len(issues) != 0:
+                if not all(isinstance(item, Warning) for item in issues):
+                    valid_indicator = False
                 # log the issues
                 log_msg = f"Line {i} has the following issues: {issues}"
                 if log_file is not None:

@@ -227,3 +227,83 @@ def log_error_response_chat(
     )
     logging.info(log_message)
     return log_message
+
+
+def check_required_env_variables_set(
+    required_env_variables: list[str],
+) -> list[Exception]:
+    """
+    Check if required environment variables are set.
+
+    Parameters
+    ----------
+    required_env_variables : list[str]
+        List of environment variables that are required to be set.
+
+    Returns
+    -------
+    list[Exception]
+        List of exceptions that are raised if the required environment variables are not set.
+    """
+    return [
+        ValueError(f"Environment variable '{env_variable}' is not set")
+        for env_variable in required_env_variables
+        if env_variable not in os.environ
+    ]
+
+
+def check_optional_env_variables_set(
+    optional_env_variables: list[str],
+) -> list[Exception]:
+    """
+    Check if optional environment variables are set.
+
+    Parameters
+    ----------
+    optional_env_variables : list[str]
+        List of environment variables that are optional to be set.
+    """
+    return [
+        Warning(f"Environment variable '{env_variable}' is not set")
+        for env_variable in optional_env_variables
+        if env_variable not in os.environ
+    ]
+
+
+def check_either_required_env_variables_set(
+    required_env_variables: list[list[str]],
+) -> list[Exception]:
+    """
+    Check if at least one of the required environment variables is set in a list
+    for a given list of lists of environment variables.
+
+    Parameters
+    ----------
+    required_env_variables : list[list[str]]
+        List of lists of environment variables where at least one of the environment variables must be set.
+    """
+    # check required environment variables is a list of lists
+    if not all(
+        isinstance(env_variables, list) for env_variables in required_env_variables
+    ):
+        raise TypeError(
+            "The 'required_env_variables' parameter must be a list of lists of environment variables"
+        )
+
+    issues = []
+    for env_variables in required_env_variables:
+        # see what variables are not set and get a list of Warnings
+        warnings = check_optional_env_variables_set(env_variables)
+
+        if len(warnings) == len(env_variables):
+            # add a value error if none of the variables in this list are set
+            issues.append(
+                ValueError(
+                    f"At least one of the environment variables '{env_variables}' must be set"
+                )
+            )
+        else:
+            # add the warnings to the list of issues if at least one variable is set
+            issues.extend(warnings)
+
+    return issues
