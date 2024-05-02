@@ -6,20 +6,22 @@ import openai
 from openai import AsyncOpenAI, OpenAI
 
 from prompto.models.base import AsyncBaseModel
-from prompto.models.openai.openai_utils import (
-    ChatRoles,
-    check_environment_variables,
-    check_prompt_dict,
-    process_response,
-)
+from prompto.models.openai.openai_utils import ChatRoles, process_response
 from prompto.settings import Settings
 from prompto.utils import (
+    check_either_required_env_variables_set,
+    check_optional_env_variables_set,
+    check_required_env_variables_set,
     log_error_response_chat,
     log_error_response_query,
     log_success_response_chat,
     log_success_response_query,
     write_log_message,
 )
+
+# set names of environment variables
+API_KEY_VAR_NAME = "OPENAI_API_KEY"
+MODEL_NAME_VAR_NAME = "OPENAI_MODEL_NAME"
 
 
 class AsyncOpenAIModel(AsyncBaseModel):
@@ -31,42 +33,117 @@ class AsyncOpenAIModel(AsyncBaseModel):
         **kwargs: Any,
     ):
         super().__init__(settings=settings, log_file=log_file, *args, **kwargs)
-        # try to get the api key and endpoint from the environment variables
-        self.api_key = os.environ.get("OPENAI_API_KEY")
-
-        # raise error if the api key or endpoint is not found
-        if self.api_key is None:
-            raise ValueError("OPENAI_API_KEY environment variable not found")
-
         self.api_type = "openai"
-
-        openai.api_key = self.api_key
-        openai.api_type = self.api_type
-        self.client = AsyncOpenAI(api_key=self.api_key)
 
     @staticmethod
     def check_environment_variables() -> list[Exception]:
-        return check_environment_variables()
+        issues = []
+
+        # check the optional environment variables are set and warn if not
+        issues.extend(
+            check_optional_env_variables_set([API_KEY_VAR_NAME, MODEL_NAME_VAR_NAME])
+        )
+
+        return issues
 
     @staticmethod
     def check_prompt_dict(prompt_dict: dict) -> list[Exception]:
-        return check_prompt_dict(prompt_dict)
+        issues = []
 
-    def _obtain_model_inputs(self, prompt_dict: dict) -> tuple:
+        # check prompt is of the right type
+        match prompt_dict["prompt"]:
+            case str(_):
+                pass
+            case [str(_)]:
+                pass
+            case [{"role": role, "content": _}, *rest]:
+                if role in ChatRoles and all(
+                    [
+                        set(d.keys()) == {"role", "content"} and d["role"] in ChatRoles
+                        for d in rest
+                    ]
+                ):
+                    pass
+            case _:
+                issues.append(
+                    TypeError(
+                        "if api == 'openai', then the prompt must be a str, list[str], or "
+                        "list[dict[str,str]] where the dictionary contains the keys 'role' and "
+                        "'content' only, and the values for 'role' must be one of 'system', 'user' or "
+                        "'assistant'"
+                    )
+                )
+
+        if "model_name" not in prompt_dict:
+            # use the default environment variables
+            # check the required environment variables are set
+            issues.extend(
+                check_required_env_variables_set(
+                    [API_KEY_VAR_NAME, MODEL_NAME_VAR_NAME]
+                )
+            )
+        else:
+            # use the model specific environment variables if they exist
+            model_name = prompt_dict["model_name"]
+
+            # check the required environment variables are set
+            # must either have the model specific key or the default key set
+            issues.extend(
+                check_either_required_env_variables_set(
+                    [
+                        [f"{API_KEY_VAR_NAME}_{model_name}", API_KEY_VAR_NAME],
+                    ]
+                )
+            )
+
+        # if mode is passed, check it is a valid value
+        if "mode" in prompt_dict and prompt_dict["mode"] not in ["chat", "completion"]:
+            issues.append(
+                ValueError(
+                    f"Invalid mode value. Must be 'chat' or 'completion', not {prompt_dict['mode']}"
+                )
+            )
+
+        # TODO: add checks for prompt_dict["parameters"] being
+        # valid arguments for OpenAI API without hardcoding
+
+        return issues
+
+    def _obtain_model_inputs(
+        self, prompt_dict: dict
+    ) -> tuple[str, str, AsyncOpenAI, dict, str]:
         # obtain the prompt from the prompt dictionary
         prompt = prompt_dict["prompt"]
 
         # obtain model name
-        model_name = prompt_dict.get("model_name", None) or os.environ.get(
-            "OPENAI_MODEL_NAME"
-        )
+        model_name = prompt_dict.get("model_name", None)
         if model_name is None:
-            log_message = (
-                "model_name is not set. Please set the OPENAI_MODEL_NAME environment variable "
-                "or pass the model_name in the prompt dictionary"
-            )
-            write_log_message(log_file=self.log_file, log_message=log_message, log=True)
-            raise ValueError(log_message)
+            model_name = os.environ.get(MODEL_NAME_VAR_NAME)
+            if model_name is None:
+                log_message = (
+                    f"model_name is not set. Please set the {MODEL_NAME_VAR_NAME} "
+                    "environment variable or pass the model_name in the prompt dictionary"
+                )
+                write_log_message(
+                    log_file=self.log_file, log_message=log_message, log=True
+                )
+                raise ValueError(log_message)
+
+            api_key_env_var = API_KEY_VAR_NAME
+        else:
+            api_key_env_var = f"{API_KEY_VAR_NAME}_{model_name}"
+            if api_key_env_var not in os.environ:
+                api_key_env_var = API_KEY_VAR_NAME
+
+        API_KEY = os.environ.get(api_key_env_var)
+
+        # raise error if the api key or endpoint is not found
+        if API_KEY is None:
+            raise ValueError(f"{api_key_env_var} environment variable not found")
+
+        openai.api_key = API_KEY
+        openai.api_type = self.api_type
+        client = AsyncOpenAI(api_key=self.api_key)
 
         # get parameters dict (if any)
         generation_config = prompt_dict.get("parameters", None)
@@ -89,25 +166,25 @@ class AsyncOpenAIModel(AsyncBaseModel):
 
         # obtain mode (default is chat)
         mode = prompt_dict.get("mode", "chat")
-        if mode not in ["chat", "query"]:
-            raise ValueError(f"mode must be one of 'chat' or 'query', not {mode}")
+        if mode not in ["chat", "completion"]:
+            raise ValueError(f"mode must be one of 'chat' or 'completion', not {mode}")
 
-        return prompt, model_name, generation_config, mode
+        return prompt, model_name, client, generation_config, mode
 
     async def _async_query_string(self, prompt_dict: dict, index: int | str) -> dict:
-        prompt, model_name, generation_config, mode = self._obtain_model_inputs(
+        prompt, model_name, client, generation_config, mode = self._obtain_model_inputs(
             prompt_dict
         )
 
         try:
             if mode == "chat":
-                response = await self.client.chat.completions.create(
+                response = await client.chat.completions.create(
                     model=model_name,
                     messages=[{"role": "user", "content": prompt}],
                     **generation_config,
                 )
-            elif mode == "query":
-                response = await self.client.completions.create(
+            elif mode == "completion":
+                response = await client.completions.create(
                     model=model_name,
                     prompt=prompt,
                     **generation_config,
@@ -140,7 +217,7 @@ class AsyncOpenAIModel(AsyncBaseModel):
             raise err
 
     async def _async_query_chat(self, prompt_dict: dict, index: int | str) -> dict:
-        prompt, model_name, generation_config, mode = self._obtain_model_inputs(
+        prompt, model_name, client, generation_config, _ = self._obtain_model_inputs(
             prompt_dict
         )
 
@@ -151,7 +228,7 @@ class AsyncOpenAIModel(AsyncBaseModel):
                 # add the user message to the list of messages
                 messages.append({"role": "user", "content": message})
                 # obtain the response from the model
-                response = await self.client.chat.completions.create(
+                response = await client.chat.completions.create(
                     model=model_name,
                     messages=messages,
                     **generation_config,
@@ -194,12 +271,12 @@ class AsyncOpenAIModel(AsyncBaseModel):
             raise err
 
     async def _async_query_history(self, prompt_dict: dict, index: int | str) -> dict:
-        prompt, model_name, generation_config, mode = self._obtain_model_inputs(
+        prompt, model_name, client, generation_config, _ = self._obtain_model_inputs(
             prompt_dict
         )
 
         try:
-            response = await self.client.chat.completions.create(
+            response = await client.chat.completions.create(
                 model=model_name,
                 messages=prompt,
                 **generation_config,

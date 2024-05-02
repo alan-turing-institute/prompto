@@ -2,8 +2,12 @@ import logging
 import os
 
 import pytest
+import regex as re
 
 from prompto.utils import (
+    check_either_required_env_variables_set,
+    check_optional_env_variables_set,
+    check_required_env_variables_set,
     create_folder,
     log_error_response_chat,
     log_error_response_query,
@@ -224,3 +228,212 @@ def test_log_error_response_chat(caplog):
     )
     assert log_message == expected_log_message
     assert expected_log_message in caplog.text
+
+
+def test_check_required_env_variables_set():
+    os.environ["TEST_VAR"] = "test"
+    os.environ["TEST_VAR_2"] = "test"
+    if "TEST_VAR_3" in os.environ:
+        del os.environ["TEST_VAR_3"]
+    if "TEST_VAR_4" in os.environ:
+        del os.environ["TEST_VAR_4"]
+
+    # check passes
+    assert check_required_env_variables_set(["TEST_VAR"]) == []
+    assert check_required_env_variables_set(["TEST_VAR", "TEST_VAR_2"]) == []
+
+    # check ValueErrors are being returned within the list
+    test_case = check_required_env_variables_set(["TEST_VAR_3"])
+    assert len(test_case) == 1
+    with pytest.raises(
+        ValueError, match="Environment variable 'TEST_VAR_3' is not set"
+    ):
+        raise test_case[0]
+
+    test_case = check_required_env_variables_set(["TEST_VAR", "TEST_VAR_3"])
+    assert len(test_case) == 1
+    with pytest.raises(
+        ValueError, match="Environment variable 'TEST_VAR_3' is not set"
+    ):
+        raise test_case[0]
+
+    test_case = check_required_env_variables_set(
+        ["TEST_VAR", "TEST_VAR_2", "TEST_VAR_3"]
+    )
+    assert len(test_case) == 1
+    with pytest.raises(
+        ValueError, match="Environment variable 'TEST_VAR_3' is not set"
+    ):
+        raise test_case[0]
+
+    test_case = check_required_env_variables_set(["TEST_VAR_3", "TEST_VAR_4"])
+    assert len(test_case) == 2
+    with pytest.raises(
+        ValueError, match="Environment variable 'TEST_VAR_3' is not set"
+    ):
+        raise test_case[0]
+    with pytest.raises(
+        ValueError, match="Environment variable 'TEST_VAR_4' is not set"
+    ):
+        raise test_case[1]
+
+    test_case = check_required_env_variables_set(
+        ["TEST_VAR", "TEST_VAR_2", "TEST_VAR_3", "TEST_VAR_4"]
+    )
+    assert len(test_case) == 2
+    with pytest.raises(
+        ValueError, match="Environment variable 'TEST_VAR_3' is not set"
+    ):
+        raise test_case[0]
+    with pytest.raises(
+        ValueError, match="Environment variable 'TEST_VAR_4' is not set"
+    ):
+        raise test_case[1]
+
+
+def test_check_optional_env_variables_set():
+    os.environ["TEST_VAR"] = "test"
+    os.environ["TEST_VAR_2"] = "test"
+    if "TEST_VAR_3" in os.environ:
+        del os.environ["TEST_VAR_3"]
+    if "TEST_VAR_4" in os.environ:
+        del os.environ["TEST_VAR_4"]
+
+    # check passes
+    assert check_optional_env_variables_set(["TEST_VAR"]) == []
+    assert check_optional_env_variables_set(["TEST_VAR", "TEST_VAR_2"]) == []
+
+    # check Warnings are being returned within the list
+    test_case = check_optional_env_variables_set(["TEST_VAR_3"])
+    assert len(test_case) == 1
+    with pytest.raises(Warning, match="Environment variable 'TEST_VAR_3' is not set"):
+        raise test_case[0]
+
+    test_case = check_optional_env_variables_set(["TEST_VAR", "TEST_VAR_3"])
+    assert len(test_case) == 1
+    with pytest.raises(Warning, match="Environment variable 'TEST_VAR_3' is not set"):
+        raise test_case[0]
+
+    test_case = check_optional_env_variables_set(
+        ["TEST_VAR", "TEST_VAR_2", "TEST_VAR_3"]
+    )
+    assert len(test_case) == 1
+    with pytest.raises(Warning, match="Environment variable 'TEST_VAR_3' is not set"):
+        raise test_case[0]
+
+    test_case = check_optional_env_variables_set(["TEST_VAR_3", "TEST_VAR_4"])
+    assert len(test_case) == 2
+    with pytest.raises(Warning, match="Environment variable 'TEST_VAR_3' is not set"):
+        raise test_case[0]
+    with pytest.raises(Warning, match="Environment variable 'TEST_VAR_4' is not set"):
+        raise test_case[1]
+
+    test_case = check_optional_env_variables_set(
+        ["TEST_VAR", "TEST_VAR_2", "TEST_VAR_3", "TEST_VAR_4"]
+    )
+    assert len(test_case) == 2
+    with pytest.raises(Warning, match="Environment variable 'TEST_VAR_3' is not set"):
+        raise test_case[0]
+    with pytest.raises(Warning, match="Environment variable 'TEST_VAR_4' is not set"):
+        raise test_case[1]
+
+
+def test_check_either_required_env_variables_set():
+    os.environ["TEST_VAR"] = "test"
+    os.environ["TEST_VAR_ALT"] = "test"
+    os.environ["TEST_VAR_2"] = "test"
+    if "TEST_VAR_2_ALT" in os.environ:
+        del os.environ["TEST_VAR_2_ALT"]
+    if "TEST_VAR_3" in os.environ:
+        del os.environ["TEST_VAR_3"]
+    if "TEST_VAR_3_ALT" in os.environ:
+        del os.environ["TEST_VAR_3_ALT"]
+    if "TEST_VAR_4" in os.environ:
+        del os.environ["TEST_VAR_4"]
+    if "TEST_VAR_4_ALT" in os.environ:
+        del os.environ["TEST_VAR_4_ALT"]
+
+    # check error raising if parameter is not a list of lists
+    with pytest.raises(
+        TypeError,
+        match="The 'required_env_variables' parameter must be a list of lists of environment variables",
+    ):
+        check_either_required_env_variables_set(["TEST_VAR", "TEST_VAR_ALT"])
+
+    # check passes
+    assert check_either_required_env_variables_set([["TEST_VAR", "TEST_VAR_ALT"]]) == []
+
+    # check Warnings and ValueErrors are being returned within the list
+    test_case = check_either_required_env_variables_set(
+        [["TEST_VAR_2", "TEST_VAR_2_ALT"]]
+    )
+    assert len(test_case) == 1
+    with pytest.raises(
+        Warning, match="Environment variable 'TEST_VAR_2_ALT' is not set"
+    ):
+        raise test_case[0]
+
+    test_case = check_either_required_env_variables_set(
+        [["TEST_VAR_3", "TEST_VAR_3_ALT"]]
+    )
+    assert len(test_case) == 1
+    with pytest.raises(
+        ValueError,
+        match=re.escape(
+            "At least one of the environment variables '['TEST_VAR_3', 'TEST_VAR_3_ALT']' must be set"
+        ),
+    ):
+        raise test_case[0]
+
+    test_case = check_either_required_env_variables_set(
+        [
+            ["TEST_VAR", "TEST_VAR_ALT"],
+            ["TEST_VAR_2", "TEST_VAR_2_ALT"],
+            ["TEST_VAR_3", "TEST_VAR_3_ALT"],
+        ]
+    )
+    assert len(test_case) == 2
+    with pytest.raises(
+        Warning, match="Environment variable 'TEST_VAR_2_ALT' is not set"
+    ):
+        raise test_case[0]
+    with pytest.raises(
+        ValueError,
+        match=re.escape(
+            "At least one of the environment variables '['TEST_VAR_3', 'TEST_VAR_3_ALT']' must be set"
+        ),
+    ):
+        raise test_case[1]
+
+    test_case = check_either_required_env_variables_set(
+        [
+            ["TEST_VAR", "TEST_VAR_ALT"],
+            ["TEST_VAR_2", "TEST_VAR_2_ALT"],
+            ["TEST_VAR", "TEST_VAR_ALT", "TEST_VAR_2", "TEST_VAR_2_ALT"],
+            ["TEST_VAR_3", "TEST_VAR_3_ALT"],
+            ["TEST_VAR_4", "TEST_VAR_4_ALT"],
+        ]
+    )
+    assert len(test_case) == 4
+    with pytest.raises(
+        Warning, match="Environment variable 'TEST_VAR_2_ALT' is not set"
+    ):
+        raise test_case[0]
+    with pytest.raises(
+        Warning, match="Environment variable 'TEST_VAR_2_ALT' is not set"
+    ):
+        raise test_case[1]
+    with pytest.raises(
+        ValueError,
+        match=re.escape(
+            "At least one of the environment variables '['TEST_VAR_3', 'TEST_VAR_3_ALT']' must be set"
+        ),
+    ):
+        raise test_case[2]
+    with pytest.raises(
+        ValueError,
+        match=re.escape(
+            "At least one of the environment variables '['TEST_VAR_4', 'TEST_VAR_4_ALT']' must be set"
+        ),
+    ):
+        raise test_case[3]
