@@ -4,14 +4,18 @@ from typing import Any
 
 import requests
 
-from batch_llm.models.base import AsyncBaseModel
-from batch_llm.models.quart.quart_utils import async_client_generate
-from batch_llm.settings import Settings
-from batch_llm.utils import (
+from prompto.models.base import AsyncBaseModel
+from prompto.models.quart.quart_utils import async_client_generate
+from prompto.settings import Settings
+from prompto.utils import (
+    check_optional_env_variables_set,
     log_error_response_query,
     log_success_response_query,
     write_log_message,
 )
+
+API_ENDPOINT_VAR_NAME = "QUART_API_ENDPOINT"
+MODEL_NAME_VAR_NAME = "QUART_MODEL_NAME"
 
 
 class AsyncQuartModel(AsyncBaseModel):
@@ -23,62 +27,59 @@ class AsyncQuartModel(AsyncBaseModel):
         **kwargs: Any,
     ):
         super().__init__(settings=settings, log_file=log_file, *args, **kwargs)
-        self.quart_endpoint = os.environ.get("QUART_API_ENDPOINT")
+        self.quart_endpoint = os.environ.get(API_ENDPOINT_VAR_NAME)
 
         if self.quart_endpoint is None:
-            raise ValueError("QUART_API_ENDPOINT environment variable not found")
+            raise ValueError(f"{API_ENDPOINT_VAR_NAME} environment variable not found")
 
     @staticmethod
     def check_environment_variables() -> list[Exception]:
         issues = []
 
-        # check the required environment variables are set
-
-        required_env_vars = ["QUART_API_ENDPOINT"]
-        for var in required_env_vars:
-            if var not in os.environ:
-                issues.append(ValueError(f"Environment variable {var} is not set"))
-
         # check the optional environment variables are set and warn if not
-        other_env_vars = ["QUART_MODEL_NAME"]
-        for var in other_env_vars:
-            if var not in os.environ:
-                issues.append(Warning(f"Environment variable {var} is not set"))
+        issues.extend(
+            check_optional_env_variables_set(
+                [API_ENDPOINT_VAR_NAME, MODEL_NAME_VAR_NAME]
+            )
+        )
 
         # check if the API endpoint is a valid endpoint
-        if "QUART_API_ENDPOINT" in os.environ:
-            response = requests.get(os.environ["QUART_API_ENDPOINT"])
-
+        if API_ENDPOINT_VAR_NAME in os.environ:
+            response = requests.get(os.environ[API_ENDPOINT_VAR_NAME])
             if response.status_code != 200:
-
                 issues.append(
                     ValueError(
-                        f"QUART_API_ENDPOINT is not working. Status code:: {response.status_code}"
+                        f"{API_ENDPOINT_VAR_NAME} is not working. Status code: {response.status_code}"
                     )
                 )
         return issues
+
+    @staticmethod
+    def check_prompt_dict(prompt_dict: dict) -> list[Exception]:
+        return []
 
     def _obtain_model_inputs(self, prompt_dict: dict) -> tuple:
         # obtain the prompt from the prompt dictionary
         prompt = prompt_dict["prompt"]
 
         model_name = prompt_dict.get("model_name", None) or os.environ.get(
-            "QUART_MODEL_NAME"
+            MODEL_NAME_VAR_NAME
         )
         if model_name is None:
             log_message = (
-                "model_name is not set. Please set the QUART_MODEL_NAME environment variable "
-                "or pass the model_name in the prompt dictionary"
+                f"model_name is not set. Please set the {MODEL_NAME_VAR_NAME} "
+                "environment variable or pass the model_name in the prompt dictionary"
             )
             write_log_message(log_file=self.log_file, log_message=log_message, log=True)
             raise ValueError(log_message)
-
         else:
             headers = {"Content-Type": "application/json"}
             data = {"text": "Test", "model": model_name}
 
             response = requests.post(
-                os.environ["QUART_API_ENDPOINT"], headers=headers, data=json.dumps(data)
+                os.environ[API_ENDPOINT_VAR_NAME],
+                headers=headers,
+                data=json.dumps(data),
             )
             if response.status_code != 200:
                 log_message = f"{model_name} is not a valid model."
