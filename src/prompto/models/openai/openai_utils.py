@@ -10,10 +10,20 @@ class ChatRoles(Enum):
     ASSISTANT = "assistant"
 
 
-def process_response(response: ChatCompletion | Completion) -> str:
+def process_response(response: ChatCompletion | Completion) -> str | list[str]:
     if isinstance(response, ChatCompletion):
-        return response.choices[0].message.content
+        if len(response.choices) == 0:
+            return ""
+        elif len(response.choices) == 1:
+            return response.choices[0].message.content
+        else:
+            return [choice.message.content for choice in response.choices]
     elif isinstance(response, Completion):
-        return response.choices[0].text
+        if len(response.choices) == 0:
+            return ""
+        elif len(response.choices) == 1:
+            return response.choices[0].text
+        else:
+            return [choice.text for choice in response.choices]
     else:
         raise ValueError(f"Unsupported response type: {type(response)}")
