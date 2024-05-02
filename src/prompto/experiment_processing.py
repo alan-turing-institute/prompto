@@ -8,9 +8,9 @@ from datetime import datetime, timedelta
 from tqdm import tqdm
 from tqdm.asyncio import tqdm_asyncio
 
-from batch_llm.models import ASYNC_MODELS
-from batch_llm.settings import Settings
-from batch_llm.utils import (
+from prompto.models import ASYNC_MODELS
+from prompto.settings import Settings
+from prompto.utils import (
     create_folder,
     move_file,
     sort_jsonl_files_by_creation_time,
@@ -92,7 +92,7 @@ class Experiment:
         for item in self.experiment_prompts:
             model = item.get("api")
             if model not in grouped_dict:
-                grouped_dict[model] = [item]
+                grouped_dict[model] = []
 
             grouped_dict[model].append(item)
 
@@ -428,7 +428,7 @@ async def query_model_and_record_response(
         # fill in response with error message
         completed_prompt_dict = prompt_dict
         completed_prompt_dict["response"] = f"{type(err).__name__} - {err}"
-    except Exception as err:
+    except (Exception, asyncio.CancelledError, asyncio.TimeoutError) as err:
         if attempt == settings.max_attempts:
             # we've already tried max_attempts times, so log the error and save an error response
             log_message = (

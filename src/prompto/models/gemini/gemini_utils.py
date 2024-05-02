@@ -1,6 +1,6 @@
 import os
 
-from vertexai.generative_models import GenerationConfig, Image, Part
+from vertexai.generative_models import Image, Part
 
 
 def parse_multimedia_dict(multimedia_dict: dict, media_folder: str) -> Part:
@@ -87,46 +87,3 @@ def process_safety_attributes(response: dict) -> dict:
     safety_attributes["finish_reason"] = str(response.candidates[0].finish_reason.name)
 
     return safety_attributes
-
-
-def check_environment_variables() -> list[Exception]:
-    issues = []
-
-    # check the required environment variables are set
-    required_env_vars = ["GEMINI_PROJECT_ID", "GEMINI_LOCATION"]
-    for var in required_env_vars:
-        if var not in os.environ:
-            issues.append(ValueError(f"Environment variable {var} is not set"))
-
-    other_env_vars = ["GEMINI_MODEL_NAME"]
-    for var in other_env_vars:
-        if var not in os.environ:
-            issues.append(Warning(f"Environment variable {var} is not set"))
-
-    return issues
-
-
-def check_prompt_dict(prompt_dict: dict) -> list[Exception]:
-    issues = []
-
-    # check the parameter settings are valid
-    # if safety_filter is provided, check that it's one of the valid options
-    if "safety_filter" in prompt_dict and prompt_dict["safety_filter"] not in [
-        "none",
-        "few",
-        "some",
-        "default",
-        "most",
-    ]:
-        issues.append(ValueError("Invalid safety_filter value"))
-
-    # if generation_config is provided, check that it can create a valid GenerationConfig object
-    if "parameters" in prompt_dict:
-        try:
-            GenerationConfig(**prompt_dict["parameters"])
-        except TypeError as err:
-            issues.append(TypeError(f"Invalid generation_config parameter: {err}"))
-        except Exception as err:
-            issues.append(ValueError(f"Invalid generation_config parameter: {err}"))
-
-    return issues
