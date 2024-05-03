@@ -82,7 +82,8 @@ def main():
 
         return jsonify({"response": response})
 
-    app.run(host='0.0.0.0', port=args.port)
+    app.run(host="0.0.0.0", port=args.port)
+
 
 if __name__ == "__main__":
     main()
