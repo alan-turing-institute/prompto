@@ -20,6 +20,7 @@ from prompto.models.gemini.gemini_utils import (
 )
 from prompto.settings import Settings
 from prompto.utils import (
+    FILE_WRITE_LOCK,
     check_optional_env_variables_set,
     check_required_env_variables_set,
     log_error_response_chat,
@@ -122,7 +123,7 @@ class AsyncGeminiModel(AsyncBaseModel):
 
         return issues
 
-    def _obtain_model_inputs(self, prompt_dict: dict) -> tuple:
+    async def _obtain_model_inputs(self, prompt_dict: dict) -> tuple:
         prompt = prompt_dict["prompt"]
 
         # obtain model name
@@ -135,9 +136,10 @@ class AsyncGeminiModel(AsyncBaseModel):
                     f"model_name is not set. Please set the {MODEL_NAME_VAR_NAME} "
                     "environment variable or pass the model_name in the prompt dictionary"
                 )
-                write_log_message(
-                    log_file=self.log_file, log_message=log_message, log=True
-                )
+                async with FILE_WRITE_LOCK:
+                    write_log_message(
+                        log_file=self.log_file, log_message=log_message, log=True
+                    )
                 raise ValueError(log_message)
 
             project_id = PROJECT_VAR_NAME
@@ -231,7 +233,7 @@ class AsyncGeminiModel(AsyncBaseModel):
 
     async def _async_query_string(self, prompt_dict: dict, index: int | str):
         prompt, model_name, safety_settings, generation_config, multimedia = (
-            self._obtain_model_inputs(prompt_dict=prompt_dict)
+            await self._obtain_model_inputs(prompt_dict=prompt_dict)
         )
 
         # prepare the contents to send to the model
@@ -280,9 +282,10 @@ class AsyncGeminiModel(AsyncBaseModel):
                 f"Response is empty and blocked (i={index}) \nPrompt: {prompt[:50]}..."
             )
             if isinstance(err, IndexError):
-                write_log_message(
-                    log_file=self.log_file, log_message=log_message, log=True
-                )
+                async with FILE_WRITE_LOCK:
+                    write_log_message(
+                        log_file=self.log_file, log_message=log_message, log=True
+                    )
                 response_text = ""
                 if len(response.candidates) == 0:
                     safety_attributes = {
@@ -303,16 +306,17 @@ class AsyncGeminiModel(AsyncBaseModel):
                 prompt=prompt,
                 error_as_string=error_as_string,
             )
-            write_log_message(
-                log_file=self.log_file,
-                log_message=log_message,
-                log=True,
-            )
+            async with FILE_WRITE_LOCK:
+                write_log_message(
+                    log_file=self.log_file,
+                    log_message=log_message,
+                    log=True,
+                )
             raise err
 
     async def _async_query_chat(self, prompt_dict: dict, index: int | str):
-        prompt, model_name, safety_settings, generation_config, multimedia = (
-            self._obtain_model_inputs(prompt_dict=prompt_dict)
+        prompt, model_name, safety_settings, generation_config, _ = (
+            await self._obtain_model_inputs(prompt_dict=prompt_dict)
         )
 
         model = GenerativeModel(model_name)
@@ -376,8 +380,10 @@ class AsyncGeminiModel(AsyncBaseModel):
             logging.info(
                 f"Response is empty and blocked (i={index}) \nPrompt: {message[:50]}..."
             )
-
-            write_log_message(log_file=self.log_file, log_message=log_message, log=True)
+            async with FILE_WRITE_LOCK:
+                write_log_message(
+                    log_file=self.log_file, log_message=log_message, log=True
+                )
             response_text = ""
             if len(response.candidates) == 0:
                 safety_attributes = {
@@ -401,11 +407,12 @@ class AsyncGeminiModel(AsyncBaseModel):
                 responses_so_far=response_list,
                 error_as_string=error_as_string,
             )
-            write_log_message(
-                log_file=self.log_file,
-                log_message=log_message,
-                log=True,
-            )
+            async with FILE_WRITE_LOCK:
+                write_log_message(
+                    log_file=self.log_file,
+                    log_message=log_message,
+                    log=True,
+                )
             raise err
 
     async def async_query(self, prompt_dict: dict, index: int | str = "NA") -> dict:

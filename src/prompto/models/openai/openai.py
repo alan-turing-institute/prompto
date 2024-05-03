@@ -3,12 +3,13 @@ import os
 from typing import Any
 
 import openai
-from openai import AsyncOpenAI, OpenAI
+from openai import AsyncOpenAI
 
 from prompto.models.base import AsyncBaseModel
 from prompto.models.openai.openai_utils import ChatRoles, process_response
 from prompto.settings import Settings
 from prompto.utils import (
+    FILE_WRITE_LOCK,
     check_either_required_env_variables_set,
     check_optional_env_variables_set,
     check_required_env_variables_set,
@@ -109,7 +110,7 @@ class AsyncOpenAIModel(AsyncBaseModel):
 
         return issues
 
-    def _obtain_model_inputs(
+    async def _obtain_model_inputs(
         self, prompt_dict: dict
     ) -> tuple[str, str, AsyncOpenAI, dict, str]:
         # obtain the prompt from the prompt dictionary
@@ -124,9 +125,10 @@ class AsyncOpenAIModel(AsyncBaseModel):
                     f"model_name is not set. Please set the {MODEL_NAME_VAR_NAME} "
                     "environment variable or pass the model_name in the prompt dictionary"
                 )
-                write_log_message(
-                    log_file=self.log_file, log_message=log_message, log=True
-                )
+                async with FILE_WRITE_LOCK:
+                    write_log_message(
+                        log_file=self.log_file, log_message=log_message, log=True
+                    )
                 raise ValueError(log_message)
 
             api_key_env_var = API_KEY_VAR_NAME
@@ -172,8 +174,8 @@ class AsyncOpenAIModel(AsyncBaseModel):
         return prompt, model_name, client, generation_config, mode
 
     async def _async_query_string(self, prompt_dict: dict, index: int | str) -> dict:
-        prompt, model_name, client, generation_config, mode = self._obtain_model_inputs(
-            prompt_dict
+        prompt, model_name, client, generation_config, mode = (
+            await self._obtain_model_inputs(prompt_dict)
         )
 
         try:
@@ -209,16 +211,17 @@ class AsyncOpenAIModel(AsyncBaseModel):
                 prompt=prompt,
                 error_as_string=error_as_string,
             )
-            write_log_message(
-                log_file=self.log_file,
-                log_message=log_message,
-                log=True,
-            )
+            async with FILE_WRITE_LOCK:
+                write_log_message(
+                    log_file=self.log_file,
+                    log_message=log_message,
+                    log=True,
+                )
             raise err
 
     async def _async_query_chat(self, prompt_dict: dict, index: int | str) -> dict:
-        prompt, model_name, client, generation_config, _ = self._obtain_model_inputs(
-            prompt_dict
+        prompt, model_name, client, generation_config, _ = (
+            await self._obtain_model_inputs(prompt_dict)
         )
 
         messages = []
@@ -263,16 +266,17 @@ class AsyncOpenAIModel(AsyncBaseModel):
                 responses_so_far=response_list,
                 error_as_string=error_as_string,
             )
-            write_log_message(
-                log_file=self.log_file,
-                log_message=log_message,
-                log=True,
-            )
+            async with FILE_WRITE_LOCK:
+                write_log_message(
+                    log_file=self.log_file,
+                    log_message=log_message,
+                    log=True,
+                )
             raise err
 
     async def _async_query_history(self, prompt_dict: dict, index: int | str) -> dict:
-        prompt, model_name, client, generation_config, _ = self._obtain_model_inputs(
-            prompt_dict
+        prompt, model_name, client, generation_config, _ = (
+            await self._obtain_model_inputs(prompt_dict)
         )
 
         try:
@@ -301,11 +305,12 @@ class AsyncOpenAIModel(AsyncBaseModel):
                 prompt=prompt,
                 error_as_string=error_as_string,
             )
-            write_log_message(
-                log_file=self.log_file,
-                log_message=log_message,
-                log=True,
-            )
+            async with FILE_WRITE_LOCK:
+                write_log_message(
+                    log_file=self.log_file,
+                    log_message=log_message,
+                    log=True,
+                )
             raise err
 
     async def async_query(self, prompt_dict: dict, index: int | str = "NA") -> dict:
