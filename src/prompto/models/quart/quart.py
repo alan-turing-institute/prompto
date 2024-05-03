@@ -98,7 +98,7 @@ class AsyncQuartModel(AsyncBaseModel):
             identifier = AsyncQuartModel._get_model_name_identifier(model_name)
             QUART_ENDPOINT = f"{API_ENDPOINT_VAR_NAME}_{identifier}"
             if QUART_ENDPOINT not in os.environ:
-                QUART_ENDPOINT = generation_config
+                QUART_ENDPOINT = API_ENDPOINT_VAR_NAME
 
         quart_endpoint = os.environ.get(QUART_ENDPOINT)
 
