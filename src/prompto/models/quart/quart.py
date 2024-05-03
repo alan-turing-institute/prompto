@@ -1,4 +1,3 @@
-import json
 import os
 from typing import Any
 
@@ -8,6 +7,7 @@ from prompto.models.base import AsyncBaseModel
 from prompto.models.quart.quart_utils import async_client_generate
 from prompto.settings import Settings
 from prompto.utils import (
+    FILE_WRITE_LOCK,
     check_optional_env_variables_set,
     log_error_response_query,
     log_success_response_query,
@@ -58,7 +58,7 @@ class AsyncQuartModel(AsyncBaseModel):
     def check_prompt_dict(prompt_dict: dict) -> list[Exception]:
         return []
 
-    def _obtain_model_inputs(self, prompt_dict: dict) -> tuple:
+    async def _obtain_model_inputs(self, prompt_dict: dict) -> tuple:
         # obtain the prompt from the prompt dictionary
         prompt = prompt_dict["prompt"]
 
@@ -70,7 +70,10 @@ class AsyncQuartModel(AsyncBaseModel):
                 f"model_name is not set. Please set the {MODEL_NAME_VAR_NAME} "
                 "environment variable or pass the model_name in the prompt dictionary"
             )
-            write_log_message(log_file=self.log_file, log_message=log_message, log=True)
+            async with FILE_WRITE_LOCK:
+                write_log_message(
+                    log_file=self.log_file, log_message=log_message, log=True
+                )
             raise ValueError(log_message)
 
         # get parameters dict (if any)
@@ -83,7 +86,7 @@ class AsyncQuartModel(AsyncBaseModel):
         return prompt, model_name, options
 
     async def _async_query_string(self, prompt_dict: dict, index: int | str) -> dict:
-        prompt, model_name, options = self._obtain_model_inputs(prompt_dict)
+        prompt, model_name, options = await self._obtain_model_inputs(prompt_dict)
 
         try:
             response = await async_client_generate(
@@ -112,11 +115,12 @@ class AsyncQuartModel(AsyncBaseModel):
                 prompt=prompt,
                 error_as_string=error_as_string,
             )
-            write_log_message(
-                log_file=self.log_file,
-                log_message=log_message,
-                log=True,
-            )
+            async with FILE_WRITE_LOCK:
+                write_log_message(
+                    log_file=self.log_file,
+                    log_message=log_message,
+                    log=True,
+                )
             raise err
 
     async def async_query(self, prompt_dict: dict, index: int | str = "NA") -> dict:
