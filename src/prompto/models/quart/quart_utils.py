@@ -8,7 +8,7 @@ async def async_client_generate(data: dict, url: str, headers: dict) -> dict:
     async with aiohttp.ClientSession() as session:
         # send the POST request with the data
         async with session.post(
-            url, data=json.dumps(data), headers=headers
+            f"{url}/generate", data=json.dumps(data), headers=headers
         ) as response:
             # check if the response status is OK
             if response.status == 200:
