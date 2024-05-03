@@ -8,7 +8,9 @@ from prompto.models.quart.quart_utils import async_client_generate
 from prompto.settings import Settings
 from prompto.utils import (
     FILE_WRITE_LOCK,
+    check_either_required_env_variables_set,
     check_optional_env_variables_set,
+    check_required_env_variables_set,
     log_error_response_query,
     log_success_response_query,
     write_log_message,
@@ -27,21 +29,23 @@ class AsyncQuartModel(AsyncBaseModel):
         **kwargs: Any,
     ):
         super().__init__(settings=settings, log_file=log_file, *args, **kwargs)
-        self.quart_endpoint = os.environ.get(API_ENDPOINT_VAR_NAME)
 
-        if self.quart_endpoint is None:
-            raise ValueError(f"{API_ENDPOINT_VAR_NAME} environment variable not found")
+    @staticmethod
+    def _get_model_name_identifier(model_name: str) -> str:
+        model_name = model_name.replace("-", "_")
+        model_name = model_name.replace("/", "_")
+        model_name = model_name.replace(".", "_")
+        return model_name
 
     @staticmethod
     def check_environment_variables() -> list[Exception]:
         issues = []
 
+        # check the required environment variables are set
+        issues.extend(check_required_env_variables_set([API_ENDPOINT_VAR_NAME]))
+
         # check the optional environment variables are set and warn if not
-        issues.extend(
-            check_optional_env_variables_set(
-                [API_ENDPOINT_VAR_NAME, MODEL_NAME_VAR_NAME]
-            )
-        )
+        issues.extend(check_optional_env_variables_set([MODEL_NAME_VAR_NAME]))
 
         # check if the API endpoint is a valid endpoint
         if API_ENDPOINT_VAR_NAME in os.environ:
@@ -56,46 +60,79 @@ class AsyncQuartModel(AsyncBaseModel):
 
     @staticmethod
     def check_prompt_dict(prompt_dict: dict) -> list[Exception]:
-        return []
+        issues = []
+
+        if "model_name" not in prompt_dict:
+            # use the default environment variables
+            # check the required environment variables are set
+            issues.extend(check_required_env_variables_set([API_ENDPOINT_VAR_NAME]))
+
+        else:
+            # use the model specific environment variables
+            model_name = prompt_dict["model_name"]
+            # replace any invalid characters in the model name
+            identifier = AsyncQuartModel._get_model_name_identifier(model_name)
+
+            # check the required environment variables are set
+            # must either have the model specific endpoint or the default endpoint set
+            issues.extend(
+                check_either_required_env_variables_set(
+                    [[f"{API_ENDPOINT_VAR_NAME}_{identifier}", API_ENDPOINT_VAR_NAME]]
+                )
+            )
+
+        return issues
 
     async def _obtain_model_inputs(self, prompt_dict: dict) -> tuple:
         # obtain the prompt from the prompt dictionary
         prompt = prompt_dict["prompt"]
 
-        model_name = prompt_dict.get("model_name", None) or os.environ.get(
-            MODEL_NAME_VAR_NAME
-        )
+        # obtain model name
+        model_name = prompt_dict.get("model_name", None)
         if model_name is None:
-            log_message = (
-                f"model_name is not set. Please set the {MODEL_NAME_VAR_NAME} "
-                "environment variable or pass the model_name in the prompt dictionary"
-            )
-            async with FILE_WRITE_LOCK:
-                write_log_message(
-                    log_file=self.log_file, log_message=log_message, log=True
-                )
-            raise ValueError(log_message)
+            # use the default environment variables
+            QUART_ENDPOINT = API_ENDPOINT_VAR_NAME
+        else:
+            # use the model specific environment variables if they exist
+            # replace any invalid characters in the model name
+            identifier = AsyncQuartModel._get_model_name_identifier(model_name)
+            QUART_ENDPOINT = f"{API_ENDPOINT_VAR_NAME}_{identifier}"
+            if QUART_ENDPOINT not in os.environ:
+                QUART_ENDPOINT = generation_config
+
+        quart_endpoint = os.environ.get(QUART_ENDPOINT)
+
+        if quart_endpoint is None:
+            raise ValueError(f"{QUART_ENDPOINT} environment variable not found")
 
         # get parameters dict (if any)
-        options = prompt_dict.get("parameters", None)
-        if options is None:
-            options = {}
-        if type(options) is not dict:
-            raise TypeError(f"parameters must be a dictionary, not {type(options)}")
+        generation_config = prompt_dict.get("parameters", None)
+        if generation_config is None:
+            generation_config = {}
+        if type(generation_config) is not dict:
+            raise TypeError(
+                f"parameters must be a dictionary, not {type(generation_config)}"
+            )
 
-        return prompt, model_name, options
+        return prompt, model_name, quart_endpoint, generation_config
 
     async def _async_query_string(self, prompt_dict: dict, index: int | str) -> dict:
-        prompt, model_name, options = await self._obtain_model_inputs(prompt_dict)
+        prompt, model_name, quart_endpoint, generation_config = (
+            await self._obtain_model_inputs(prompt_dict)
+        )
 
         try:
             response = await async_client_generate(
-                data={"text": prompt, "model": model_name, "options": options},
-                url=self.quart_endpoint,
+                data={
+                    "text": prompt,
+                    "model": model_name,
+                    "options": generation_config,
+                },
+                url=quart_endpoint,
                 headers={"Content-Type": "application/json"},
             )
 
-            response_text = response["response"]
+            response_text = response["response"][0]["generated_text"]
 
             log_success_response_query(
                 index=index,
