@@ -72,21 +72,6 @@ class AsyncQuartModel(AsyncBaseModel):
             )
             write_log_message(log_file=self.log_file, log_message=log_message, log=True)
             raise ValueError(log_message)
-        else:
-            headers = {"Content-Type": "application/json"}
-            data = {"text": "Test", "model": model_name}
-
-            response = requests.post(
-                os.environ[API_ENDPOINT_VAR_NAME],
-                headers=headers,
-                data=json.dumps(data),
-            )
-            if response.status_code != 200:
-                log_message = f"{model_name} is not a valid model."
-                write_log_message(
-                    log_file=self.log_file, log_message=log_message, log=True
-                )
-                raise ValueError(log_message)
 
         # get parameters dict (if any)
         options = prompt_dict.get("parameters", None)
