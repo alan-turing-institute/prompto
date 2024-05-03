@@ -31,6 +31,8 @@ google-generativeai = { version = "^0.4.1", optional = true }
 openai = { version = "^1.19.0", optional = true }
 ollama = { version = "^0.1.8", optional = true }
 huggingface-hub = { version = "^0.22.2", optional = true }
+quart = { version = "^0.19.5", optional = true }
+aiohttp = { version = "^3.9.5", optional = true }
 
 
 [tool.poetry.extras]
@@ -45,7 +47,10 @@ all = [
     "google-cloud-aiplatform",
     "google-generativeai",
     "openai",
-    "ollama"
+    "ollama",
+    "huggingface-hub",
+    "quart",
+    "aiohttp",
 ]
 dev = [
     "black",
@@ -60,6 +65,7 @@ azure_openai = ["openai"]
 openai = ["openai"]
 ollama = ["ollama"]
 huggingface_tgi = ["openai", "huggingface-hub"]
+quart = ["quart", "aiohttp"]
 
 [tool.pytest.ini_options]
 log_format = "%(asctime)s %(levelname)s %(message)s"
@@ -75,3 +81,4 @@ prompto_run_checks = "prompto.scripts.run_checks:main"
 prompto_create_judge_file = "prompto.scripts.create_judge_file:main"
 prompto_obtain_missing_jsonl = "prompto.scripts.obtain_missing_jsonl:main"
 prompto_convert_images = "prompto.scripts.convert_images:main"
+prompto_quart_server = "prompto.models.quart.quart_api:main"
