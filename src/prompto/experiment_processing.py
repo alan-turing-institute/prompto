@@ -274,11 +274,12 @@ class ExperimentPipeline:
         request_interval = 60 / self.settings.max_queries
         tasks = []
         for_model_string = f"for model {model} " if model is not None else ""
+        attempt_frac = f"{attempt}/{self.settings.max_attempts}"
 
         for index, item in enumerate(
             tqdm(
                 prompt_dicts,
-                desc=f"Sending {len(prompt_dicts)} queries {for_model_string}",
+                desc=f"Sending {len(prompt_dicts)} queries {for_model_string} (attempt {attempt_frac})",
                 unit="query",
             )
         ):
@@ -299,7 +300,9 @@ class ExperimentPipeline:
 
         # wait for all tasks to complete before returning
         responses = await tqdm_asyncio.gather(
-            *tasks, desc=f"Waiting for responses {for_model_string}", unit="query"
+            *tasks,
+            desc=f"Waiting for responses {for_model_string} (attempt {attempt_frac})",
+            unit="query",
         )
 
         return prompt_dicts, responses
