@@ -4,7 +4,10 @@ from typing import Any
 import requests
 
 from prompto.models.base import AsyncBaseModel
-from prompto.models.quart.quart_utils import async_client_generate
+from prompto.models.quart.quart_utils import (
+    async_client_generate,
+    get_model_name_identifier,
+)
 from prompto.settings import Settings
 from prompto.utils import (
     FILE_WRITE_LOCK,
@@ -29,13 +32,6 @@ class AsyncQuartModel(AsyncBaseModel):
         **kwargs: Any,
     ):
         super().__init__(settings=settings, log_file=log_file, *args, **kwargs)
-
-    @staticmethod
-    def _get_model_name_identifier(model_name: str) -> str:
-        model_name = model_name.replace("-", "_")
-        model_name = model_name.replace("/", "_")
-        model_name = model_name.replace(".", "_")
-        return model_name
 
     @staticmethod
     def check_environment_variables() -> list[Exception]:
@@ -71,7 +67,7 @@ class AsyncQuartModel(AsyncBaseModel):
             # use the model specific environment variables
             model_name = prompt_dict["model_name"]
             # replace any invalid characters in the model name
-            identifier = AsyncQuartModel._get_model_name_identifier(model_name)
+            identifier = get_model_name_identifier(model_name)
 
             # check the required environment variables are set
             # must either have the model specific endpoint or the default endpoint set
@@ -95,7 +91,7 @@ class AsyncQuartModel(AsyncBaseModel):
         else:
             # use the model specific environment variables if they exist
             # replace any invalid characters in the model name
-            identifier = AsyncQuartModel._get_model_name_identifier(model_name)
+            identifier = get_model_name_identifier(model_name)
             QUART_ENDPOINT = f"{API_ENDPOINT_VAR_NAME}_{identifier}"
             if QUART_ENDPOINT not in os.environ:
                 QUART_ENDPOINT = API_ENDPOINT_VAR_NAME
