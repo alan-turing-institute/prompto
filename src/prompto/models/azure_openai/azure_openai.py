@@ -196,6 +196,7 @@ class AsyncAzureOpenAIModel(AsyncBaseModel):
             api_key=API_KEY,
             azure_endpoint=API_ENDPOINT,
             api_version=API_VERSION,
+            max_retries=1,
         )
 
         # get parameters dict (if any)

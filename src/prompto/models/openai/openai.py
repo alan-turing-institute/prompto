@@ -145,7 +145,7 @@ class AsyncOpenAIModel(AsyncBaseModel):
 
         openai.api_key = API_KEY
         openai.api_type = self.api_type
-        client = AsyncOpenAI(api_key=self.api_key)
+        client = AsyncOpenAI(api_key=API_KEY, max_retries=1)
 
         # get parameters dict (if any)
         generation_config = prompt_dict.get("parameters", None)
