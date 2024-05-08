@@ -1,4 +1,5 @@
 import argparse
+import asyncio
 import logging
 import os
 
@@ -7,15 +8,15 @@ from prompto.settings import Settings
 from prompto.utils import move_file
 
 
-def main():
+async def main():
     """
     Runs a particular experiment in the input data folder.
     """
     # parse command line arguments
     parser = argparse.ArgumentParser()
     parser.add_argument(
-        "--experiment-file",
-        "-e",
+        "--file",
+        "-f",
         help=(
             "Path to the experiment file. "
             "If it's not already in the input folder of the data folder provided, "
@@ -73,31 +74,45 @@ def main():
     # log the settings that are set for the pipeline
     logging.info(settings)
 
-    # check if file exists
-    if not os.path.exists():
-        raise FileNotFoundError(f"File {args.experiment_file} not found")
-    if not args.experiment_file.endswith(".jsonl"):
-        raise ValueError("Experiment file must be a jsonl file")
-
     # get experiment file name (without the path)
-    file_name_split = args.experiment_file.split("/")
+    file_name_split = args.file.split("/")
+    logging.info(file_name_split)
     experiment_file_name = file_name_split[-1]
+    logging.info(experiment_file_name)
+
+    # check if file exists or if it is in the input folder
+    if not args.file.endswith(".jsonl"):
+        raise ValueError("Experiment file must be a jsonl file")
+    if not os.path.exists(args.file) and experiment_file_name not in os.listdir(
+        settings.input_folder
+    ):
+        # only raise error if file path doesn't exist and it's not a file in the input folder
+        raise FileNotFoundError(
+            f"File {args.file} not found, and {experiment_file_name} not "
+            f"in the input folder {settings.input_folder}"
+        )
 
     # if the experiment file is not in the input folder, move it there
     if experiment_file_name not in os.listdir(settings.input_folder):
-        move_file(
-            args.experiment_file, f"{settings.input_folder}/{experiment_file_name}"
+        logging.info(
+            f"File {args.file} is not in the input folder {settings.input_folder}"
         )
+        move_file(args.file, f"{settings.input_folder}/{experiment_file_name}")
 
     # initialise experiment pipeline
     experiment_pipeline = ExperimentPipeline(settings=settings)
 
     # create Experiment object
-    experiment = Experiment(file_name=args.experiment_file, settings=settings)
+    experiment = Experiment(file_name=experiment_file_name, settings=settings)
 
     # process the experiment
-    experiment_pipeline.process_experiment(experiment=experiment)
+    logging.info(f"Processing experiment {experiment.experiment_name}...")
+    await experiment_pipeline.process_experiment(experiment=experiment)
 
 
 if __name__ == "__main__":
-    main()
+    asyncio.run(main())
+
+
+def cli():
+    asyncio.run(main())
