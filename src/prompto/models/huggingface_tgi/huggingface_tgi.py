@@ -114,10 +114,10 @@ class AsyncHuggingfaceTGIModel(AsyncBaseModel):
 
         openai.api_key = API_KEY
         openai.api_type = API_ENDPOINT
-
         client = AsyncOpenAI(
             base_url=f"{API_ENDPOINT}/v1/",
             api_key=API_KEY,
+            max_retries=1,
         )
 
         # get parameters dict (if any)
