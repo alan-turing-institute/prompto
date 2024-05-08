@@ -3,6 +3,14 @@ import json
 import aiohttp
 
 
+def get_model_name_identifier(model_name: str) -> str:
+    model_name = model_name.replace("-", "_")
+    model_name = model_name.replace("/", "_")
+    model_name = model_name.replace(".", "_")
+
+    return model_name
+
+
 async def async_client_generate(data: dict, url: str, headers: dict) -> dict:
     # create an asynchronous HTTP session
     async with aiohttp.ClientSession() as session:
