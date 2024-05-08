@@ -77,7 +77,7 @@ build-backend = "poetry.core.masonry.api"
 
 [tool.poetry.scripts]
 prompto_run_pipeline = "prompto.scripts.run_pipeline:main"
-prompto_run_experiment = "prompto.scripts.run_experiment:main"
+prompto_run_experiment = "prompto.scripts.run_experiment:cli"
 prompto_run_checks = "prompto.scripts.run_checks:main"
 prompto_create_judge_file = "prompto.scripts.create_judge_file:main"
 prompto_obtain_missing_jsonl = "prompto.scripts.obtain_missing_jsonl:main"
