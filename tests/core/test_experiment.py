@@ -63,7 +63,7 @@ def test_experiment_init(temporary_data_folders):
     assert isinstance(experiment.creation_time, str)
     assert (
         experiment.log_file
-        == f"data/output/test_in_input/{experiment.creation_time}-log.txt"
+        == f"data/output/test_in_input/{experiment.creation_time}-test_in_input-log.txt"
     )
 
     # test str method

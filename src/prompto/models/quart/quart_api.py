@@ -64,6 +64,10 @@ def main():
     except Exception as exc:
         raise Exception(f"Error loading model '{args.model_name}'") from exc
 
+    @app.get("/")
+    async def ping():
+        return "pong"
+
     @app.route("/generate", methods=["POST"])
     async def generate():
         data = await request.get_json()

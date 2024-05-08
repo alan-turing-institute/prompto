@@ -11,13 +11,12 @@ from tqdm.asyncio import tqdm_asyncio
 from prompto.models import ASYNC_MODELS
 from prompto.settings import Settings
 from prompto.utils import (
+    FILE_WRITE_LOCK,
     create_folder,
     move_file,
     sort_jsonl_files_by_creation_time,
     write_log_message,
 )
-
-file_write_lock = asyncio.Lock()
 
 
 class Experiment:
@@ -64,7 +63,7 @@ class Experiment:
         ).strftime("%d-%m-%Y-%H-%M-%S")
         # log file is a file in the experiment output folder
         self.log_file: str = os.path.join(
-            self.output_folder, f"{self.creation_time}-log.txt"
+            self.output_folder, f"{self.creation_time}-{self.experiment_name}-log.txt"
         )
         # file path of the completed experiment file in the output experiment folder
         self.output_completed_file_path: str = os.path.join(
@@ -249,9 +248,10 @@ class ExperimentPipeline:
             f"Experiment processing time: {round(processing_time, 3)} seconds, "
             f"Average time per query: {round(avg_query_processing_time, 3)} seconds"
         )
-        write_log_message(
-            log_file=experiment.log_file, log_message=log_message, log=True
-        )
+        async with FILE_WRITE_LOCK:
+            write_log_message(
+                log_file=experiment.log_file, log_message=log_message, log=True
+            )
 
         # keep track of the average processing time per query for the experiment
         self.average_per_query_processing_times.append(avg_query_processing_time)
@@ -274,11 +274,12 @@ class ExperimentPipeline:
         request_interval = 60 / self.settings.max_queries
         tasks = []
         for_model_string = f"for model {model} " if model is not None else ""
+        attempt_frac = f"{attempt}/{self.settings.max_attempts}"
 
         for index, item in enumerate(
             tqdm(
                 prompt_dicts,
-                desc=f"Sending {len(prompt_dicts)} queries {for_model_string}",
+                desc=f"Sending {len(prompt_dicts)} queries {for_model_string} (attempt {attempt_frac})",
                 unit="query",
             )
         ):
@@ -299,7 +300,9 @@ class ExperimentPipeline:
 
         # wait for all tasks to complete before returning
         responses = await tqdm_asyncio.gather(
-            *tasks, desc=f"Waiting for responses {for_model_string}", unit="query"
+            *tasks,
+            desc=f"Waiting for responses {for_model_string} (attempt {attempt_frac})",
+            unit="query",
         )
 
         return prompt_dicts, responses
@@ -422,9 +425,10 @@ async def query_model_and_record_response(
             f"Error (i={index}) [id={prompt_dict.get('id', 'NA')}]. "
             f"{type(err).__name__} - {err}"
         )
-        write_log_message(
-            log_file=experiment.log_file, log_message=log_message, log=True
-        )
+        async with FILE_WRITE_LOCK:
+            write_log_message(
+                log_file=experiment.log_file, log_message=log_message, log=True
+            )
         # fill in response with error message
         completed_prompt_dict = prompt_dict
         completed_prompt_dict["response"] = f"{type(err).__name__} - {err}"
@@ -435,9 +439,10 @@ async def query_model_and_record_response(
                 f"Error (i={index}) [id={prompt_dict.get('id', 'NA')}] after maximum {settings.max_attempts} attempts: "
                 f"{type(err).__name__} - {err}"
             )
-            write_log_message(
-                log_file=experiment.log_file, log_message=log_message, log=True
-            )
+            async with FILE_WRITE_LOCK:
+                write_log_message(
+                    log_file=experiment.log_file, log_message=log_message, log=True
+                )
             # fill in response with error message and note that we've tried max_attempts times
             completed_prompt_dict = prompt_dict
             completed_prompt_dict["response"] = (
@@ -450,14 +455,15 @@ async def query_model_and_record_response(
                 f"Error (i={index}) [id={prompt_dict.get('id', 'NA')}] on attempt {attempt} of {settings.max_attempts}: "
                 f"{type(err).__name__} - {err} - adding to the queue to try again later"
             )
-            write_log_message(
-                log_file=experiment.log_file, log_message=log_message, log=True
-            )
+            async with FILE_WRITE_LOCK:
+                write_log_message(
+                    log_file=experiment.log_file, log_message=log_message, log=True
+                )
             # return Execption to indicate that we should try this prompt again later
             return Exception(f"{type(err).__name__} - {err}\n")
 
-    # record the response in a jsonl file asynchronously using file_write_lock
-    async with file_write_lock:
+    # record the response in a jsonl file asynchronously using FILE_WRITE_LOCK
+    async with FILE_WRITE_LOCK:
         with open(experiment.output_completed_file_path, "a") as f:
             json.dump(completed_prompt_dict, f)
             f.write("\n")

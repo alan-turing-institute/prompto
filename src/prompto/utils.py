@@ -1,6 +1,9 @@
+import asyncio
 import logging
 import os
 from datetime import datetime
+
+FILE_WRITE_LOCK = asyncio.Lock()
 
 
 def sort_jsonl_files_by_creation_time(input_folder: str) -> list[str]:
