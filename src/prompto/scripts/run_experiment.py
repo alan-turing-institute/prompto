@@ -21,8 +21,6 @@ async def main():
             "Path to the experiment file. "
             "If it's not already in the input folder of the data folder provided, "
             "it is moved into the input folder. "
-            "If it is already in the input folder, you can either "
-            "provide the full path or just the filename."
         ),
         type=str,
         required=True,
@@ -81,14 +79,8 @@ async def main():
     # check if file exists or if it is in the input folder
     if not args.file.endswith(".jsonl"):
         raise ValueError("Experiment file must be a jsonl file")
-    if not os.path.exists(args.file) and experiment_file_name not in os.listdir(
-        settings.input_folder
-    ):
-        # only raise error if file path doesn't exist and it's not a file in the input folder
-        raise FileNotFoundError(
-            f"File {args.file} not found, and {experiment_file_name} not "
-            f"in the input folder {settings.input_folder}"
-        )
+    if not os.path.exists(args.file):
+        raise FileNotFoundError(f"File {args.file} not found")
 
     # if the experiment file is not in the input folder, move it there
     if experiment_file_name not in os.listdir(settings.input_folder):
