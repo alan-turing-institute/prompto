@@ -76,9 +76,7 @@ async def main():
 
     # get experiment file name (without the path)
     file_name_split = args.file.split("/")
-    logging.info(file_name_split)
     experiment_file_name = file_name_split[-1]
-    logging.info(experiment_file_name)
 
     # check if file exists or if it is in the input folder
     if not args.file.endswith(".jsonl"):
