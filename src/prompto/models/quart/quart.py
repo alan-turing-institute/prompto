@@ -37,11 +37,12 @@ class AsyncQuartModel(AsyncBaseModel):
     def check_environment_variables() -> list[Exception]:
         issues = []
 
-        # check the required environment variables are set
-        issues.extend(check_required_env_variables_set([API_ENDPOINT_VAR_NAME]))
-
         # check the optional environment variables are set and warn if not
-        issues.extend(check_optional_env_variables_set([MODEL_NAME_VAR_NAME]))
+        issues.extend(
+            check_optional_env_variables_set(
+                [API_ENDPOINT_VAR_NAME, MODEL_NAME_VAR_NAME]
+            )
+        )
 
         # check if the API endpoint is a valid endpoint
         if API_ENDPOINT_VAR_NAME in os.environ:
