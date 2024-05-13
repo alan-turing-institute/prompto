@@ -24,7 +24,7 @@ def main():
         "-m",
         help="Maximum number of queries to send within a minute",
         type=int,
-        default=30,
+        default=10,
     )
     parser.add_argument(
         "--max-attempts",
