@@ -7,6 +7,7 @@ from prompto.models.openai.openai import AsyncOpenAIModel
 from prompto.models.quart.quart import AsyncQuartModel
 from prompto.models.testing.testing_model import AsyncTestModel
 
+# define the API names that are available in the pipeline and the corresponding model classess
 ASYNC_MODELS: dict[str, AsyncBaseModel] = {
     "azure-openai": AsyncAzureOpenAIModel,
     "gemini": AsyncGeminiModel,
@@ -17,4 +18,4 @@ ASYNC_MODELS: dict[str, AsyncBaseModel] = {
     "quart": AsyncQuartModel,
 }
 
-__all__ = ["MODELS", "ASYNC_MODELS"]
+__all__ = ["ASYNC_MODELS"]

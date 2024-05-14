@@ -25,6 +25,17 @@ API_KEY_VAR_NAME = "HUGGINGFACE_TGI_API_KEY"
 
 
 class AsyncHuggingfaceTGIModel(AsyncBaseModel):
+    """
+    Class for asynchrnous querying of the Huggingface TGI API endpoint.
+
+    Parameters
+    ----------
+    settings : Settings
+        The settings for the pipeline/experiment
+    log_file : str
+        The path to the log file
+    """
+
     def __init__(
         self,
         settings: Settings,
@@ -37,20 +48,75 @@ class AsyncHuggingfaceTGIModel(AsyncBaseModel):
 
     @staticmethod
     def check_environment_variables() -> list[Exception]:
+        """
+        For Huggingface TGI, there are some optional variables
+        - HUGGINGFACE_TGI_API_KEY
+        - HUGGINGFACE_TGI_API_ENDPOINT
+
+        These are optional only if the model_name is passed
+        in the prompt dictionary. If the model_name is not
+        passed, then the default values are taken from these
+        environment variables.
+
+        These are checked in the check_prompt_dict method to ensure that
+        the required environment variables are set.
+
+        Returns
+        -------
+        list[Exception]
+            A list of exceptions or warnings if the environment variables
+            are not set
+        """
         issues = []
 
         # check the optional environment variables are set and warn if not
         issues.extend(
-            check_optional_env_variables_set([API_ENDPOINT_VAR_NAME, API_KEY_VAR_NAME])
+            check_optional_env_variables_set([API_KEY_VAR_NAME, API_ENDPOINT_VAR_NAME])
         )
 
         return issues
 
     @staticmethod
     def check_prompt_dict(prompt_dict: dict) -> list[Exception]:
+        """
+        For Huggingface TGI, we make the following model-specific checks:
+        - "prompt" must be a string or a list of strings
+        - if "model_name" is not in the prompt dictionary, then the default
+          environment variables (HUGGINGFACE_TGI_API_KEY, HUGGINGFACE_TGI_API_ENDPOINT)
+          must be set
+        - if "model_name" is in the prompt dictionary, then for API key and endpoint,
+          either the model-specific environment variables (HUUGINGFACE_TGI_API_KEY_{model_name},
+          HUGGINGFACE_TGI_API_ENDPOINT_{model_name}) can be set, or the default environment
+          variables must be set
+
+        Parameters
+        ----------
+        prompt_dict : dict
+            The prompt dictionary to check
+
+        Returns
+        -------
+        list[Exception]
+            A list of exceptions or warnings if the prompt dictionary
+            is not valid
+        """
         # for Huggingface TGI, there's specific environment variables that need to be set
         # for different model_name values
         issues = []
+
+        # check prompt is of the right type
+        match prompt_dict["prompt"]:
+            case str(_):
+                pass
+            case [str(_)]:
+                pass
+            case _:
+                issues.append(
+                    TypeError(
+                        "if api == 'huggingface-tgi', then prompt must be a string or a list, "
+                        f"not {type(prompt_dict['prompt'])}"
+                    )
+                )
 
         if "model_name" not in prompt_dict:
             # use the default environment variables
@@ -83,6 +149,20 @@ class AsyncHuggingfaceTGIModel(AsyncBaseModel):
     async def _obtain_model_inputs(
         self, prompt_dict: dict
     ) -> tuple[str, str, AsyncOpenAI, dict, str]:
+        """
+        Async method to obtain the model inputs from the prompt dictionary.
+
+        Parameters
+        ----------
+        prompt_dict : dict
+            The prompt dictionary to use for querying the model
+
+        Returns
+        -------
+        tuple[str, str, AsyncAzureOpenAI, dict, str]
+            A tuple containing the prompt, model name, AzureOpenAI client object,
+            the generation config, and mode to use for querying the model
+        """
         # obtain the prompt from the prompt dictionary
         prompt = prompt_dict["prompt"]
 
@@ -147,6 +227,11 @@ class AsyncHuggingfaceTGIModel(AsyncBaseModel):
         return prompt, model_name, client, generation_config, mode
 
     async def _async_query_string(self, prompt_dict: dict, index: int | str) -> dict:
+        """
+        Async method for querying the model with a string prompt
+        (prompt_dict["prompt"] is a string),
+        i.e. single-turn completion or chat.
+        """
         prompt, model_name, client, generation_config, mode = (
             await self._obtain_model_inputs(prompt_dict)
         )
@@ -196,6 +281,11 @@ class AsyncHuggingfaceTGIModel(AsyncBaseModel):
             raise err
 
     async def _async_query_chat(self, prompt_dict: dict, index: int | str) -> dict:
+        """
+        Async method for querying the model with a chat prompt
+        (prompt_dict["prompt"] is a list of strings to sequentially send to the model),
+        i.e. multi-turn chat with history.
+        """
         prompt, model_name, client, generation_config, _ = (
             await self._obtain_model_inputs(prompt_dict)
         )
@@ -255,20 +345,42 @@ class AsyncHuggingfaceTGIModel(AsyncBaseModel):
             raise err
 
     async def async_query(self, prompt_dict: dict, index: int | str = "NA") -> dict:
-        if isinstance(prompt_dict["prompt"], str):
-            response_dict = await self._async_query_string(
-                prompt_dict=prompt_dict,
-                index=index,
-            )
-        elif isinstance(prompt_dict["prompt"], list):
-            response_dict = await self._async_query_chat(
-                prompt_dict=prompt_dict,
-                index=index,
-            )
-        else:
-            raise TypeError(
-                f"if api == 'huggingface-tgi', then prompt must be a string or a list, "
-                f"not {type(prompt_dict['prompt'])}"
-            )
+        """
+        Async Method for querying the API/model asynchronously.
 
-        return response_dict
+        Parameters
+        ----------
+        prompt_dict : dict
+            The prompt dictionary to use for querying the model
+        index : int | str
+            The index of the prompt in the experiment
+
+        Returns
+        -------
+        dict
+            Completed prompt_dict with "response" key storing the response(s)
+            from the LLM
+
+        Raises
+        ------
+        Exception
+            If an error occurs during the querying process
+        """
+        match prompt_dict["prompt"]:
+            case str(_):
+                return await self._async_query_string(
+                    prompt_dict=prompt_dict,
+                    index=index,
+                )
+            case [str(_)]:
+                return await self._async_query_chat(
+                    prompt_dict=prompt_dict,
+                    index=index,
+                )
+            case _:
+                pass
+
+        raise TypeError(
+            f"if api == 'huggingface-tgi', then prompt must be a string or a list, "
+            f"not {type(prompt_dict['prompt'])}"
+        )
