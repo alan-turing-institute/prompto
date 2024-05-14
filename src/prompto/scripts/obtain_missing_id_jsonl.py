@@ -1,5 +1,3 @@
-from __future__ import annotations
-
 import argparse
 import json
 
@@ -29,8 +27,11 @@ def get_ids(file: str, id_name: str = "id") -> list[str]:
         for line in tqdm(
             f, desc="Reading jsonl file to get ids", unit="lines", total=n_lines
         ):
-            data = json.loads(line)
-            ids.append(data[id_name])
+            try:
+                data = json.loads(line)
+                ids.append(data[id_name])
+            except:
+                print(f"Error reading line: {line}")
 
     return ids
 
