@@ -20,6 +20,23 @@ from prompto.utils import (
 
 
 class Experiment:
+    """
+    A class to represent an experiment. An experiment is a jsonl file
+    containing a list of prompts to be sent to a language model.
+
+    An Experiment is also ran with a set of settings for the pipeline
+    to run the experiment.
+
+    Parameters
+    ----------
+    file_name : str
+        The name of the jsonl experiment file
+    settings : Settings
+        Settings for the pipeline which includes the data folder locations,
+        the maximum number of queries to send per minute, the maximum number
+        of attempts when retrying, and whether to run the experiment in parallel
+    """
+
     def __init__(
         self,
         file_name: str,
@@ -76,13 +93,29 @@ class Experiment:
 
         # grouped experiment prompts by model
         self.grouped_experiment_prompts: dict[str, list[dict]] = (
-            self.group_prompts_by_model()
+            self.group_prompts_by_api()
         )
 
     def __str__(self) -> str:
         return self.file_name
 
-    def group_prompts_by_model(self) -> dict[str, list[dict]]:
+    def group_prompts_by_api(self) -> dict[str, list[dict]]:
+        """
+        Function to group the experiment prompts by the API.
+
+        If the class already has the grouped_experiment_prompts attribute,
+        then it will return that attribute. Otherwise, it will group the
+        experiment prompts by the API and return the grouped dictionary,
+        where each key is an API name and the value is a list of prompts
+        for that API.
+
+        Returns
+        -------
+        dict[str, list[dict]]
+            Dictionary where the keys are the API names and the values are
+            lists of prompts for that API (i.e. lines in the jsonl file
+            which have "api" key equal to the key in the dictionary)
+        """
         # return self.grouped_experiment_prompts if it exists
         if hasattr(self, "grouped_experiment_prompts"):
             return self.grouped_experiment_prompts
@@ -99,6 +132,17 @@ class Experiment:
 
 
 class ExperimentPipeline:
+    """
+    A class for the experiment pipeline process.
+
+    Parameters
+    ----------
+    settings : Settings
+        Settings for the pipeline which includes the data folder locations,
+        the maximum number of queries to send per minute, the maximum number
+        of attempts when retrying, and whether to run the experiment in parallel
+    """
+
     def __init__(
         self,
         settings: Settings,
@@ -110,11 +154,14 @@ class ExperimentPipeline:
 
     def run(self) -> None:
         """
-        Run the pipeline process of continually checking for new experiment files
-        and running the experiments sequentially.
+        Run the pipeline process of continually by checking for
+        new experiment files and running the experiments sequentially
+        in the order that the files were created.
+
+        The process will continue to run until the program is stopped.
         """
         while True:
-            # obtain experiment files sorted by creation time
+            # obtain experiment files sorted by creation/change time
             self.update_experiment_files()
 
             if len(self.experiment_files) != 0:
@@ -130,7 +177,10 @@ class ExperimentPipeline:
                 self.log_progress(experiment=next_experiment)
 
     def update_experiment_files(self) -> None:
-        # get the list of experiment files
+        """
+        Function to update the list of experiment files by sorting
+        the files by creation/change time (using `os.path.getctime`).
+        """
         self.experiment_files = sort_jsonl_files_by_creation_time(
             input_folder=self.settings.input_folder
         )
@@ -141,6 +191,11 @@ class ExperimentPipeline:
     ) -> None:
         """
         Function to log the estimated time of completion of the next experiment.
+
+        Parameters
+        ----------
+        experiment : Experiment
+            The experiment that is being processed
         """
         now = datetime.now()
         if self.overall_avg_proc_times == 0:
@@ -169,6 +224,11 @@ class ExperimentPipeline:
     ) -> None:
         """
         Function to log the progress of the queue of experiments.
+
+        Parameters
+        ----------
+        experiment : Experiment
+            The experiment that was just processed
         """
         # log completion of experiment
         logging.info(f"Completed experiment: {experiment}!")
@@ -186,7 +246,23 @@ class ExperimentPipeline:
         experiment: Experiment,
     ) -> None:
         """
-        Function to process the next experiment in the queue.
+        Function to process an experiment.
+
+        The method will first create a folder for the experiment in the output
+        folder named after the experiment name (filename without the .jsonl extension).
+        It will then move the input experiment file to the output folder.
+
+        The method will then send the prompts to the API asynchronously and
+        record the responses in an output jsonl file in the output experiment folder.
+        Logs will be printed and saved in the log file for the experiment.
+
+        All output files are timestamped with the creation/change time of the
+        experiment file.
+
+        Parameters
+        ----------
+        experiment : Experiment
+            The experiment that is being processed
         """
         logging.info(f"Processing experiment: {experiment}...")
         start_time = time.time()
@@ -270,6 +346,44 @@ class ExperimentPipeline:
     ) -> tuple[list[dict], list[dict | Exception]]:
         """
         Send requests to the API asynchronously.
+
+        The method will send the prompts to the API asynchronously with a wait
+        interval between requests in order to not exceed the maximum number of
+        queries per minute specified by the experiment settings.
+
+        For each prompt_dict in prompt_dicts, the method will query the model
+        and record the response in a jsonl file if successful. If the query fails,
+        an Exception is returned.
+
+        A tuple is returned containing the input prompt_dicts and their corresponding
+        completed prompt_dicts with the responses from the API. For any failed queries,
+        the response will be an Exception.
+
+        This tuple can be used to determine easily which prompts failed and potentially
+        need to be retried.
+
+        Parameters
+        ----------
+        experiment : Experiment
+            The experiment that is being processed
+        prompt_dicts : list[dict]
+            List of dictionaries containing the prompt and other parameters
+            to be sent to the API. Each dictionary must have keys "prompt" and "api".
+            Optionally, they can have a "parameters" key. Some APIs may have
+            other specific required keys
+        attempt : int
+            Integer containing the attempt number to process the prompt
+        model : str | None, optional
+            API/Model name, by default None. If None, then the model is
+            not specified in the logs
+
+        Returns
+        -------
+        tuple[list[dict], list[dict | Exception]]
+            A tuple containing the input prompt_dicts and their corresponding
+            responses (given in the form of completed prompt_dicts, i.e. a
+            prompt_dict with a completed "response" key) from the API.
+            For any failed queries, the response will be an Exception.
         """
         request_interval = 60 / self.settings.max_queries
         tasks = []
@@ -316,6 +430,23 @@ class ExperimentPipeline:
         """
         Send requests to the API asynchronously and retry failed queries
         up to a maximum number of attempts.
+
+        Wrapper function around send_requests that retries failed queries
+        for a maximum number of attempts specified by the experiment settings
+        or until all queries are successful.
+
+        Parameters
+        ----------
+        experiment : Experiment
+            The experiment that is being processed
+        prompt_dicts : list[dict]
+            List of dictionaries containing the prompt and other parameters
+            to be sent to the API. Each dictionary must have keys "prompt" and "api".
+            Optionally, they can have a "parameters" key. Some APIs may have
+            other specific required keys
+        model : str | None, optional
+            API/Model name, by default None. If None, then the model is
+            not specified in the logs
         """
         # initialise the number of attempts
         attempt = 1
@@ -366,7 +497,7 @@ async def query_model_and_record_response(
     settings: Settings,
     experiment: Experiment,
     index: int | str | None,
-    attempt: int = 1,
+    attempt: int,
 ) -> dict | Exception:
     """
     Send request to generate response from a LLM and record the response in a jsonl file.
@@ -376,17 +507,20 @@ async def query_model_and_record_response(
     prompt_dict : dict
         Dictionary containing the prompt and other parameters to be
         used for text generation. Required keys are "prompt" and "api".
-        Some models may have other required keys.
+        Optionally can have a "parameters" key. Some APIs may have
+        other specific required keys
     settings : Settings
-        Settings for the pipeline
+        Settings for the pipeline which includes the data folder locations,
+        the maximum number of queries to send per minute, the maximum number
+        of attempts when retrying, and whether to run the experiment in parallel
     experiment : Experiment
-        Current experiment that is being run
+        The experiment that is being processed
     index : int | None, optional
         Integer containing the index of the prompt in the experiment,
         by default None. If None, then index is set to "NA".
-        Useful for tagging the prompt/response received and any errors.
+        Useful for tagging the prompt/response received and any errors
     attempt : int
-        Integer containing the attempt number to process the prompt.
+        Integer containing the attempt number to process the prompt
 
     Returns
     -------
@@ -396,7 +530,7 @@ async def query_model_and_record_response(
         A dictionary is returned if the response is received successfully or
         if the maximum number of attempts is reached (i.e. an Exception
         was caught but we have attempt==max_attempts).
-        An Exception is returned if an error is caught and we have
+        An Exception is returned (not raised) if an error is caught and we have
         attempt < max_attempts, indicating that we could try this
         prompt again later in the queue.
     """
@@ -487,19 +621,21 @@ async def generate_text(
         used for text generation. Required keys are "prompt" and "api".
         Some models may have other required keys.
     settings : Settings
-        Settings for the pipeline
+        Settings for the pipeline which includes the data folder locations,
+        the maximum number of queries to send per minute, the maximum number
+        of attempts when retrying, and whether to run the experiment in parallel
     experiment : Experiment
-        Current experiment that is being run
+        The experiment that is being processed
     index : int | None, optional
         Integer containing the index of the prompt in the experiment,
         by default None. If None, then index is set to "NA".
-        Useful for tagging the prompt/response received and any errors.
+        Useful for tagging the prompt/response received and any errors
 
     Returns
     -------
     dict
         Completed prompt_dict with "response" key storing the response(s)
-        from the LLM.
+        from the LLM
     """
     if index is None:
         index = "NA"

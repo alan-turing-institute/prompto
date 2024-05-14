@@ -8,10 +8,25 @@ class WriteFolderError(Exception):
 
 
 class Settings:
-    # settings for the pipeline which includes the following attributes:
-    # - data_folder (folder where input, output, media folders are stored)
-    # - max_queries (maximum number of queries to send per minute)
-    # - max_attempts (maximum number of attempts when retrying)
+    """
+    A class to represent the settings for the pipeline/experiment.
+    This includes the following attributes:
+    - data_folder (folder where input, output, media folders are stored)
+    - max_queries (maximum number of queries to send per minute)
+    - max_attempts (maximum number of attempts when retrying)
+    - parallel (whether to run the experiment(s) in parallel)
+
+    Parameters
+    ----------
+    data_folder : str, optional
+        The folder where the input, output, and media folders are stored, by default "data"
+    max_queries : int, optional
+        The maximum number of queries to send per minute, by default 10
+    max_attempts : int, optional
+        The maximum number of attempts when retrying, by default 3
+    parallel : bool, optional
+        Whether to run the experiment(s) in parallel, by default False
+    """
 
     def __init__(
         self,
@@ -39,11 +54,21 @@ class Settings:
         )
 
     @staticmethod
-    def check_folder_exists(data_folder: str) -> tuple[str]:
+    def check_folder_exists(data_folder: str) -> bool:
         """
         Check that the data folder exists.
 
         Raises a ValueError if the data folder does not exist.
+
+        Parameters
+        ----------
+        data_folder : str
+            The path to the data folder
+
+        Returns
+        -------
+        bool
+            True if the data folder exists, otherwise raises a ValueError
         """
         # check if data folder exists
         if not os.path.isdir(data_folder):
@@ -54,17 +79,34 @@ class Settings:
         return True
 
     def set_subfolders(self) -> None:
-        # set the subfolders for the data folder
+        """
+        Set the subfolders for the data folder.
+
+        The subfolders are:
+        - input_folder: folder where input data is stored (e.g. experiment files)
+        - output_folder: folder where output data is stored (e.g. results, logs)
+        - media_folder: folder where media files are stored (e.g. images, videos)
+
+        They are stored in the data folder.
+        """
         self._input_folder = os.path.join(self.data_folder, "input")
         self._output_folder = os.path.join(self.data_folder, "output")
         self._media_folder = os.path.join(self.data_folder, "media")
 
     def create_subfolders(self) -> None:
+        """
+        Create the subfolders for the data folder.
+
+        The subfolders must be set before calling this method.
+        """
         # check all folders exist and create them if not
         for folder in [self._input_folder, self._output_folder, self._media_folder]:
             create_folder(folder)
 
     def set_and_create_subfolders(self) -> None:
+        """
+        Set and create the subfolders for the data folder.
+        """
         # set the subfolders and create them if they do not exist
         self.set_subfolders()
         self.create_subfolders()
