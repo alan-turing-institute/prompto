@@ -43,7 +43,11 @@ This will run the checks on the experiment file and log any errors or warnings t
 
 Lastly, it's possible to automatically move the file to the input folder of the data folder if it is not already there. To do this, you can use the `--move-to-input` flag:
 ```
-prompto_check_experiment --file path/to/experiment.jsonl --move-to-input --data-folder data --log-file path/to/logfile.txt
+prompto_check_experiment \
+    --file path/to/experiment.jsonl \
+    --data-folder data \
+    --log-file path/to/logfile.txt \
+    --move-to-input
 ```
 
 ## Create judge file
