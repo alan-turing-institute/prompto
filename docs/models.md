@@ -33,7 +33,7 @@ To clarify, the order of precedence for the API key is as follows:
 ## Self-hosted endpoints
 
 - [Ollama ("ollama")](#ollama)
-- [Huggingface `text-generation-inference` ("huggingface-tgi")](#huggingface-text-generation-inference)
+- [Huggingface text-generation-inference ("huggingface-tgi")](#huggingface-text-generation-inference)
 - [Quart API](#quart-api)
 
 # Implemented APIs
@@ -109,7 +109,7 @@ For any given `prompt_dict`, the following environment variables are required:
 - One of `OLLAMA_API_ENDPOINT` or `OLLAMA_API_ENDPOINT_model_name`
 - `OLLAMA_MODEL_NAME` if a model is not specified in the `prompt_dict`
 
-## Huggingface `text-generation-inference`
+## Huggingface text-generation-inference
 
 See the [Huggingface `text-generation-inference` repo](https://github.com/huggingface/text-generation-inference) on how to set up a self-hosted Huggingface `text-generation-inference` API endpoint.
 
