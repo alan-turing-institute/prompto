@@ -52,7 +52,10 @@ Once an experiment has been ran and responses to prompts have been obtained, it 
 
 To create a judge file for a particular experiment file with a judge-location as `./judge` and using judge `gemini-1.0-pro` you can use the following command:
 ```
-prompto_create_judge --experiment-file path/to/experiment.jsonl --judge-location judge --judge gemini-1.0-pro
+prompto_create_judge \
+    --experiment-file path/to/experiment.jsonl \
+    --judge-location judge \
+    --judge gemini-1.0-pro
 ```
 
 In `judge`, you must have two files:
@@ -69,7 +72,10 @@ In some cases, you may have ran an experiment file and obtained responses for so
 
 To obtain the missing results jsonl file for a particular experiment file with the input experiment file as `path/to/experiment.jsonl`, the output experiment file as `path/to/experiment-output.jsonl`, and the new jsonl file as `path/to/missing-results.jsonl`, you can use the following command:
 ```
-prompto_obtain_missing_results --input-experiment path/to/experiment.jsonl --output-experiment path/to/experiment-output.jsonl --missing-results path/to/missing-results.jsonl
+prompto_obtain_missing_results \
+    --input-experiment path/to/experiment.jsonl \
+    --output-experiment path/to/experiment-output.jsonl \
+    --missing-results path/to/missing-results.jsonl
 ```
 
 ## Convert images to correct form
@@ -87,5 +93,8 @@ As described in the [Quart API model documentation](models.md#quart-api), we hav
 
 To start up the Quart server with [`vicgalle/gpt2-open-instruct-v1`](https://huggingface.co/vicgalle/gpt2-open-instruct-v1), at `"http://localhost:8000"`, you can use the following command:
 ```
-prompto_start_quart_server --model-name vicgalle/gpt2-open-instruct-v1 --host localhost --port 8000
+prompto_start_quart_server \
+    --model-name vicgalle/gpt2-open-instruct-v1 \
+    --host localhost \
+    --port 8000
 ```
