@@ -9,8 +9,7 @@
 ### Using `prompto`
 
 * [Setting up an experiment file](./experiment_file.md)
-* [Running an experiment file](./run_experiment.md)
-* [prompto Pipeline](./pipeline.md)
+* [prompto Pipeline and running experiments](./pipeline.md)
 * [prompto commands](./commands.md)
 
 ### Reference
