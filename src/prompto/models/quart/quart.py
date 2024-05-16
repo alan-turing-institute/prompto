@@ -4,23 +4,20 @@ from typing import Any
 import requests
 
 from prompto.models.base import AsyncBaseModel
-from prompto.models.quart.quart_utils import (
-    async_client_generate,
-    get_model_name_identifier,
-)
+from prompto.models.quart.quart_utils import async_client_generate
 from prompto.settings import Settings
 from prompto.utils import (
     FILE_WRITE_LOCK,
     check_either_required_env_variables_set,
     check_optional_env_variables_set,
     check_required_env_variables_set,
+    get_model_name_identifier,
     log_error_response_query,
     log_success_response_query,
     write_log_message,
 )
 
 API_ENDPOINT_VAR_NAME = "QUART_API_ENDPOINT"
-MODEL_NAME_VAR_NAME = "QUART_MODEL_NAME"
 
 
 class AsyncQuartModel(AsyncBaseModel):
@@ -70,11 +67,7 @@ class AsyncQuartModel(AsyncBaseModel):
         issues = []
 
         # check the optional environment variables are set and warn if not
-        issues.extend(
-            check_optional_env_variables_set(
-                [API_ENDPOINT_VAR_NAME, MODEL_NAME_VAR_NAME]
-            )
-        )
+        issues.extend(check_optional_env_variables_set([API_ENDPOINT_VAR_NAME]))
 
         # check if the API endpoint is a valid endpoint
         if API_ENDPOINT_VAR_NAME in os.environ:
@@ -99,7 +92,7 @@ class AsyncQuartModel(AsyncBaseModel):
           then for the API endpoint, either the model-specific endpoint
           (QUART_API_ENDPOINT_{identifier}) (where identifier is the
           model name with invalid characters replaced by underscores
-          obtained using get_model_name_identifier method) or the
+          obtained using get_model_name_identifier function) or the
           default endpoint must be set
 
         Parameters
@@ -131,7 +124,6 @@ class AsyncQuartModel(AsyncBaseModel):
             # use the default environment variables
             # check the required environment variables are set
             issues.extend(check_required_env_variables_set([API_ENDPOINT_VAR_NAME]))
-
         else:
             # use the model specific environment variables
             model_name = prompt_dict["model_name"]
@@ -176,6 +168,7 @@ class AsyncQuartModel(AsyncBaseModel):
             # use the model specific environment variables if they exist
             # replace any invalid characters in the model name
             identifier = get_model_name_identifier(model_name)
+
             QUART_ENDPOINT = f"{API_ENDPOINT_VAR_NAME}_{identifier}"
             if QUART_ENDPOINT not in os.environ:
                 QUART_ENDPOINT = API_ENDPOINT_VAR_NAME
@@ -218,6 +211,9 @@ class AsyncQuartModel(AsyncBaseModel):
             )
 
             response_text = response["response"][0]["generated_text"]
+
+            # obtain model name
+            prompt_dict["model"] = response["model"]
 
             log_success_response_query(
                 index=index,
