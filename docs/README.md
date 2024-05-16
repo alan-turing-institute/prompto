@@ -15,5 +15,4 @@
 ### Reference
 
 * [Implemented APIs](./models.md)
-* [Querying locally hosted models](./local_models.md)
 * [Adding new API/model](./add_new_api.md)
