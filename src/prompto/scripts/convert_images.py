@@ -9,7 +9,6 @@ from tqdm import tqdm
 def main():
     # parse command line arguments
     parser = argparse.ArgumentParser()
-
     parser.add_argument(
         "--folder",
         "-f",

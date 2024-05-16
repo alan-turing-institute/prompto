@@ -26,7 +26,6 @@ def main():
     parser.add_argument(
         "--judge", "-j", help="Judge to be used", type=str, required=True
     )
-
     parser.add_argument(
         "--output-folder",
         "-o",
