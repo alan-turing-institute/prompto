@@ -13,6 +13,7 @@ from prompto.utils import (
     check_either_required_env_variables_set,
     check_optional_env_variables_set,
     check_required_env_variables_set,
+    get_model_name_identifier,
     log_error_response_chat,
     log_error_response_query,
     log_success_response_chat,
@@ -85,8 +86,10 @@ class AsyncHuggingfaceTGIModel(AsyncBaseModel):
           environment variables (HUGGINGFACE_TGI_API_KEY, HUGGINGFACE_TGI_API_ENDPOINT)
           must be set
         - if "model_name" is in the prompt dictionary, then for API key and endpoint,
-          either the model-specific environment variables (HUUGINGFACE_TGI_API_KEY_{model_name},
-          HUGGINGFACE_TGI_API_ENDPOINT_{model_name}) can be set, or the default environment
+          either the model-specific environment variables (HUUGINGFACE_TGI_API_KEY_{identifier},
+          HUGGINGFACE_TGI_API_ENDPOINT_{identifier}) (where identifier is
+          the model name with invalid characters replaced by underscores obtained
+          using get_model_name_identifier function) can be set, or the default environment
           variables must be set
 
         Parameters
@@ -128,19 +131,21 @@ class AsyncHuggingfaceTGIModel(AsyncBaseModel):
         else:
             # use the model specific environment variables
             model_name = prompt_dict["model_name"]
+            # replace any invalid characters in the model name
+            identifier = get_model_name_identifier(model_name)
 
             # check the required environment variables are set
             # must either have the model specific endpoint or the default endpoint set
             issues.extend(
                 check_either_required_env_variables_set(
-                    [[f"{API_ENDPOINT_VAR_NAME}_{model_name}", API_ENDPOINT_VAR_NAME]]
+                    [[f"{API_ENDPOINT_VAR_NAME}_{identifier}", API_ENDPOINT_VAR_NAME]]
                 )
             )
 
             # check the optional environment variables are set and warn if not
             issues.extend(
                 check_optional_env_variables_set(
-                    [f"{API_KEY_VAR_NAME}_{model_name}", API_KEY_VAR_NAME]
+                    [f"{API_KEY_VAR_NAME}_{identifier}", API_KEY_VAR_NAME]
                 )
             )
 
@@ -174,11 +179,14 @@ class AsyncHuggingfaceTGIModel(AsyncBaseModel):
             api_endpoint_env_var = API_ENDPOINT_VAR_NAME
         else:
             # use the model specific environment variables if they exist
-            api_key_env_var = f"{API_KEY_VAR_NAME}_{model_name}"
+            # replace any invalid characters in the model name
+            identifier = get_model_name_identifier(model_name)
+
+            api_key_env_var = f"{API_KEY_VAR_NAME}_{identifier}"
             if api_key_env_var not in os.environ:
                 api_key_env_var = API_KEY_VAR_NAME
 
-            api_endpoint_env_var = f"{API_ENDPOINT_VAR_NAME}_{model_name}"
+            api_endpoint_env_var = f"{API_ENDPOINT_VAR_NAME}_{identifier}"
             if api_endpoint_env_var not in os.environ:
                 api_endpoint_env_var = API_ENDPOINT_VAR_NAME
 

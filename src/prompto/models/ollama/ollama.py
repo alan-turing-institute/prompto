@@ -11,6 +11,7 @@ from prompto.utils import (
     check_either_required_env_variables_set,
     check_optional_env_variables_set,
     check_required_env_variables_set,
+    get_model_name_identifier,
     log_error_response_query,
     log_success_response_query,
     write_log_message,
@@ -111,8 +112,10 @@ class AsyncOllamaModel(AsyncBaseModel):
           OLLAMA_MODEL_NAME) must be set
         - if "model_name" is passed in the prompt dictionary, then
           then for the API endpoint, either the model-specific endpoint
-          (OLLAMA_API_ENDPOINT_{model_name}) or the default endpoint
-          must be set
+          (OLLAMA_API_ENDPOINT_{identifier}) (where identifier is
+          the model name with invalid characters replaced
+          by underscores obtained using get_model_name_identifier function)
+          or the default endpoint must be set
 
         Parameters
         ----------
@@ -150,12 +153,14 @@ class AsyncOllamaModel(AsyncBaseModel):
         else:
             # use the model specific environment variables
             model_name = prompt_dict["model_name"]
+            # replace any invalid characters in the model name
+            identifier = get_model_name_identifier(model_name)
 
             # check the required environment variables are set
             # must either have the model specific endpoint or the default endpoint set
             issues.extend(
                 check_either_required_env_variables_set(
-                    [[f"{API_ENDPOINT_VAR_NAME}_{model_name}", API_ENDPOINT_VAR_NAME]]
+                    [[f"{API_ENDPOINT_VAR_NAME}_{identifier}", API_ENDPOINT_VAR_NAME]]
                 )
             )
 
@@ -199,7 +204,10 @@ class AsyncOllamaModel(AsyncBaseModel):
             api_endpoint_env_var = API_ENDPOINT_VAR_NAME
         else:
             # use the model specific environment variables if they exist
-            api_endpoint_env_var = f"{API_ENDPOINT_VAR_NAME}_{model_name}"
+            # replace any invalid characters in the model name
+            identifier = get_model_name_identifier(model_name)
+
+            api_endpoint_env_var = f"{API_ENDPOINT_VAR_NAME}_{identifier}"
             if api_endpoint_env_var not in os.environ:
                 api_endpoint_env_var = API_ENDPOINT_VAR_NAME
 

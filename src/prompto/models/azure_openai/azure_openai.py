@@ -14,6 +14,7 @@ from prompto.utils import (
     check_either_required_env_variables_set,
     check_optional_env_variables_set,
     check_required_env_variables_set,
+    get_model_name_identifier,
     log_error_response_chat,
     log_error_response_query,
     log_success_response_chat,
@@ -101,8 +102,10 @@ class AsyncAzureOpenAIModel(AsyncBaseModel):
           (AZURE_OPENAI_API_KEY, AZURE_OPENAI_API_ENDPOINT, AZURE_OPENAI_MODEL_NAME)
           are set
         - if "model_name" is passed, then for the API key and endpoint, either the
-          model-specific environment variables (AZURE_OPENAI_API_KEY_{model_name},
-          AZURE_OPENAI_API_ENDPOINT_{model_name}) are set or the default environment
+          model-specific environment variables (AZURE_OPENAI_API_KEY_{identifier},
+          AZURE_OPENAI_API_ENDPOINT_{identifier}) (where identifier is
+          the model name with invalid characters replaced by underscores obtained
+          using get_model_name_identifier function) are set or the default environment
           variables must be set
         - if "mode" is passed, it must be one of 'chat' or 'completion'
 
@@ -157,15 +160,17 @@ class AsyncAzureOpenAIModel(AsyncBaseModel):
         else:
             # use the model specific environment variables
             model_name = prompt_dict["model_name"]
+            # replace any invalid characters in the model name
+            identifier = get_model_name_identifier(model_name)
 
             # check the required environment variables are set
             # must either have the model specific key/endpoint or the default key/endpoint set
             issues.extend(
                 check_either_required_env_variables_set(
                     [
-                        [f"{API_KEY_VAR_NAME}_{model_name}", API_KEY_VAR_NAME],
+                        [f"{API_KEY_VAR_NAME}_{identifier}", API_KEY_VAR_NAME],
                         [
-                            f"{API_ENDPOINT_VAR_NAME}_{model_name}",
+                            f"{API_ENDPOINT_VAR_NAME}_{identifier}",
                             API_ENDPOINT_VAR_NAME,
                         ],
                     ]
@@ -175,7 +180,7 @@ class AsyncAzureOpenAIModel(AsyncBaseModel):
             # check the optional environment variables are set and warn if not
             issues.extend(
                 check_optional_env_variables_set(
-                    [f"{API_VERSION_VAR_NAME}_{model_name}", API_VERSION_VAR_NAME]
+                    [f"{API_VERSION_VAR_NAME}_{identifier}", API_VERSION_VAR_NAME]
                 )
             )
 
@@ -233,15 +238,18 @@ class AsyncAzureOpenAIModel(AsyncBaseModel):
             api_version_env_var = API_VERSION_VAR_NAME
         else:
             # use the model specific environment variables if they exist
-            api_key_env_var = f"{API_KEY_VAR_NAME}_{model_name}"
+            # replace any invalid characters in the model name
+            identifier = get_model_name_identifier(model_name)
+
+            api_key_env_var = f"{API_KEY_VAR_NAME}_{identifier}"
             if api_key_env_var not in os.environ:
                 api_key_env_var = API_KEY_VAR_NAME
 
-            api_endpoint_env_var = f"{API_ENDPOINT_VAR_NAME}_{model_name}"
+            api_endpoint_env_var = f"{API_ENDPOINT_VAR_NAME}_{identifier}"
             if api_endpoint_env_var not in os.environ:
                 api_endpoint_env_var = API_ENDPOINT_VAR_NAME
 
-            api_version_env_var = f"{API_VERSION_VAR_NAME}_{model_name}"
+            api_version_env_var = f"{API_VERSION_VAR_NAME}_{identifier}"
             if api_version_env_var not in os.environ:
                 api_version_env_var = API_VERSION_VAR_NAME
 

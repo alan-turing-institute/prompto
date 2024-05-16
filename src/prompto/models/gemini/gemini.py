@@ -23,6 +23,7 @@ from prompto.utils import (
     FILE_WRITE_LOCK,
     check_optional_env_variables_set,
     check_required_env_variables_set,
+    get_model_name_identifier,
     log_error_response_chat,
     log_error_response_query,
     log_success_response_chat,
@@ -98,8 +99,10 @@ class AsyncGeminiModel(AsyncBaseModel):
           environment variables (GEMINI_PROJECT_ID, GEMINI_LOCATION, GEMINI_MODEL_NAME)
           must be set
         - if "model_name" is in the prompt dictionary, then the model-specific
-          project and location environment variables (GEMINI_PROJECT_ID_{model_name},
-          GEMINI_LOCATION_{model_name}) can be optionally set.
+          project and location environment variables (GEMINI_PROJECT_ID_{identifier},
+          GEMINI_LOCATION_{identifier}) (where identifier is the model name with
+          invalid characters replaced by underscores obtained using
+          get_model_name_identifier function) can be optionally set.
           If neither the model-specific environment variable is set or the default
           environment variable is set, it is possible to run if you are signed in
           with gcloud CLI
@@ -147,14 +150,16 @@ class AsyncGeminiModel(AsyncBaseModel):
         else:
             # use the model specific environment variables
             model_name = prompt_dict["model_name"]
+            # replace any invalid characters in the model name
+            identifier = get_model_name_identifier(model_name)
 
             # check the optional environment variables are set and warn if not
             issues.extend(
                 check_optional_env_variables_set(
                     [
-                        f"{PROJECT_VAR_NAME}_{model_name}",
+                        f"{PROJECT_VAR_NAME}_{identifier}",
                         PROJECT_VAR_NAME,
-                        f"{LOCATION_VAR_NAME}_{model_name}",
+                        f"{LOCATION_VAR_NAME}_{identifier}",
                         LOCATION_VAR_NAME,
                     ]
                 )
@@ -222,11 +227,14 @@ class AsyncGeminiModel(AsyncBaseModel):
             location_id = LOCATION_VAR_NAME
         else:
             # use the model specific environment variables if they exist
-            project_id = f"{PROJECT_VAR_NAME}_{model_name}"
+            # replace any invalid characters in the model name
+            identifier = get_model_name_identifier(model_name)
+
+            project_id = f"{PROJECT_VAR_NAME}_{identifier}"
             if project_id not in os.environ:
                 project_id = PROJECT_VAR_NAME
 
-            location_id = f"{LOCATION_VAR_NAME}_{model_name}"
+            location_id = f"{LOCATION_VAR_NAME}_{identifier}"
             if location_id not in os.environ:
                 location_id = LOCATION_VAR_NAME
 

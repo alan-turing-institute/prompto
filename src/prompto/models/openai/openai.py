@@ -13,6 +13,7 @@ from prompto.utils import (
     check_either_required_env_variables_set,
     check_optional_env_variables_set,
     check_required_env_variables_set,
+    get_model_name_identifier,
     log_error_response_chat,
     log_error_response_query,
     log_success_response_chat,
@@ -85,7 +86,9 @@ class AsyncOpenAIModel(AsyncBaseModel):
         - if "model_name" is not passed, then the default environment variables
           (OPENAI_API_KEY, OPENAI_MODEL_NAME) are set
         - if "model_name" is passed, then for the API key, either the
-          model-specific environment variable (OPENAI_API_KEY_{model_name})
+          model-specific environment variable (OPENAI_API_KEY_{identifier})
+          (where identifier is the model name with invalid characters replaced
+          by underscores obtained using get_model_name_identifier function)
           is set or the default environment variable must be set
         - if "mode" is passed, it must be one of 'chat' or 'completion'
 
@@ -137,13 +140,15 @@ class AsyncOpenAIModel(AsyncBaseModel):
         else:
             # use the model specific environment variables if they exist
             model_name = prompt_dict["model_name"]
+            # replace any invalid characters in the model name
+            identifier = get_model_name_identifier(model_name)
 
             # check the required environment variables are set
             # must either have the model specific key or the default key set
             issues.extend(
                 check_either_required_env_variables_set(
                     [
-                        [f"{API_KEY_VAR_NAME}_{model_name}", API_KEY_VAR_NAME],
+                        [f"{API_KEY_VAR_NAME}_{identifier}", API_KEY_VAR_NAME],
                     ]
                 )
             )
@@ -184,6 +189,7 @@ class AsyncOpenAIModel(AsyncBaseModel):
         # obtain model name
         model_name = prompt_dict.get("model_name", None)
         if model_name is None:
+            # use the default environment variables
             model_name = os.environ.get(MODEL_NAME_VAR_NAME)
             if model_name is None:
                 log_message = (
@@ -198,7 +204,11 @@ class AsyncOpenAIModel(AsyncBaseModel):
 
             api_key_env_var = API_KEY_VAR_NAME
         else:
-            api_key_env_var = f"{API_KEY_VAR_NAME}_{model_name}"
+            # use the model specific environment variables if they exist
+            # replace any invalid characters in the model name
+            identifier = get_model_name_identifier(model_name)
+
+            api_key_env_var = f"{API_KEY_VAR_NAME}_{identifier}"
             if api_key_env_var not in os.environ:
                 api_key_env_var = API_KEY_VAR_NAME
 

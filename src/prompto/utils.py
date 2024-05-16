@@ -334,3 +334,30 @@ def check_either_required_env_variables_set(
             issues.extend(warnings)
 
     return issues
+
+
+def get_model_name_identifier(model_name: str) -> str:
+    """
+    Helper function to get the model name identifier.
+
+    Some model names can contain characters that are not allowed in
+    environment variable names. This function replaces those characters
+    ("-", "/", ".", " ") with underscores ("_").
+
+    Parameters
+    ----------
+    model_name : str
+        The model name
+
+    Returns
+    -------
+    str
+        The model name identifier with invalid characters replaced
+        with underscores
+    """
+    model_name = model_name.replace("-", "_")
+    model_name = model_name.replace("/", "_")
+    model_name = model_name.replace(".", "_")
+    model_name = model_name.replace(" ", "_")
+
+    return model_name
