@@ -23,6 +23,7 @@ from prompto.utils import (
     FILE_WRITE_LOCK,
     check_optional_env_variables_set,
     check_required_env_variables_set,
+    get_model_name_identifier,
     log_error_response_chat,
     log_error_response_query,
     log_success_response_chat,
@@ -36,6 +37,17 @@ MODEL_NAME_VAR_NAME = "GEMINI_MODEL_NAME"
 
 
 class AsyncGeminiModel(AsyncBaseModel):
+    """
+    Class for asynchronous querying of the Gemini API.
+
+    Parameters
+    ----------
+    settings : Settings
+        The settings for the pipeline/experiment
+    log_file : str
+        The path to the log file
+    """
+
     def __init__(
         self,
         settings: Settings,
@@ -47,6 +59,26 @@ class AsyncGeminiModel(AsyncBaseModel):
 
     @staticmethod
     def check_environment_variables() -> list[Exception]:
+        """
+        For Gemini, there are some optional variables:
+        - GEMINI_PROJECT_ID
+        - GEMINI_LOCATION
+        - GEMINI_MODEL_NAME
+
+        These are optional only if the model_name is passed
+        in the prompt dictionary. If the model_name is not
+        passed, then the default values are taken from these
+        environment variables.
+
+        These are checked in the check_prompt_dict method to ensure that
+        the required environment variables are set.
+
+        Returns
+        -------
+        list[Exception]
+            A list of exceptions or warnings if the environment variables
+            are not set
+        """
         issues = []
 
         # check the optional environment variables are set and warn if not
@@ -60,6 +92,36 @@ class AsyncGeminiModel(AsyncBaseModel):
 
     @staticmethod
     def check_prompt_dict(prompt_dict: dict) -> list[Exception]:
+        """
+        For Gemini, we make the following model-specific checks:
+        - "prompt" must be a string or a list of strings
+        - if "model_name" is not in the prompt dictionary, then the default
+          environment variables (GEMINI_PROJECT_ID, GEMINI_LOCATION, GEMINI_MODEL_NAME)
+          must be set
+        - if "model_name" is in the prompt dictionary, then the model-specific
+          project and location environment variables (GEMINI_PROJECT_ID_{identifier},
+          GEMINI_LOCATION_{identifier}) (where identifier is the model name with
+          invalid characters replaced by underscores obtained using
+          get_model_name_identifier function) can be optionally set.
+          If neither the model-specific environment variable is set or the default
+          environment variable is set, it is possible to run if you are signed in
+          with gcloud CLI
+        - if "safety_filter" is provided, check that it's one of the valid options
+          ("none", "few", "some", "default", "most")
+        - if "generation_config" is provided, check that it can create a valid
+          vertexai.generative_models.GenerationConfig object
+
+        Parameters
+        ----------
+        prompt_dict : dict
+            The prompt dictionary to check
+
+        Returns
+        -------
+        list[Exception]
+            A list of exceptions or warnings if the prompt dictionary
+            is not valid
+        """
         issues = []
 
         # check prompt is of the right type (string or list of strings)
@@ -88,14 +150,16 @@ class AsyncGeminiModel(AsyncBaseModel):
         else:
             # use the model specific environment variables
             model_name = prompt_dict["model_name"]
+            # replace any invalid characters in the model name
+            identifier = get_model_name_identifier(model_name)
 
             # check the optional environment variables are set and warn if not
             issues.extend(
                 check_optional_env_variables_set(
                     [
-                        f"{PROJECT_VAR_NAME}_{model_name}",
+                        f"{PROJECT_VAR_NAME}_{identifier}",
                         PROJECT_VAR_NAME,
-                        f"{LOCATION_VAR_NAME}_{model_name}",
+                        f"{LOCATION_VAR_NAME}_{identifier}",
                         LOCATION_VAR_NAME,
                     ]
                 )
@@ -123,7 +187,24 @@ class AsyncGeminiModel(AsyncBaseModel):
 
         return issues
 
-    async def _obtain_model_inputs(self, prompt_dict: dict) -> tuple:
+    async def _obtain_model_inputs(
+        self, prompt_dict: dict
+    ) -> tuple[str, str, dict, dict, list[Part] | None]:
+        """
+        Async method to obtain the model inputs from the prompt dictionary.
+
+        Parameters
+        ----------
+        prompt_dict : dict
+            The prompt dictionary to use for querying the model
+
+        Returns
+        -------
+        tuple[str, str, dict, dict, list[Part] | None]
+            A tuple containing the prompt, model name, safety settings,
+            the generation config, and list of multimedia parts (if passed)
+            to use for querying the model
+        """
         prompt = prompt_dict["prompt"]
 
         # obtain model name
@@ -146,11 +227,14 @@ class AsyncGeminiModel(AsyncBaseModel):
             location_id = LOCATION_VAR_NAME
         else:
             # use the model specific environment variables if they exist
-            project_id = f"{PROJECT_VAR_NAME}_{model_name}"
+            # replace any invalid characters in the model name
+            identifier = get_model_name_identifier(model_name)
+
+            project_id = f"{PROJECT_VAR_NAME}_{identifier}"
             if project_id not in os.environ:
                 project_id = PROJECT_VAR_NAME
 
-            location_id = f"{LOCATION_VAR_NAME}_{model_name}"
+            location_id = f"{LOCATION_VAR_NAME}_{identifier}"
             if location_id not in os.environ:
                 location_id = LOCATION_VAR_NAME
 
@@ -232,6 +316,11 @@ class AsyncGeminiModel(AsyncBaseModel):
         return prompt, model_name, safety_settings, generation_config, multimedia
 
     async def _async_query_string(self, prompt_dict: dict, index: int | str):
+        """
+        Async method for querying the model with a string prompt
+        (prompt_dict["prompt"] is a string),
+        i.e. single-turn completion or chat.
+        """
         prompt, model_name, safety_settings, generation_config, multimedia = (
             await self._obtain_model_inputs(prompt_dict=prompt_dict)
         )
@@ -315,6 +404,11 @@ class AsyncGeminiModel(AsyncBaseModel):
             raise err
 
     async def _async_query_chat(self, prompt_dict: dict, index: int | str):
+        """
+        Async method for querying the model with a chat prompt
+        (prompt_dict["prompt"] is a list of strings to sequentially send to the model),
+        i.e. multi-turn chat with history.
+        """
         prompt, model_name, safety_settings, generation_config, _ = (
             await self._obtain_model_inputs(prompt_dict=prompt_dict)
         )
@@ -416,6 +510,27 @@ class AsyncGeminiModel(AsyncBaseModel):
             raise err
 
     async def async_query(self, prompt_dict: dict, index: int | str = "NA") -> dict:
+        """
+        Async Method for querying the API/model asynchronously.
+
+        Parameters
+        ----------
+        prompt_dict : dict
+            The prompt dictionary to use for querying the model
+        index : int | str
+            The index of the prompt in the experiment
+
+        Returns
+        -------
+        dict
+            Completed prompt_dict with "response" key storing the response(s)
+            from the LLM
+
+        Raises
+        ------
+        Exception
+            If an error occurs during the querying process
+        """
         match prompt_dict["prompt"]:
             case str(_):
                 return await self._async_query_string(

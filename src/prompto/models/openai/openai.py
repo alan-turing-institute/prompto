@@ -13,6 +13,7 @@ from prompto.utils import (
     check_either_required_env_variables_set,
     check_optional_env_variables_set,
     check_required_env_variables_set,
+    get_model_name_identifier,
     log_error_response_chat,
     log_error_response_query,
     log_success_response_chat,
@@ -26,6 +27,17 @@ MODEL_NAME_VAR_NAME = "OPENAI_MODEL_NAME"
 
 
 class AsyncOpenAIModel(AsyncBaseModel):
+    """
+    Class for querying the OpenAI API asynchronously.
+
+    Parameters
+    ----------
+    settings : Settings
+        The settings for the pipeline/experiment
+    log_file : str
+        The path to the log file
+    """
+
     def __init__(
         self,
         settings: Settings,
@@ -38,6 +50,25 @@ class AsyncOpenAIModel(AsyncBaseModel):
 
     @staticmethod
     def check_environment_variables() -> list[Exception]:
+        """
+        For OpenAI, there are some optional environment:
+        - OPENAI_API_KEY
+        - OPENAI_MODEL_NAME
+
+        These are optional only if the model_name is passed
+        in the prompt dictionary. If the model_name is not
+        passed, then the default values are taken from these
+        environment variables.
+
+        These are checked in the check_prompt_dict method to ensure that
+        the required environment variables are set.
+
+        Returns
+        -------
+        list[Exception]
+            A list of exceptions or warnings if the environment variables
+            are not set
+        """
         issues = []
 
         # check the optional environment variables are set and warn if not
@@ -49,6 +80,29 @@ class AsyncOpenAIModel(AsyncBaseModel):
 
     @staticmethod
     def check_prompt_dict(prompt_dict: dict) -> list[Exception]:
+        """
+        For OpenAI, we make the following model-specific checks:
+        - "prompt" key must be of type str, list[str], or list[dict[str,str]]
+        - if "model_name" is not passed, then the default environment variables
+          (OPENAI_API_KEY, OPENAI_MODEL_NAME) are set
+        - if "model_name" is passed, then for the API key, either the
+          model-specific environment variable (OPENAI_API_KEY_{identifier})
+          (where identifier is the model name with invalid characters replaced
+          by underscores obtained using get_model_name_identifier function)
+          is set or the default environment variable must be set
+        - if "mode" is passed, it must be one of 'chat' or 'completion'
+
+        Parameters
+        ----------
+        prompt_dict : dict
+            The prompt dictionary to check
+
+        Returns
+        -------
+        list[Exception]
+            A list of exceptions or warnings if the prompt dictionary
+            is not valid
+        """
         issues = []
 
         # check prompt is of the right type
@@ -86,13 +140,15 @@ class AsyncOpenAIModel(AsyncBaseModel):
         else:
             # use the model specific environment variables if they exist
             model_name = prompt_dict["model_name"]
+            # replace any invalid characters in the model name
+            identifier = get_model_name_identifier(model_name)
 
             # check the required environment variables are set
             # must either have the model specific key or the default key set
             issues.extend(
                 check_either_required_env_variables_set(
                     [
-                        [f"{API_KEY_VAR_NAME}_{model_name}", API_KEY_VAR_NAME],
+                        [f"{API_KEY_VAR_NAME}_{identifier}", API_KEY_VAR_NAME],
                     ]
                 )
             )
@@ -113,12 +169,27 @@ class AsyncOpenAIModel(AsyncBaseModel):
     async def _obtain_model_inputs(
         self, prompt_dict: dict
     ) -> tuple[str, str, AsyncOpenAI, dict, str]:
+        """
+        Async method to obtain the model inputs from the prompt dictionary.
+
+        Parameters
+        ----------
+        prompt_dict : dict
+            The prompt dictionary to use for querying the model
+
+        Returns
+        -------
+        tuple[str, str, AsyncAzureOpenAI, dict, str]
+            A tuple containing the prompt, model name, AzureOpenAI client object,
+            the generation config, and mode to use for querying the model
+        """
         # obtain the prompt from the prompt dictionary
         prompt = prompt_dict["prompt"]
 
         # obtain model name
         model_name = prompt_dict.get("model_name", None)
         if model_name is None:
+            # use the default environment variables
             model_name = os.environ.get(MODEL_NAME_VAR_NAME)
             if model_name is None:
                 log_message = (
@@ -133,7 +204,11 @@ class AsyncOpenAIModel(AsyncBaseModel):
 
             api_key_env_var = API_KEY_VAR_NAME
         else:
-            api_key_env_var = f"{API_KEY_VAR_NAME}_{model_name}"
+            # use the model specific environment variables if they exist
+            # replace any invalid characters in the model name
+            identifier = get_model_name_identifier(model_name)
+
+            api_key_env_var = f"{API_KEY_VAR_NAME}_{identifier}"
             if api_key_env_var not in os.environ:
                 api_key_env_var = API_KEY_VAR_NAME
 
@@ -174,6 +249,11 @@ class AsyncOpenAIModel(AsyncBaseModel):
         return prompt, model_name, client, generation_config, mode
 
     async def _async_query_string(self, prompt_dict: dict, index: int | str) -> dict:
+        """
+        Async method for querying the model with a string prompt
+        (prompt_dict["prompt"] is a string),
+        i.e. single-turn completion or chat.
+        """
         prompt, model_name, client, generation_config, mode = (
             await self._obtain_model_inputs(prompt_dict)
         )
@@ -220,6 +300,11 @@ class AsyncOpenAIModel(AsyncBaseModel):
             raise err
 
     async def _async_query_chat(self, prompt_dict: dict, index: int | str) -> dict:
+        """
+        Async method for querying the model with a chat prompt
+        (prompt_dict["prompt"] is a list of strings to sequentially send to the model),
+        i.e. multi-turn chat with history.
+        """
         prompt, model_name, client, generation_config, _ = (
             await self._obtain_model_inputs(prompt_dict)
         )
@@ -275,6 +360,12 @@ class AsyncOpenAIModel(AsyncBaseModel):
             raise err
 
     async def _async_query_history(self, prompt_dict: dict, index: int | str) -> dict:
+        """
+        Async method for querying the model with a chat prompt with history
+        (prompt_dict["prompt"] is a list of dictionaries with keys "role" and "content",
+        where "role" is one of "user", "assistant", or "system" and "content" is the message),
+        i.e. multi-turn chat with history.
+        """
         prompt, model_name, client, generation_config, _ = (
             await self._obtain_model_inputs(prompt_dict)
         )
@@ -314,6 +405,27 @@ class AsyncOpenAIModel(AsyncBaseModel):
             raise err
 
     async def async_query(self, prompt_dict: dict, index: int | str = "NA") -> dict:
+        """
+        Async Method for querying the API/model asynchronously.
+
+        Parameters
+        ----------
+        prompt_dict : dict
+            The prompt dictionary to use for querying the model
+        index : int | str
+            The index of the prompt in the experiment
+
+        Returns
+        -------
+        dict
+            Completed prompt_dict with "response" key storing the response(s)
+            from the LLM
+
+        Raises
+        ------
+        Exception
+            If an error occurs during the querying process
+        """
         match prompt_dict["prompt"]:
             case str(_):
                 return await self._async_query_string(

@@ -8,8 +8,8 @@ FILE_WRITE_LOCK = asyncio.Lock()
 
 def sort_jsonl_files_by_creation_time(input_folder: str) -> list[str]:
     """
-    Function sorts the jsonl files in the input folder by creation time
-    in a given directory.
+    Function sorts the jsonl files in the input folder by creation/change
+    time in a given directory.
 
     Parameters
     ----------
@@ -238,6 +238,9 @@ def check_required_env_variables_set(
     """
     Check if required environment variables are set.
 
+    A list of ValueErrors are returned for each required environment variables
+    that is not set. If they are all set, an empty list is returned.
+
     Parameters
     ----------
     required_env_variables : list[str]
@@ -261,10 +264,18 @@ def check_optional_env_variables_set(
     """
     Check if optional environment variables are set.
 
+    A list of Warnings are returned for each optional environment variables
+    that is not set. If they are all set, an empty list is returned.
+
     Parameters
     ----------
     optional_env_variables : list[str]
         List of environment variables that are optional to be set.
+
+    Returns
+    -------
+    list[Exception]
+        List of exceptions for the optional environment variables that are not set.
     """
     return [
         Warning(f"Environment variable '{env_variable}' is not set")
@@ -280,10 +291,23 @@ def check_either_required_env_variables_set(
     Check if at least one of the required environment variables is set in a list
     for a given list of lists of environment variables.
 
+    For example, if required_env_variables is `[['A', 'B'], ['C', 'D']]`,
+    then we first look at `['A', 'B']`, and check at least one of the
+    environment variables 'A' or 'B' are set. If either 'A' or 'B' are not set,
+    we add a Warning to the returned list. IF neither 'A' or 'B' are set, we add
+    a ValueError to the returned list. We then repeat this process for `['C', 'D']`.
+
     Parameters
     ----------
     required_env_variables : list[list[str]]
-        List of lists of environment variables where at least one of the environment variables must be set.
+        List of lists of environment variables where at least one of the
+        environment variables must be set.
+
+    Returns
+    -------
+    list[Exception]
+        List of exceptions of either Warnings to say an environment variable isn't set
+        or ValueErrors if none of the required environment variables in a list are set.
     """
     # check required environment variables is a list of lists
     if not all(
@@ -310,3 +334,30 @@ def check_either_required_env_variables_set(
             issues.extend(warnings)
 
     return issues
+
+
+def get_model_name_identifier(model_name: str) -> str:
+    """
+    Helper function to get the model name identifier.
+
+    Some model names can contain characters that are not allowed in
+    environment variable names. This function replaces those characters
+    ("-", "/", ".", " ") with underscores ("_").
+
+    Parameters
+    ----------
+    model_name : str
+        The model name
+
+    Returns
+    -------
+    str
+        The model name identifier with invalid characters replaced
+        with underscores
+    """
+    model_name = model_name.replace("-", "_")
+    model_name = model_name.replace("/", "_")
+    model_name = model_name.replace(".", "_")
+    model_name = model_name.replace(" ", "_")
+
+    return model_name

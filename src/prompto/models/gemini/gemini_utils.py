@@ -71,11 +71,40 @@ def parse_multimedia(multimedia: list[dict] | dict, media_folder: str) -> list[P
 
 
 def process_response(response: dict) -> str:
+    """
+    Helper function to process the response from Gemini API.
+
+    Parameters
+    ----------
+    response : dict
+        The response from the Gemini API as a dictionary
+
+    Returns
+    -------
+    str
+        The processed response text as a string
+    """
     response_text = response.candidates[0].content.parts[0].text
     return response_text
 
 
 def process_safety_attributes(response: dict) -> dict:
+    """
+    Helper function to process the safety attributes from Gemini API.
+
+    Parameters
+    ----------
+    response : dict
+        The response from the Gemini API as a dictionary
+
+    Returns
+    -------
+    dict
+        The safety attributes as a dictionary with category names as keys
+        and their respective probabilities as values. Additionally,
+        the dictionary contains a key 'blocked' with a list of booleans
+        indicating whether each category is blocked, and 'finish_reason'
+    """
     safety_attributes = {
         x.category.name: str(x.probability)
         for x in response.candidates[0].safety_ratings
