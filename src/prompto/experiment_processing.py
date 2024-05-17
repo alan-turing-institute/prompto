@@ -9,6 +9,7 @@ from tqdm import tqdm
 from tqdm.asyncio import tqdm_asyncio
 
 from prompto.models import ASYNC_MODELS
+from prompto.models.ollama.ollama_utils import sort_ollama_prompts
 from prompto.settings import Settings
 from prompto.utils import (
     FILE_WRITE_LOCK,
@@ -70,6 +71,7 @@ class Experiment:
         # read in the experiment data
         with open(self.input_file_path, "r") as f:
             self.experiment_prompts: list[dict] = [dict(json.loads(line)) for line in f]
+            self.experiment_prompts = sort_ollama_prompts(self.experiment_prompts)
 
         # set the number of queries
         self.number_queries: int = len(self.experiment_prompts)
@@ -294,6 +296,7 @@ class ExperimentPipeline:
             }
             logging.info(f"Queries per model: {queries_per_model}")
 
+            # create tasks for each model which we will run in parallel using asyncio.gather
             tasks = [
                 asyncio.create_task(
                     self.send_requests_retry(
