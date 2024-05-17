@@ -69,7 +69,9 @@ class Experiment:
 
         # read in the experiment data
         with open(self.input_file_path, "r") as f:
-            self.experiment_prompts: list[dict] = [dict(json.loads(line)) for line in f]
+            self.experiment_prompts: list[dict] = self._sort_ollama_prompts(
+                [dict(json.loads(line)) for line in f]
+            )
 
         # set the number of queries
         self.number_queries: int = len(self.experiment_prompts)
