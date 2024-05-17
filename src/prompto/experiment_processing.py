@@ -9,6 +9,7 @@ from tqdm import tqdm
 from tqdm.asyncio import tqdm_asyncio
 
 from prompto.models import ASYNC_MODELS
+from prompto.models.ollama.ollama_utils import sort_ollama_prompts
 from prompto.settings import Settings
 from prompto.utils import (
     FILE_WRITE_LOCK,
@@ -69,9 +70,8 @@ class Experiment:
 
         # read in the experiment data
         with open(self.input_file_path, "r") as f:
-            self.experiment_prompts: list[dict] = self._sort_ollama_prompts(
-                [dict(json.loads(line)) for line in f]
-            )
+            self.experiment_prompts: list[dict] = [dict(json.loads(line)) for line in f]
+            self.experiment_prompts = sort_ollama_prompts(self.experiment_prompts)
 
         # set the number of queries
         self.number_queries: int = len(self.experiment_prompts)
@@ -131,54 +131,6 @@ class Experiment:
             grouped_dict[model].append(item)
 
         return grouped_dict
-
-    @staticmethod
-    def _sort_ollama_prompts(prompt_dicts: list[dict]) -> list[dict]:
-        """
-        For a list of prompt dictionaries, sort the dictionaries with "api": "ollama"
-        by the "model_name" key. The rest of the dictionaries are kept in the same order.
-
-        For Ollama API, if the model requested is not currently loaded, the model will be
-        loaded on demand. This can take some time, so it is better to sort the prompts
-        by the model name to reduce the time taken to load the models.
-
-        If no "ollama" dictionaries are present, the original list is returned.
-
-        Parameters
-        ----------
-        prompt_dicts : list[dict]
-            List of dictionaries containing the prompt and other parameters
-            to be sent to the API. Each dictionary must have keys "prompt" and "api".
-
-        Returns
-        -------
-        list[dict]
-            List of dictionaries containing the prompt and other parameters
-            where the "ollama" dictionaries are sorted by the "model_name" key
-        """
-        ollama_indices = [
-            i for i, item in enumerate(prompt_dicts) if item.get("api") == "ollama"
-        ]
-        if len(ollama_indices) == 0:
-            return prompt_dicts
-
-        # sort indices for "ollama" dictionaries
-        sorted_ollama_indices = sorted(
-            ollama_indices, key=lambda i: prompt_dicts[i].get("model_name", "")
-        )
-
-        # create map from original ollama index to sorted index
-        ollama_index_map = {i: j for i, j in zip(ollama_indices, sorted_ollama_indices)}
-
-        # sort data based on the combined indices
-        return [
-            (
-                prompt_dicts[i]
-                if i not in ollama_index_map.keys()
-                else prompt_dicts[ollama_index_map[i]]
-            )
-            for i in range(len(prompt_dicts))
-        ]
 
 
 class ExperimentPipeline:
