@@ -153,6 +153,22 @@ To query models from Huggingface that are not available via the `text-generation
 prompto_quart_server --model-name vicgalle/gpt2-open-instruct-v1 --host localhost --port 5000 --max-length 200
 ```
 
+Once the server is running, you can query the model by sending a POST request to the endpoint with the prompt in the request body, e.g.
+```
+curl -X POST http://localhost:5000/generate -H "Content-Type: application/json" -d '{"text": "This is a test prompt"}'
+```
+
+In Python, you can use the `requests` library to send a POST request to the endpoint, e.g.
+```python
+import requests
+import json
+req = requests.post(
+    "http://localhost:5000/generate",
+    data=json.dumps({"text": "This is a test prompt"}),
+    headers={"Content-Type": "application/json"},
+)
+```
+
 **Environment variables**:
 
 - `QUART_API_ENDPOINT`: the endpoint for the Quart API
