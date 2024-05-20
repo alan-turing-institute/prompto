@@ -26,7 +26,7 @@ class AsyncTestModel(AsyncBaseModel):
     def check_prompt_dict(prompt_dict: dict) -> list[Exception]:
         return []
 
-    async def async_query(prompt_dict: dict, index: int | str) -> dict:
+    async def async_query(self, prompt_dict: dict, index: int | str) -> dict:
         # return an error 1/5 times
         raise_error = random.randint(1, 5) == 1
         if raise_error:
