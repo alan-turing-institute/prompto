@@ -8,7 +8,7 @@ For all models/APIs, we require the following keys in the `prompt_dict`:
     - See the [documentation](models.md) for the specific APIs/models for more details on the different accepted formats of the prompt.
 - `api`: the name of the API to query
     - See the [available APIs/models](models.md) for the list of supported APIs and the corresponding names to use in the `api` key
-    - They are defined in the `ASYNC_MODELS` dictionary in the [`prompto.models` module](../src/prompto/models/__init__.py)
+    - They are defined in the `ASYNC_APIS` dictionary in the [`prompto.apis` module](../src/prompto/apis/__init__.py)
 
 In addition, there are other optional keys that can be included in the `prompt_dict`:
 - `parameters`: the parameter settings / generation config for the query (given as a dictionary)

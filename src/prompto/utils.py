@@ -361,3 +361,53 @@ def get_model_name_identifier(model_name: str) -> str:
     model_name = model_name.replace(" ", "_")
 
     return model_name
+
+
+def sort_prompts_by_model_for_api(prompt_dicts: list[dict], api: str) -> list[dict]:
+    """
+    For a list of prompt dictionaries, sort the dictionaries with `"api": api`
+    by the "model_name" key. The rest of the dictionaries are kept in the same order.
+
+    For Ollama API, if the model requested is not currently loaded, the model will be
+    loaded on demand. This can take some time, so it is better to sort the prompts
+    by the model name to reduce the time taken to load the models.
+
+    If no dictionaries with `"api": api` are present, the original list is returned.
+
+    Parameters
+    ----------
+    prompt_dicts : list[dict]
+        List of dictionaries containing the prompt and other parameters
+        to be sent to the API. Each dictionary must have keys "prompt" and "api"
+    api : str
+        The API name to sort the prompt dictionaries by the "model_name" key
+
+    Returns
+    -------
+    list[dict]
+        List of dictionaries containing the prompt and other parameters
+        where the dictionaries with `"api": api` are sorted by the "model_name" key
+    """
+    api_indices = [
+        i for i, item in enumerate(prompt_dicts) if item.get("api") == api
+    ]
+    if len(api_indices) == 0:
+        return prompt_dicts
+
+    # sort indices for dictionaries with "api": api
+    sorted_api_indices = sorted(
+        api_indices, key=lambda i: prompt_dicts[i].get("model_name", "")
+    )
+
+    # create map from original api index to sorted index
+    api_index_map = {i: j for i, j in zip(api_indices, sorted_api_indices)}
+
+    # sort data based on the combined indices
+    return [
+        (
+            prompt_dicts[i]
+            if i not in api_index_map.keys()
+            else prompt_dicts[api_index_map[i]]
+        )
+        for i in range(len(prompt_dicts))
+    ]

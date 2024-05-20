@@ -2,7 +2,7 @@
 
 `prompto` is designed to be extensible and can be used to query different models using different APIs. The library currently supports the following APIs which are grouped into two categories: [_cloud-based services_](#cloud-based-services) and [_self-hosted endpoints_](#self-hosted-endpoints). Cloud-based services refer to LLMs that are hosted by a provider's API endpoint (e.g. OpenAI, Gemini, Anthropic), whereas self-hosted endpoints refer to LLMs that are hosted on a server that you have control over (e.g. Ollama, a Huggingface `text-generation-inference` endpoint).
 
-Note that the names of the APIs are to be used in the `api` key of the `prompt_dict` in the experiment file (see [experiment file documentation](experiment_file.md)) and the names of the models can be specified in the `model_name` key of the `prompt_dict` in the experiment file. The names of the APIs are defined in the `ASYNC_MODELS` dictionary in the [`prompto.models` module](../src/prompto/models/__init__.py).
+Note that the names of the APIs are to be used in the `api` key of the `prompt_dict` in the experiment file (see [experiment file documentation](experiment_file.md)) and the names of the models can be specified in the `model_name` key of the `prompt_dict` in the experiment file. The names of the APIs are defined in the `ASYNC_APIS` dictionary in the [`prompto.apis` module](../src/prompto/apis/__init__.py).
 
 ## Environment variables
 
@@ -148,7 +148,7 @@ For any given `prompt_dict`, the following environment variables are required:
 
 ## Quart API
 
-To query models from Huggingface that are not available via the `text-generation-inference` API, we have written a simple [Quart API](../src/prompto/models/quart/quart_api.py) that can be used to query a text-generation model from the [Huggingface model hub](https://huggingface.co/models) using the Huggingface `transformers` library. This can be started using the `prompto_quart_server` command, e.g.
+To query models from Huggingface that are not available via the `text-generation-inference` API, we have written a simple [Quart API](../src/prompto/apis/quart/quart_api.py) that can be used to query a text-generation model from the [Huggingface model hub](https://huggingface.co/models) using the Huggingface `transformers` library. This can be started using the `prompto_quart_server` command, e.g.
 ```
 prompto_quart_server --model-name vicgalle/gpt2-open-instruct-v1 --host localhost --port 5000 --max-length 200
 ```

@@ -12,8 +12,8 @@ from vertexai.generative_models import (
     Part,
 )
 
-from prompto.models.base import AsyncBaseModel
-from prompto.models.gemini.gemini_utils import (
+from prompto.apis.base import AsyncBaseAPI
+from prompto.apis.gemini.gemini_utils import (
     parse_multimedia,
     process_response,
     process_safety_attributes,
@@ -36,7 +36,7 @@ LOCATION_VAR_NAME = "GEMINI_LOCATION"
 MODEL_NAME_VAR_NAME = "GEMINI_MODEL_NAME"
 
 
-class AsyncGeminiModel(AsyncBaseModel):
+class AsyncGeminiAPI(AsyncBaseAPI):
     """
     Class for asynchronous querying of the Gemini API.
 

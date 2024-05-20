@@ -5,9 +5,8 @@ from typing import Any
 import openai
 from openai import AsyncAzureOpenAI
 
-from prompto.models.base import AsyncBaseModel
-from prompto.models.openai.openai import process_response
-from prompto.models.openai.openai_utils import ChatRoles
+from prompto.apis.base import AsyncBaseAPI
+from prompto.apis.openai.openai_utils import ChatRoles, process_response
 from prompto.settings import Settings
 from prompto.utils import (
     FILE_WRITE_LOCK,
@@ -32,7 +31,7 @@ API_VERSION_VAR_NAME = "AZURE_OPENAI_API_VERSION"
 MODEL_NAME_VAR_NAME = "AZURE_OPENAI_MODEL_NAME"
 
 
-class AsyncAzureOpenAIModel(AsyncBaseModel):
+class AsyncAzureOpenAIAPI(AsyncBaseAPI):
     """
     Class for asynchronous querying of the Azure OpenAI API.
 

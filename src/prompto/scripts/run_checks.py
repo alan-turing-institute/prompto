@@ -3,7 +3,7 @@ import json
 import logging
 import os
 
-from prompto.models import ASYNC_MODELS
+from prompto.apis import ASYNC_APIS
 from prompto.utils import move_file, write_log_message
 
 
@@ -152,7 +152,7 @@ def is_valid_jsonl(
                     multimedia_path_errors.add(path_errors)
 
                 if "api" in data:
-                    if data["api"] not in ASYNC_MODELS:
+                    if data["api"] not in ASYNC_APIS:
                         issues.append(
                             NotImplementedError(
                                 f"Model {data['api']} is not a valid model. "
@@ -161,7 +161,7 @@ def is_valid_jsonl(
                         )
                     else:
                         # model specific checks
-                        issues.extend(ASYNC_MODELS[data["api"]].check_prompt_dict(data))
+                        issues.extend(ASYNC_APIS[data["api"]].check_prompt_dict(data))
                         # add model to set of models to check environment variables for
                         model_environments_to_check.add(data["api"])
             except json.JSONDecodeError as err:
@@ -179,7 +179,7 @@ def is_valid_jsonl(
     # check environment variables for each model
     environment_issues = []
     for model in model_environments_to_check:
-        environment_issues.extend(ASYNC_MODELS[model].check_environment_variables())
+        environment_issues.extend(ASYNC_APIS[model].check_environment_variables())
 
     if len(environment_issues) != 0:
         if not all(isinstance(item, Warning) for item in environment_issues):

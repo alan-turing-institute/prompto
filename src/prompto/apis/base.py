@@ -4,7 +4,7 @@ from typing import Any
 from prompto.settings import Settings
 
 
-class AsyncBaseModel(ABC):
+class AsyncBaseAPI(ABC):
     def __init__(self, settings: Settings, log_file: str, *args: Any, **kwargs: Any):
         """
         Base class for asynchronous API models.
@@ -46,7 +46,7 @@ class AsyncBaseModel(ABC):
             If the method is not implemented by a subclass
         """
         raise NotImplementedError(
-            "'check_environment_variables' method needs to be implemented by a subclass of AsyncBaseModel"
+            "'check_environment_variables' method needs to be implemented by a subclass of AsyncBaseAPI"
         )
 
     @staticmethod
@@ -73,7 +73,7 @@ class AsyncBaseModel(ABC):
             If the method is not implemented by a subclass
         """
         raise NotImplementedError(
-            "'check_prompt_dict' method needs to be implemented by a subclass of AsyncBaseModel"
+            "'check_prompt_dict' method needs to be implemented by a subclass of AsyncBaseAPI"
         )
 
     async def async_query(
@@ -103,7 +103,7 @@ class AsyncBaseModel(ABC):
         # async method for querying the model using the prompt and other arguments
         # returns a dictionary/json object which is saved into the output jsonl
         raise NotImplementedError(
-            "'async_query' method needs to be implemented by a subclass of AsyncBaseModel"
+            "'async_query' method needs to be implemented by a subclass of AsyncBaseAPI"
         )
 
     # TODO (maybe): async_batch_query (for multiple prompts asynchronously)
