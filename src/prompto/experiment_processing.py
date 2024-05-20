@@ -15,8 +15,8 @@ from prompto.utils import (
     create_folder,
     move_file,
     sort_jsonl_files_by_creation_time,
-    write_log_message,
     sort_prompts_by_model_for_api,
+    write_log_message,
 )
 
 
@@ -72,7 +72,9 @@ class Experiment:
         with open(self.input_file_path, "r") as f:
             self.experiment_prompts: list[dict] = [dict(json.loads(line)) for line in f]
             # sort the prompts by model_name key for the ollama api (for grouping and avoiding switching models)
-            self.experiment_prompts = sort_prompts_by_model_for_api(self.experiment_prompts, api="ollama")
+            self.experiment_prompts = sort_prompts_by_model_for_api(
+                self.experiment_prompts, api="ollama"
+            )
 
         # set the number of queries
         self.number_queries: int = len(self.experiment_prompts)

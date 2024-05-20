@@ -3,8 +3,10 @@ import warnings
 from prompto.apis.base import AsyncBaseAPI
 from prompto.apis.testing import AsyncTestAPI
 
+
 class DependencyWarning(Warning):
     pass
+
 
 # define the API names that are available in the pipeline and the corresponding model classes
 ASYNC_APIS: dict[str, AsyncBaseAPI] = {}

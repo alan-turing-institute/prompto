@@ -388,9 +388,7 @@ def sort_prompts_by_model_for_api(prompt_dicts: list[dict], api: str) -> list[di
         List of dictionaries containing the prompt and other parameters
         where the dictionaries with `"api": api` are sorted by the "model_name" key
     """
-    api_indices = [
-        i for i, item in enumerate(prompt_dicts) if item.get("api") == api
-    ]
+    api_indices = [i for i, item in enumerate(prompt_dicts) if item.get("api") == api]
     if len(api_indices) == 0:
         return prompt_dicts
 
