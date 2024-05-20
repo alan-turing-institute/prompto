@@ -1,2 +1,0 @@
-20-05-2024, 14:00: Next experiment: test2.jsonl, Number of queries: 3, Estimated completion time: 3.644, Estimated completion by: 20-05-2024, 14:01
-20-05-2024, 14:01: Completed experiment test2.jsonl! Experiment processing time: 18.612 seconds, Average time per query: 6.204 seconds

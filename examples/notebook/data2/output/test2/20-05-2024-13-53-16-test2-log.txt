@@ -1,5 +1,0 @@
-20-05-2024, 13:56: Next experiment: test2.jsonl, Number of queries: 3, Estimated completion time: 3.637, Estimated completion by: 20-05-2024, 13:56
-20-05-2024, 13:56: Error (i=1) [id=9]. TypeError - AsyncTestModel.async_query() got multiple values for argument 'prompt_dict'
-20-05-2024, 13:56: Error (i=2) [id=10]. TypeError - AsyncTestModel.async_query() got multiple values for argument 'prompt_dict'
-20-05-2024, 13:56: Error (i=3) [id=11]. TypeError - AsyncTestModel.async_query() got multiple values for argument 'prompt_dict'
-20-05-2024, 13:56: Completed experiment test2.jsonl! Experiment processing time: 3.62 seconds, Average time per query: 1.207 seconds

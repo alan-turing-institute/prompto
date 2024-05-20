@@ -1,0 +1,5 @@
+20-05-2024, 14:17: Next experiment: test.jsonl, Number of queries: 3, Estimated completion time: [unknown], Estimated completion by: [unknown]
+20-05-2024, 14:17: Error (i=1) [id=9]. NotImplementedError - Model unknown-model-name not recognised or implemented
+20-05-2024, 14:18: Error (i=2) [id=10]. NotImplementedError - Model unknown-model-name not recognised or implemented
+20-05-2024, 14:18: Error (i=3) [id=11]. NotImplementedError - Model unknown-model-name not recognised or implemented
+20-05-2024, 14:18: Completed experiment test.jsonl! Experiment processing time: 3.655 seconds, Average time per query: 1.218 seconds
