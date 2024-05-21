@@ -5,8 +5,8 @@ from typing import Any
 import openai
 from openai import AsyncOpenAI
 
-from prompto.models.base import AsyncBaseModel
-from prompto.models.openai.openai_utils import ChatRoles, process_response
+from prompto.apis.base import AsyncBaseAPI
+from prompto.apis.openai.openai_utils import process_response
 from prompto.settings import Settings
 from prompto.utils import (
     FILE_WRITE_LOCK,
@@ -21,14 +21,13 @@ from prompto.utils import (
     write_log_message,
 )
 
-# set names of environment variables
-API_KEY_VAR_NAME = "OPENAI_API_KEY"
-MODEL_NAME_VAR_NAME = "OPENAI_MODEL_NAME"
+API_ENDPOINT_VAR_NAME = "HUGGINGFACE_TGI_API_ENDPOINT"
+API_KEY_VAR_NAME = "HUGGINGFACE_TGI_API_KEY"
 
 
-class AsyncOpenAIModel(AsyncBaseModel):
+class AsyncHuggingfaceTGIAPI(AsyncBaseAPI):
     """
-    Class for querying the OpenAI API asynchronously.
+    Class for asynchrnous querying of the Huggingface TGI API endpoint.
 
     Parameters
     ----------
@@ -46,14 +45,14 @@ class AsyncOpenAIModel(AsyncBaseModel):
         **kwargs: Any,
     ):
         super().__init__(settings=settings, log_file=log_file, *args, **kwargs)
-        self.api_type = "openai"
+        self.api_type = "tgi"
 
     @staticmethod
     def check_environment_variables() -> list[Exception]:
         """
-        For OpenAI, there are some optional environment:
-        - OPENAI_API_KEY
-        - OPENAI_MODEL_NAME
+        For Huggingface TGI, there are some optional variables
+        - HUGGINGFACE_TGI_API_KEY
+        - HUGGINGFACE_TGI_API_ENDPOINT
 
         These are optional only if the model_name is passed
         in the prompt dictionary. If the model_name is not
@@ -73,7 +72,7 @@ class AsyncOpenAIModel(AsyncBaseModel):
 
         # check the optional environment variables are set and warn if not
         issues.extend(
-            check_optional_env_variables_set([API_KEY_VAR_NAME, MODEL_NAME_VAR_NAME])
+            check_optional_env_variables_set([API_KEY_VAR_NAME, API_ENDPOINT_VAR_NAME])
         )
 
         return issues
@@ -81,16 +80,17 @@ class AsyncOpenAIModel(AsyncBaseModel):
     @staticmethod
     def check_prompt_dict(prompt_dict: dict) -> list[Exception]:
         """
-        For OpenAI, we make the following model-specific checks:
-        - "prompt" key must be of type str, list[str], or list[dict[str,str]]
-        - if "model_name" is not passed, then the default environment variables
-          (OPENAI_API_KEY, OPENAI_MODEL_NAME) are set
-        - if "model_name" is passed, then for the API key, either the
-          model-specific environment variable (OPENAI_API_KEY_{identifier})
-          (where identifier is the model name with invalid characters replaced
-          by underscores obtained using get_model_name_identifier function)
-          is set or the default environment variable must be set
-        - if "mode" is passed, it must be one of 'chat' or 'completion'
+        For Huggingface TGI, we make the following model-specific checks:
+        - "prompt" must be a string or a list of strings
+        - if "model_name" is not in the prompt dictionary, then the default
+          environment variables (HUGGINGFACE_TGI_API_KEY, HUGGINGFACE_TGI_API_ENDPOINT)
+          must be set
+        - if "model_name" is in the prompt dictionary, then for API key and endpoint,
+          either the model-specific environment variables (HUUGINGFACE_TGI_API_KEY_{identifier},
+          HUGGINGFACE_TGI_API_ENDPOINT_{identifier}) (where identifier is
+          the model name with invalid characters replaced by underscores obtained
+          using get_model_name_identifier function) can be set, or the default environment
+          variables must be set
 
         Parameters
         ----------
@@ -103,6 +103,8 @@ class AsyncOpenAIModel(AsyncBaseModel):
             A list of exceptions or warnings if the prompt dictionary
             is not valid
         """
+        # for Huggingface TGI, there's specific environment variables that need to be set
+        # for different model_name values
         issues = []
 
         # check prompt is of the right type
@@ -111,58 +113,41 @@ class AsyncOpenAIModel(AsyncBaseModel):
                 pass
             case [str(_)]:
                 pass
-            case [{"role": role, "content": _}, *rest]:
-                if role in ChatRoles and all(
-                    [
-                        set(d.keys()) == {"role", "content"} and d["role"] in ChatRoles
-                        for d in rest
-                    ]
-                ):
-                    pass
             case _:
                 issues.append(
                     TypeError(
-                        "if api == 'openai', then the prompt must be a str, list[str], or "
-                        "list[dict[str,str]] where the dictionary contains the keys 'role' and "
-                        "'content' only, and the values for 'role' must be one of 'system', 'user' or "
-                        "'assistant'"
+                        "if api == 'huggingface-tgi', then prompt must be a string or a list, "
+                        f"not {type(prompt_dict['prompt'])}"
                     )
                 )
 
         if "model_name" not in prompt_dict:
             # use the default environment variables
             # check the required environment variables are set
-            issues.extend(
-                check_required_env_variables_set(
-                    [API_KEY_VAR_NAME, MODEL_NAME_VAR_NAME]
-                )
-            )
+            issues.extend(check_required_env_variables_set([API_ENDPOINT_VAR_NAME]))
+
+            # check the optional environment variables are set and warn if not
+            issues.extend(check_optional_env_variables_set([API_KEY_VAR_NAME]))
         else:
-            # use the model specific environment variables if they exist
+            # use the model specific environment variables
             model_name = prompt_dict["model_name"]
             # replace any invalid characters in the model name
             identifier = get_model_name_identifier(model_name)
 
             # check the required environment variables are set
-            # must either have the model specific key or the default key set
+            # must either have the model specific endpoint or the default endpoint set
             issues.extend(
                 check_either_required_env_variables_set(
-                    [
-                        [f"{API_KEY_VAR_NAME}_{identifier}", API_KEY_VAR_NAME],
-                    ]
+                    [[f"{API_ENDPOINT_VAR_NAME}_{identifier}", API_ENDPOINT_VAR_NAME]]
                 )
             )
 
-        # if mode is passed, check it is a valid value
-        if "mode" in prompt_dict and prompt_dict["mode"] not in ["chat", "completion"]:
-            issues.append(
-                ValueError(
-                    f"Invalid mode value. Must be 'chat' or 'completion', not {prompt_dict['mode']}"
+            # check the optional environment variables are set and warn if not
+            issues.extend(
+                check_optional_env_variables_set(
+                    [f"{API_KEY_VAR_NAME}_{identifier}", API_KEY_VAR_NAME]
                 )
             )
-
-        # TODO: add checks for prompt_dict["parameters"] being
-        # valid arguments for OpenAI API without hardcoding
 
         return issues
 
@@ -190,19 +175,8 @@ class AsyncOpenAIModel(AsyncBaseModel):
         model_name = prompt_dict.get("model_name", None)
         if model_name is None:
             # use the default environment variables
-            model_name = os.environ.get(MODEL_NAME_VAR_NAME)
-            if model_name is None:
-                log_message = (
-                    f"model_name is not set. Please set the {MODEL_NAME_VAR_NAME} "
-                    "environment variable or pass the model_name in the prompt dictionary"
-                )
-                async with FILE_WRITE_LOCK:
-                    write_log_message(
-                        log_file=self.log_file, log_message=log_message, log=True
-                    )
-                raise ValueError(log_message)
-
             api_key_env_var = API_KEY_VAR_NAME
+            api_endpoint_env_var = API_ENDPOINT_VAR_NAME
         else:
             # use the model specific environment variables if they exist
             # replace any invalid characters in the model name
@@ -212,15 +186,27 @@ class AsyncOpenAIModel(AsyncBaseModel):
             if api_key_env_var not in os.environ:
                 api_key_env_var = API_KEY_VAR_NAME
 
-        API_KEY = os.environ.get(api_key_env_var)
+            api_endpoint_env_var = f"{API_ENDPOINT_VAR_NAME}_{identifier}"
+            if api_endpoint_env_var not in os.environ:
+                api_endpoint_env_var = API_ENDPOINT_VAR_NAME
 
-        # raise error if the api key or endpoint is not found
+        API_KEY = os.environ.get(api_key_env_var)
+        API_ENDPOINT = os.environ.get(api_endpoint_env_var)
+
         if API_KEY is None:
-            raise ValueError(f"{api_key_env_var} environment variable not found")
+            # need pass string to initialise OpenAI client
+            API_KEY = "-"
+
+        if API_ENDPOINT is None:
+            raise ValueError(f"{api_endpoint_env_var} environment variable not found")
 
         openai.api_key = API_KEY
-        openai.api_type = self.api_type
-        client = AsyncOpenAI(api_key=API_KEY, max_retries=1)
+        openai.api_type = API_ENDPOINT
+        client = AsyncOpenAI(
+            base_url=f"{API_ENDPOINT}/v1/",
+            api_key=API_KEY,
+            max_retries=1,
+        )
 
         # get parameters dict (if any)
         generation_config = prompt_dict.get("parameters", None)
@@ -242,9 +228,9 @@ class AsyncOpenAIModel(AsyncBaseModel):
                 generation_config[key] = value
 
         # obtain mode (default is chat)
-        mode = prompt_dict.get("mode", "chat")
+        mode = prompt_dict.get("mode", "completion")
         if mode not in ["chat", "completion"]:
-            raise ValueError(f"mode must be one of 'chat' or 'completion', not {mode}")
+            raise ValueError(f"mode must be 'chat' or 'completion', not {mode}")
 
         return prompt, model_name, client, generation_config, mode
 
@@ -261,22 +247,25 @@ class AsyncOpenAIModel(AsyncBaseModel):
         try:
             if mode == "chat":
                 response = await client.chat.completions.create(
-                    model=model_name,
+                    model=self.api_type,
                     messages=[{"role": "user", "content": prompt}],
                     **generation_config,
                 )
             elif mode == "completion":
                 response = await client.completions.create(
-                    model=model_name,
+                    model=self.api_type,
                     prompt=prompt,
                     **generation_config,
                 )
 
             response_text = process_response(response)
 
+            # obtain model name
+            prompt_dict["model"] = response.model
+
             log_success_response_query(
                 index=index,
-                model=f"OpenAI ({model_name})",
+                model=f"Huggingface TGI ({model_name})",
                 prompt=prompt,
                 response_text=response_text,
             )
@@ -287,7 +276,7 @@ class AsyncOpenAIModel(AsyncBaseModel):
             error_as_string = f"{type(err).__name__} - {err}"
             log_message = log_error_response_query(
                 index=index,
-                model=f"OpenAI ({model_name})",
+                model=f"Huggingface TGI ({model_name})",
                 prompt=prompt,
                 error_as_string=error_as_string,
             )
@@ -317,7 +306,7 @@ class AsyncOpenAIModel(AsyncBaseModel):
                 messages.append({"role": "user", "content": message})
                 # obtain the response from the model
                 response = await client.chat.completions.create(
-                    model=model_name,
+                    model=self.api_type,
                     messages=messages,
                     **generation_config,
                 )
@@ -328,9 +317,12 @@ class AsyncOpenAIModel(AsyncBaseModel):
                 # add the response message to the list of messages
                 messages.append({"role": "assistant", "content": response_text})
 
+                # obtain model name
+                prompt_dict["model"] = response.model
+
                 log_success_response_chat(
                     index=index,
-                    model=f"OpenAI ({model_name})",
+                    model=f"Huggingface TGI ({model_name})",
                     message_index=message_index,
                     n_messages=len(prompt),
                     message=message,
@@ -345,55 +337,11 @@ class AsyncOpenAIModel(AsyncBaseModel):
             error_as_string = f"{type(err).__name__} - {err}"
             log_message = log_error_response_chat(
                 index=index,
-                model=f"OpenAI ({model_name})",
+                model=f"Huggingface TGI ({model_name})",
                 message_index=message_index,
+                n_messages=len(prompt),
                 message=message,
                 responses_so_far=response_list,
-                error_as_string=error_as_string,
-            )
-            async with FILE_WRITE_LOCK:
-                write_log_message(
-                    log_file=self.log_file,
-                    log_message=log_message,
-                    log=True,
-                )
-            raise err
-
-    async def _async_query_history(self, prompt_dict: dict, index: int | str) -> dict:
-        """
-        Async method for querying the model with a chat prompt with history
-        (prompt_dict["prompt"] is a list of dictionaries with keys "role" and "content",
-        where "role" is one of "user", "assistant", or "system" and "content" is the message),
-        i.e. multi-turn chat with history.
-        """
-        prompt, model_name, client, generation_config, _ = (
-            await self._obtain_model_inputs(prompt_dict)
-        )
-
-        try:
-            response = await client.chat.completions.create(
-                model=model_name,
-                messages=prompt,
-                **generation_config,
-            )
-
-            response_text = process_response(response)
-
-            log_success_response_query(
-                index=index,
-                model=f"OpenAI ({model_name})",
-                prompt=prompt,
-                response_text=response_text,
-            )
-
-            prompt_dict["response"] = response_text
-            return prompt_dict
-        except Exception as err:
-            error_as_string = f"{type(err).__name__} - {err}"
-            log_message = log_error_response_query(
-                index=index,
-                model=f"OpenAI ({model_name})",
-                prompt=prompt,
                 error_as_string=error_as_string,
             )
             async with FILE_WRITE_LOCK:
@@ -437,23 +385,10 @@ class AsyncOpenAIModel(AsyncBaseModel):
                     prompt_dict=prompt_dict,
                     index=index,
                 )
-            case [{"role": role, "content": _}, *rest]:
-                if role in ChatRoles and all(
-                    [
-                        set(d.keys()) == {"role", "content"} and d["role"] in ChatRoles
-                        for d in rest
-                    ]
-                ):
-                    return await self._async_query_history(
-                        prompt_dict=prompt_dict,
-                        index=index,
-                    )
             case _:
                 pass
 
         raise TypeError(
-            "if api == 'openai', then the prompt must be a str, list[str], or "
-            "list[dict[str,str]] where the dictionary contains the keys 'role' and "
-            "'content' only, and the values for 'role' must be one of 'system', 'user' or "
-            "'assistant'"
+            f"if api == 'huggingface-tgi', then prompt must be a string or a list, "
+            f"not {type(prompt_dict['prompt'])}"
         )

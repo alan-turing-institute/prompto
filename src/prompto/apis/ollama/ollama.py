@@ -3,8 +3,8 @@ from typing import Any
 
 from ollama import AsyncClient, Client, ResponseError
 
-from prompto.models.base import AsyncBaseModel
-from prompto.models.ollama.ollama_utils import process_response
+from prompto.apis.base import AsyncBaseAPI
+from prompto.apis.ollama.ollama_utils import process_response
 from prompto.settings import Settings
 from prompto.utils import (
     FILE_WRITE_LOCK,
@@ -21,7 +21,7 @@ API_ENDPOINT_VAR_NAME = "OLLAMA_API_ENDPOINT"
 MODEL_NAME_VAR_NAME = "OLLAMA_MODEL_NAME"
 
 
-class AsyncOllamaModel(AsyncBaseModel):
+class AsyncOllamaAPI(AsyncBaseAPI):
     """
     Class for querying the Ollama API asynchronously.
 

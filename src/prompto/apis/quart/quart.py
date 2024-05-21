@@ -3,8 +3,8 @@ from typing import Any
 
 import requests
 
-from prompto.models.base import AsyncBaseModel
-from prompto.models.quart.quart_utils import async_client_generate
+from prompto.apis.base import AsyncBaseAPI
+from prompto.apis.quart.quart_utils import async_client_generate
 from prompto.settings import Settings
 from prompto.utils import (
     FILE_WRITE_LOCK,
@@ -20,7 +20,7 @@ from prompto.utils import (
 API_ENDPOINT_VAR_NAME = "QUART_API_ENDPOINT"
 
 
-class AsyncQuartModel(AsyncBaseModel):
+class AsyncQuartAPI(AsyncBaseAPI):
     """
     Class for querying the Quart API asynchronously.
 

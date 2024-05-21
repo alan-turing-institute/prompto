@@ -3,12 +3,12 @@ import random
 import time
 from typing import Any
 
-from prompto.models.base import AsyncBaseModel
+from prompto.apis.base import AsyncBaseAPI
 from prompto.settings import Settings
 from prompto.utils import log_error_response_query, log_success_response_query
 
 
-class AsyncTestModel(AsyncBaseModel):
+class AsyncTestAPI(AsyncBaseAPI):
     def __init__(
         self,
         settings: Settings,

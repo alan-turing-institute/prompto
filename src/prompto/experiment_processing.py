@@ -8,14 +8,14 @@ from datetime import datetime, timedelta
 from tqdm import tqdm
 from tqdm.asyncio import tqdm_asyncio
 
-from prompto.models import ASYNC_MODELS
-from prompto.models.ollama.ollama_utils import sort_ollama_prompts
+from prompto.apis import ASYNC_APIS
 from prompto.settings import Settings
 from prompto.utils import (
     FILE_WRITE_LOCK,
     create_folder,
     move_file,
     sort_jsonl_files_by_creation_time,
+    sort_prompts_by_model_for_api,
     write_log_message,
 )
 
@@ -71,7 +71,10 @@ class Experiment:
         # read in the experiment data
         with open(self.input_file_path, "r") as f:
             self.experiment_prompts: list[dict] = [dict(json.loads(line)) for line in f]
-            self.experiment_prompts = sort_ollama_prompts(self.experiment_prompts)
+            # sort the prompts by model_name key for the ollama api (for grouping and avoiding switching models)
+            self.experiment_prompts = sort_prompts_by_model_for_api(
+                self.experiment_prompts, api="ollama"
+            )
 
         # set the number of queries
         self.number_queries: int = len(self.experiment_prompts)
@@ -645,17 +648,17 @@ async def generate_text(
     if "api" not in prompt_dict:
         raise KeyError("API is not specified in the prompt_dict. Must have 'api' key")
 
-    # obtain model
+    # obtain api class
     try:
-        model = ASYNC_MODELS[prompt_dict["api"]](
+        api = ASYNC_APIS[prompt_dict["api"]](
             settings=settings, log_file=experiment.log_file
         )
     except KeyError:
         raise NotImplementedError(
-            f"Model {prompt_dict['api']} not recognised or implemented"
+            f"API {prompt_dict['api']} not recognised or implemented"
         )
 
     # query the model
-    response = await model.async_query(prompt_dict=prompt_dict, index=index)
+    response = await api.async_query(prompt_dict=prompt_dict, index=index)
 
     return response
