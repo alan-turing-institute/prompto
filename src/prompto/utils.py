@@ -342,7 +342,7 @@ def get_model_name_identifier(model_name: str) -> str:
 
     Some model names can contain characters that are not allowed in
     environment variable names. This function replaces those characters
-    ("-", "/", ".", " ") with underscores ("_").
+    ("-", "/", ".", ":", " ") with underscores ("_").
 
     Parameters
     ----------
@@ -358,6 +358,7 @@ def get_model_name_identifier(model_name: str) -> str:
     model_name = model_name.replace("-", "_")
     model_name = model_name.replace("/", "_")
     model_name = model_name.replace(".", "_")
+    model_name = model_name.replace(":", "_")
     model_name = model_name.replace(" ", "_")
 
     return model_name
