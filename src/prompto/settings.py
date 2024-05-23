@@ -1,4 +1,5 @@
 import os
+import warnings
 
 from prompto.utils import create_folder
 
@@ -106,12 +107,24 @@ class Settings:
         self.parallel = parallel
         self.max_queries_dict = max_queries_dict
 
+        if self.parallel and max_queries_dict != {}:
+            warnings.warn(
+                message=(
+                    "max_queries_dict is provided and not empty, but parallel is set to False. "
+                    "max_queries_dict will not be used. Set parallel to True to use max_queries_dict."
+                ),
+                category=UserWarning,
+            )
+
     def __str__(self) -> str:
+        max_queries_dict_str = (
+            f"max_queries_dict={self.max_queries_dict}\n" if self.parallel else ""
+        )
         return (
             f"Settings: data_folder={self.data_folder}, "
             f"max_queries={self.max_queries}, max_attempts={self.max_attempts}, "
             f"parallel={self.parallel}\n"
-            f"max_queries_dict={self.max_queries_dict}\n"
+            f"{max_queries_dict_str}"
             f"Subfolders: input_folder={self.input_folder}, "
             f"output_folder={self.output_folder}, media_folder={self.media_folder}"
         )

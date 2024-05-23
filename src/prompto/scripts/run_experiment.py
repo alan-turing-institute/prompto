@@ -1,5 +1,6 @@
 import argparse
 import asyncio
+import json
 import logging
 import os
 
@@ -48,7 +49,7 @@ async def main():
     parser.add_argument(
         "--max-queries",
         "-m",
-        help="Maximum number of queries to send within a minute",
+        help="The default maximum number of queries to send per minute",
         type=int,
         default=10,
     )
@@ -66,6 +67,16 @@ async def main():
         action="store_true",
         default=False,
     )
+    parser.add_argument(
+        "--max-query-json",
+        "-mqj",
+        help=(
+            "Path to the json file containing the maximum queries per minute "
+            "for each API and model or group"
+        ),
+        type=str,
+        default=None,
+    )
     args = parser.parse_args()
 
     # initialise logging
@@ -75,12 +86,28 @@ async def main():
         level=logging.INFO,
     )
 
+    if args.max_query_json is not None:
+        # check if file exists
+        if not os.path.exists(args.max_query_json):
+            raise FileNotFoundError(f"File {args.max_query_json} not found")
+
+        # check if file is a json file
+        if not args.max_query_json.endswith(".json"):
+            raise ValueError("max_query_json must be a json file")
+
+        # load the json file
+        with open(args.max_query_json, "r") as f:
+            max_queries_dict = json.load(f)
+    else:
+        max_queries_dict = {}
+
     # initialise settings
     settings = Settings(
         data_folder=args.data_folder,
         max_queries=args.max_queries,
         max_attempts=args.max_attempts,
         parallel=args.parallel,
+        max_queries_dict=max_queries_dict,
     )
     # log the settings that are set for the pipeline
     logging.info(settings)
