@@ -19,6 +19,16 @@ prompto_run_experiment --file path/to/experiment.jsonl
 
 This uses the default settings for the pipeline. You can also set the `--max-queries`, `--max-attempts`, and `--parallel` flags as detailed in the [pipeline documentation](pipeline.md).
 
+If the experiment file is not in the input folder of the data folder, we will make a copy of the file in the input folder which will get processed. If you want to move the file to the input folder, you can use the `--move-to-input` flag:
+```
+prompto_run_experiment \
+    --file path/to/experiment.jsonl \
+    --data-folder data \
+    --move-to-input
+```
+
+Note that if the experiment file is already in the input folder, we will not make a copy of the file and process the file in place.
+
 ## Running the pipeline
 
 As detailed in the [pipeline documentation](pipeline.md), you can run the pipeline using the `prompto_run_pipeline` command. To see all arguments of this command, run `prompto_run_pipeline --help`.

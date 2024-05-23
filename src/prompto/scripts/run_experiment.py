@@ -5,7 +5,7 @@ import os
 
 from prompto.experiment_processing import Experiment, ExperimentPipeline
 from prompto.settings import Settings
-from prompto.utils import move_file
+from prompto.utils import copy_file, move_file
 
 
 async def main():
@@ -24,6 +24,19 @@ async def main():
         ),
         type=str,
         required=True,
+    )
+    parser.add_argument(
+        "--move-to-input",
+        "-m",
+        help=(
+            "If used, the file will be moved to the input folder to run. "
+            "By default the file is only copied to the input folder. "
+            "Note if the file is already in the input folder, this flag has no effect "
+            "but the file will still be processed which would lead it to be "
+            "moved to the output folder."
+        ),
+        action="store_true",
+        default=False,
     )
     parser.add_argument(
         "--data-folder",
@@ -87,7 +100,16 @@ async def main():
         logging.info(
             f"File {args.file} is not in the input folder {settings.input_folder}"
         )
-        move_file(args.file, f"{settings.input_folder}/{experiment_file_name}")
+        if args.move_to_input:
+            move_file(
+                source=args.file,
+                destination=f"{settings.input_folder}/{experiment_file_name}",
+            )
+        else:
+            copy_file(
+                source=args.file,
+                destination=f"{settings.input_folder}/{experiment_file_name}",
+            )
 
     # initialise experiment pipeline
     experiment_pipeline = ExperimentPipeline(settings=settings)

@@ -48,6 +48,7 @@ def check_max_queries_dict(max_queries_dict: dict[str, int | dict[str, int]]) ->
                         f"the sub-keys must be strings, not {type(sub_key)}"
                     )
 
+                # check each sub_value is an integer
                 if not isinstance(sub_value, int):
                     raise ValueError(
                         "if a value of max_queries_dict is a dictionary, "
