@@ -1,5 +1,5 @@
+import logging
 import os
-import warnings
 
 from prompto.utils import create_folder
 
@@ -12,7 +12,7 @@ def check_max_queries_dict(max_queries_dict: dict[str, int | dict[str, int]]) ->
     """
     Check the format of the max_queries_dict dictionary.
 
-    Raises a ValueError if the dictionary is not in the correct format.
+    Raises a TypeError if the dictionary is not in the correct format.
 
     Parameters
     ----------
@@ -25,18 +25,18 @@ def check_max_queries_dict(max_queries_dict: dict[str, int | dict[str, int]]) ->
     """
     # check max_queries_dict is a dictionary
     if not isinstance(max_queries_dict, dict):
-        raise ValueError(
+        raise TypeError(
             f"max_queries_dict must be a dictionary, not {type(max_queries_dict)}"
         )
 
     for key, value in max_queries_dict.items():
         # check each key is a string
         if not isinstance(key, str):
-            raise ValueError(f"max_queries_dict keys must be strings, not {type(key)}")
+            raise TypeError(f"max_queries_dict keys must be strings, not {type(key)}")
 
         # check each value is an integer or dictionary
         if not isinstance(value, int) and not isinstance(value, dict):
-            raise ValueError(
+            raise TypeError(
                 f"max_queries_dict values must be integers or dictionaries, not {type(value)}"
             )
 
@@ -44,16 +44,16 @@ def check_max_queries_dict(max_queries_dict: dict[str, int | dict[str, int]]) ->
             for sub_key, sub_value in value.items():
                 # check each sub_key is a string
                 if not isinstance(sub_key, str):
-                    raise ValueError(
+                    raise TypeError(
                         "if a value of max_queries_dict is a dictionary, "
                         f"the sub-keys must be strings, not {type(sub_key)}"
                     )
 
                 # check each sub_value is an integer
                 if not isinstance(sub_value, int):
-                    raise ValueError(
+                    raise TypeError(
                         "if a value of max_queries_dict is a dictionary, "
-                        f"sub-values must be integers, not {type(sub_value)}"
+                        f"the sub-values must be integers, not {type(sub_value)}"
                     )
 
 
@@ -107,26 +107,28 @@ class Settings:
         self.parallel = parallel
         self.max_queries_dict = max_queries_dict
 
-        if self.parallel and max_queries_dict != {}:
-            warnings.warn(
-                message=(
-                    "max_queries_dict is provided and not empty, but parallel is set to False. "
-                    "max_queries_dict will not be used. Set parallel to True to use max_queries_dict."
-                ),
-                category=UserWarning,
+        if not self.parallel and max_queries_dict != {}:
+            log_msg = (
+                "max_queries_dict is provided and not empty, but parallel is set to False, so "
+                "max_queries_dict will not be used. Set parallel to True to use max_queries_dict"
             )
+            logging.warning(log_msg)
 
     def __str__(self) -> str:
         max_queries_dict_str = (
-            f"max_queries_dict={self.max_queries_dict}\n" if self.parallel else ""
+            f", max_queries_dict={self.max_queries_dict}\n" if self.parallel else "\n"
         )
         return (
-            f"Settings: data_folder={self.data_folder}, "
-            f"max_queries={self.max_queries}, max_attempts={self.max_attempts}, "
-            f"parallel={self.parallel}\n"
+            "Settings: "
+            f"data_folder={self.data_folder}, "
+            f"max_queries={self.max_queries}, "
+            f"max_attempts={self.max_attempts}, "
+            f"parallel={self.parallel}"
             f"{max_queries_dict_str}"
-            f"Subfolders: input_folder={self.input_folder}, "
-            f"output_folder={self.output_folder}, media_folder={self.media_folder}"
+            "Subfolders: "
+            f"input_folder={self.input_folder}, "
+            f"output_folder={self.output_folder}, "
+            f"media_folder={self.media_folder}"
         )
 
     @staticmethod

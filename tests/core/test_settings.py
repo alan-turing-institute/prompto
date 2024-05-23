@@ -1,3 +1,4 @@
+import logging
 import os
 
 import pytest
@@ -13,6 +14,7 @@ def test_settings_default_init(temporary_data_folders):
     assert settings.max_queries == 10
     assert settings.max_attempts == 3
     assert settings.parallel is False
+    assert settings.max_queries_dict == {}
 
     # check the subfolders
     assert settings.input_folder == "data/input"
@@ -23,6 +25,12 @@ def test_settings_default_init(temporary_data_folders):
     assert os.path.isdir("data/input")
     assert os.path.isdir("data/output")
     assert os.path.isdir("data/media")
+
+    # when printing, it should show the settings and subfolders
+    assert str(settings) == (
+        "Settings: data_folder=data, max_queries=10, max_attempts=3, parallel=False\n"
+        "Subfolders: input_folder=data/input, output_folder=data/output, media_folder=data/media"
+    )
 
 
 def test_settings_custom_init(temporary_data_folders):
@@ -35,6 +43,7 @@ def test_settings_custom_init(temporary_data_folders):
     assert settings.max_queries == 20
     assert settings.max_attempts == 5
     assert settings.parallel is True
+    assert settings.max_queries_dict == {}
 
     # check the subfolders
     assert settings.input_folder == "dummy_data/input"
@@ -46,15 +55,154 @@ def test_settings_custom_init(temporary_data_folders):
     assert os.path.isdir("dummy_data/output")
     assert os.path.isdir("dummy_data/media")
 
-
-def test_settings_str(temporary_data_folders):
-    settings = Settings()
-
-    # when printing, it should show the settings and subfolders
+    # when printing with parallel=True, should print out the max_queries_dict
     assert str(settings) == (
-        "Settings: data_folder=data, max_queries=10, max_attempts=3, parallel=False\n"
-        "Subfolders: input_folder=data/input, output_folder=data/output, media_folder=data/media"
+        "Settings: data_folder=dummy_data, max_queries=20, max_attempts=5, parallel=True, "
+        "max_queries_dict={}\n"
+        "Subfolders: input_folder=dummy_data/input, "
+        "output_folder=dummy_data/output, "
+        "media_folder=dummy_data/media"
     )
+
+
+def test_settings_custom_init_with_max_queries_dict(temporary_data_folders):
+    settings = Settings(
+        data_folder="dummy_data",
+        max_queries=20,
+        max_attempts=5,
+        parallel=True,
+        max_queries_dict={"api1": 10, "api2": {"model1": 10, "model2": 20}},
+    )
+
+    # check the custom values
+    assert settings.data_folder == "dummy_data"
+    assert settings.max_queries == 20
+    assert settings.max_attempts == 5
+    assert settings.parallel is True
+    assert settings.max_queries_dict == {
+        "api1": 10,
+        "api2": {"model1": 10, "model2": 20},
+    }
+
+    # check the subfolders
+    assert settings.input_folder == "dummy_data/input"
+    assert settings.output_folder == "dummy_data/output"
+    assert settings.media_folder == "dummy_data/media"
+
+    # check the folders exist (should be created by initialising settings object)
+    assert os.path.isdir("dummy_data/input")
+    assert os.path.isdir("dummy_data/output")
+    assert os.path.isdir("dummy_data/media")
+
+    # when printing with parallel=True, should print out the max_queries_dict
+    assert str(settings) == (
+        "Settings: data_folder=dummy_data, max_queries=20, max_attempts=5, parallel=True, "
+        "max_queries_dict={'api1': 10, 'api2': {'model1': 10, 'model2': 20}}\n"
+        "Subfolders: input_folder=dummy_data/input, "
+        "output_folder=dummy_data/output, "
+        "media_folder=dummy_data/media"
+    )
+
+
+def test_settings_custom_init_with_max_queries_dict_and_no_parallel(
+    temporary_data_folders,
+):
+    settings = Settings(
+        data_folder="dummy_data",
+        max_queries=20,
+        max_attempts=5,
+        parallel=False,
+        max_queries_dict={"api1": 10, "api2": {"model1": 10, "model2": 20}},
+    )
+
+    # check the custom values
+    assert settings.data_folder == "dummy_data"
+    assert settings.max_queries == 20
+    assert settings.max_attempts == 5
+    assert settings.parallel is False
+    assert settings.max_queries_dict == {
+        "api1": 10,
+        "api2": {"model1": 10, "model2": 20},
+    }
+
+    # check the subfolders
+    assert settings.input_folder == "dummy_data/input"
+    assert settings.output_folder == "dummy_data/output"
+    assert settings.media_folder == "dummy_data/media"
+
+    # check the folders exist (should be created by initialising settings object)
+    assert os.path.isdir("dummy_data/input")
+    assert os.path.isdir("dummy_data/output")
+    assert os.path.isdir("dummy_data/media")
+
+    # when printing with parallel=True, should print out the max_queries_dict
+    assert str(settings) == (
+        "Settings: data_folder=dummy_data, max_queries=20, max_attempts=5, parallel=False\n"
+        "Subfolders: input_folder=dummy_data/input, "
+        "output_folder=dummy_data/output, "
+        "media_folder=dummy_data/media"
+    )
+
+
+def test_warning_max_queries_dict_not_used(temporary_data_folders, caplog):
+    caplog.set_level(logging.WARNING)
+
+    Settings(
+        data_folder="dummy_data",
+        max_queries=20,
+        max_attempts=5,
+        parallel=False,
+        max_queries_dict={"api1": 10, "api2": {"model1": 10, "model2": 20}},
+    )
+
+    # check the warning message
+    log_msg = (
+        "max_queries_dict is provided and not empty, but parallel is set to False, so "
+        "max_queries_dict will not be used. Set parallel to True to use max_queries_dict"
+    )
+    assert log_msg in caplog.text
+
+
+def test_settings_check_max_queries_dict(temporary_data_folders):
+    # check raise error if max_queries_dict is not a dictionary
+    max_queries_dict = "not_a_dict"
+    with pytest.raises(
+        TypeError,
+        match="max_queries_dict must be a dictionary, not <class 'str'>",
+    ):
+        Settings(max_queries_dict=max_queries_dict)
+
+    # check raise error if there is a key that is not a string
+    max_queries_dict = {"api": 10, 1: 10}
+    with pytest.raises(
+        TypeError,
+        match="max_queries_dict keys must be strings, not <class 'int'>",
+    ):
+        Settings(max_queries_dict=max_queries_dict)
+
+    # check raise error if there is a value that is not an integer or a dictionary
+    max_queries_dict = {"api": "not_an_int"}
+    with pytest.raises(
+        TypeError,
+        match="max_queries_dict values must be integers or dictionaries, not <class 'str'>",
+    ):
+        Settings(max_queries_dict=max_queries_dict)
+
+    # check raise error if there is a value that is a dictionary which has a key that is not a string
+    max_queries_dict = {"api": {"model": 10, 1: 10}}
+    with pytest.raises(
+        TypeError,
+        match="if a value of max_queries_dict is a dictionary, the sub-keys must be strings, not <class 'int'>",
+    ):
+        Settings(max_queries_dict=max_queries_dict)
+
+    # check raise error if there is a value that is a dictionary which has a value that is not an integer
+    max_queries_dict = {"api": {"model": "not_an_int"}}
+    with pytest.raises(
+        TypeError,
+        match="if a value of max_queries_dict is a dictionary, the sub-values must be integers, not <class 'str'>",
+    ):
+        Settings(max_queries_dict=max_queries_dict)
 
 
 def test_settings_check_folder_exists(temporary_data_folders):
@@ -271,3 +419,17 @@ def test_parallel_getter_and_setter(temporary_data_folders):
     # set it to a different value
     settings.parallel = True
     assert settings.parallel is True
+
+
+def test_max_queries_dict_getter_and_setter(temporary_data_folders):
+    settings = Settings()
+
+    # check the default value
+    assert settings.max_queries_dict == {}
+
+    # set it to a different value
+    settings.max_queries_dict = {"api1": 10, "api2": {"model1": 10, "model2": 20}}
+    assert settings.max_queries_dict == {
+        "api1": 10,
+        "api2": {"model1": 10, "model2": 20},
+    }
