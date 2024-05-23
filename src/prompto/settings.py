@@ -15,8 +15,12 @@ def check_max_queries_dict(max_queries_dict: dict[str, int | dict[str, int]]) ->
 
     Parameters
     ----------
-    max_queries_dict : dict[str, int | dict[str, int]]
-        A dictionary of maximum queries per minute for each API or group
+    max_queries_dict : dict[str, int | dict[str, int]], optional
+        A dictionary of maximum queries per minute for each API or group, by default {}.
+        The dictionary keys should be either a group name (which is then used in the
+        "group" key of the prompt_dict) or an API name. The values should be integers
+        (the maximum queries per minute or rate limit) or itself a dictionary with
+        keys as the model-names and values as the maximum queries per minute for that model.
     """
     # check max_queries_dict is a dictionary
     if not isinstance(max_queries_dict, dict):
@@ -72,8 +76,11 @@ class Settings:
     parallel : bool, optional
         Whether to run the experiment(s) in parallel, by default False
     max_queries_dict : dict[str, int | dict[str, int]], optional
-        A dictionary of maximum queries per minute for each API or group, by default {}
-
+        A dictionary of maximum queries per minute for each API or group, by default {}.
+        The dictionary keys should be either a group name (which is then used in the
+        "group" key of the prompt_dict) or an API name. The values should be integers
+        (the maximum queries per minute or rate limit) or itself a dictionary with
+        keys as the model-names and values as the maximum queries per minute for that model.
     """
 
     def __init__(

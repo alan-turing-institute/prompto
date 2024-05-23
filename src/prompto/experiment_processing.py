@@ -119,20 +119,32 @@ class Experiment:
 
     def group_prompts(self) -> dict[str, list[dict]]:
         """
-        Function to group the experiment prompts by the API.
+        Function to group the experiment prompts by either the "group" key
+        or the "api" key in the prompt dictionaries. The "group" key is
+        used if it exists, otherwise the "api" key is used.
 
-        If the class already has the grouped_experiment_prompts attribute,
-        then it will return that attribute. Otherwise, it will group the
-        experiment prompts by the API and return the grouped dictionary,
-        where each key is an API name and the value is a list of prompts
-        for that API.
+        Depending on the 'max_queries_dict' attribute in the settings object
+        (of class Settings), the prompts may also be further split by
+        the model name (if a model-specific rate limit is provided).
+
+        It first initialises a dictionary with keys as the grouping names
+        determined by the 'max_queries_dict' attribute in the settings object,
+        and values are dictionaries with "prompt_dicts" and "rate_limit" keys.
+        It will use any of the rate limits provided to intialise these values.
+        The function then loops over the experiment prompts and adds them to the
+        appropriate group in the dictionary. If a grouping name (given by the "group" or
+        "api" key) is not in the dictionary already, it will initialise it
+        with an empty list of prompt dictionaries and the default rate limit
+        (given by the 'max_queries' attribute in the settings).
 
         Returns
         -------
-        dict[str, list[dict]]
-            Dictionary where the keys are the API names and the values are
-            lists of prompts for that API (i.e. lines in the jsonl file
-            which have "api" key equal to the key in the dictionary)
+        dict[str, dict[str, list[dict] | int]
+            Dictionary where the keys are the grouping names (either a group name
+            or an API name, and potentially with a model name tag too) and the values
+            are dictionaries with "prompt_dicts" and "rate_limit" keys. The "prompt_dicts"
+            key stores a list of prompt dictionaries for that group, and the "rate_limit"
+            key stores the maximum number of queries to send per minute for that group
         """
         grouped_dict = {}
         # initialise some keys with the rate limits if provided
