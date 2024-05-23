@@ -71,7 +71,8 @@ class Experiment:
         # read in the experiment data
         with open(self.input_file_path, "r") as f:
             self.experiment_prompts: list[dict] = [dict(json.loads(line)) for line in f]
-            # sort the prompts by model_name key for the ollama api (for grouping and avoiding switching models)
+            # sort the prompts by model_name key for the ollama api
+            # (for avoiding constantly switching and loading models between prompts)
             self.experiment_prompts = sort_prompts_by_model_for_api(
                 self.experiment_prompts, api="ollama"
             )
@@ -96,15 +97,27 @@ class Experiment:
             self.output_folder, f"{self.creation_time}-input-" + self.file_name
         )
 
-        # grouped experiment prompts by model
-        self.grouped_experiment_prompts: dict[str, list[dict]] = (
-            self.group_prompts_by_api()
-        )
+        # grouped experiment prompts by
+        # only group the prompts on the first call to the property
+        self._grouped_experiment_prompts: dict[str, list[dict]] = {}
 
     def __str__(self) -> str:
         return self.file_name
 
-    def group_prompts_by_api(self) -> dict[str, list[dict]]:
+    @property
+    def grouped_experiment_prompts(self) -> dict[str, list[dict]]:
+        # only group the prompts on the first call to the property
+        # i.e. we only group the experiment prompts when we need to
+        if self._grouped_experiment_prompts == {}:
+            self._grouped_experiment_prompts = self.group_prompts()
+
+        return self._grouped_experiment_prompts
+
+    @grouped_experiment_prompts.setter
+    def grouped_experiment_prompts(self, value: dict[str, list[dict]]) -> None:
+        raise AttributeError("Cannot set the grouped_experiment_prompts attribute")
+
+    def group_prompts(self) -> dict[str, list[dict]]:
         """
         Function to group the experiment prompts by the API.
 
@@ -121,19 +134,81 @@ class Experiment:
             lists of prompts for that API (i.e. lines in the jsonl file
             which have "api" key equal to the key in the dictionary)
         """
-        # return self.grouped_experiment_prompts if it exists
-        if hasattr(self, "grouped_experiment_prompts"):
-            return self.grouped_experiment_prompts
-
         grouped_dict = {}
-        for item in self.experiment_prompts:
-            model = item.get("api")
-            if model not in grouped_dict:
-                grouped_dict[model] = []
+        # initialise some keys with the rate limits if provided
+        if self.settings.max_queries_dict != {}:
+            for key, value in self.settings.max_queries_dict.items():
+                if isinstance(value, int):
+                    # a default was provided for this api / group
+                    grouped_dict[key] = {
+                        "prompt_dicts": [],
+                        "rate_limit": value,
+                    }
+                elif isinstance(value, dict):
+                    for sub_key, sub_value in value.items():
+                        # sub_key is the model name (or "default")
+                        # sub_value is the rate limit for that model
+                        # (or the default for the api / group)
+                        if sub_key == "default":
+                            # a default was provided for this api / group
+                            grouped_dict[key] = {
+                                "prompt_dicts": [],
+                                "rate_limit": sub_value,
+                            }
+                        else:
+                            # a model-specific rate for the api / group was provided
+                            grouped_dict[f"{key}-{sub_key}"] = {
+                                "prompt_dicts": [],
+                                "rate_limit": sub_value,
+                            }
 
-            grouped_dict[model].append(item)
+        # add the prompts to the grouped dictionary
+        for prompt_dict in self.experiment_prompts:
+            # obtain the key to add the prompt_dict to
+            # "group" key is used if it exists, otherwise use "api"
+            if "group" in prompt_dict:
+                key = prompt_dict["group"]
+            else:
+                key = prompt_dict["api"]
+
+            # model-specific rates may have been provided in the settings
+            if (
+                key in self.settings.max_queries_dict
+                and prompt_dict.get("model-name") in self.settings.max_queries_dict[key]
+            ):
+                key = f"{key}-{prompt_dict.get('model-name')}"
+
+            if key not in grouped_dict:
+                # initilise the key with an empty prompt_dicts list
+                # and the rate limit is just the default max_queries
+                # as no rate limit was provided for this api / group
+                grouped_dict[key] = {
+                    "prompt_dicts": [],
+                    "rate_limit": self.settings.max_queries,
+                }
+
+            grouped_dict[key]["prompt_dicts"].append(prompt_dict)
 
         return grouped_dict
+
+    def grouped_experiment_prompts_summary(self) -> dict[str, str]:
+        """
+        Generate a dictionary with the group names as keys
+        and the number of queries and rate limit for each group
+        as a string.
+
+        Returns
+        -------
+        dict[str, str]
+            Dictionary with the group names as keys and the number
+            of queries and rate limit for each group as a string
+        """
+        queries_and_rates_per_group = {
+            group: f"{len(values['prompt_dicts'])} queries at {values['rate_limit']} queries per minute"
+            for group, values in self.grouped_experiment_prompts.items()
+        }
+
+        return queries_and_rates_per_group
 
 
 class ExperimentPipeline:
@@ -291,32 +366,34 @@ class ExperimentPipeline:
         # run the experiment asynchronously
         if self.settings.parallel:
             logging.info(
-                f"Sending {experiment.number_queries} queries in parallel by grouping models..."
+                f"Sending {experiment.number_queries} queries in parallel by grouping prompts..."
             )
-            queries_per_model = {
-                model: len(prompts)
-                for model, prompts in experiment.grouped_experiment_prompts.items()
-            }
-            logging.info(f"Queries per model: {queries_per_model}")
+            logging.info(
+                f"Queries per group: {experiment.grouped_experiment_prompts_summary()}"
+            )
 
-            # create tasks for each model which we will run in parallel using asyncio.gather
+            # create tasks for each group which we will run in parallel using asyncio.gather
             tasks = [
                 asyncio.create_task(
                     self.send_requests_retry(
-                        experiment=experiment, prompt_dicts=prompt_dicts, model=model
+                        experiment=experiment,
+                        prompt_dicts=values["prompt_dicts"],
+                        group=group,
+                        rate_limit=values["rate_limit"],
                     )
                 )
-                for model, prompt_dicts in experiment.grouped_experiment_prompts.items()
+                for group, values in experiment.grouped_experiment_prompts.items()
             ]
             await tqdm_asyncio.gather(
-                *tasks, desc="Waiting for all models to complete", unit="model"
+                *tasks, desc="Waiting for all groups to complete", unit="group"
             )
         else:
             logging.info(f"Sending {experiment.number_queries} queries...")
             await self.send_requests_retry(
                 experiment=experiment,
                 prompt_dicts=experiment.experiment_prompts,
-                model=None,
+                group=None,
+                rate_limit=self.settings.max_queries,
             )
 
         # calculate average processing time per query for the experiment
@@ -348,7 +425,8 @@ class ExperimentPipeline:
         experiment: Experiment,
         prompt_dicts: list[dict],
         attempt: int,
-        model: str | None = None,
+        rate_limit: int,
+        group: str | None = None,
     ) -> tuple[list[dict], list[dict | Exception]]:
         """
         Send requests to the API asynchronously.
@@ -378,9 +456,11 @@ class ExperimentPipeline:
             Optionally, they can have a "parameters" key. Some APIs may have
             other specific required keys
         attempt : int
-            Integer containing the attempt number to process the prompt
-        model : str | None, optional
-            API/Model name, by default None. If None, then the model is
+            The attempt number to process the prompt
+        rate_limit : int
+            The maximum number of queries to send per minute
+        group : str | None, optional
+            Group name, by default None. If None, then the group is
             not specified in the logs
 
         Returns
@@ -391,15 +471,15 @@ class ExperimentPipeline:
             prompt_dict with a completed "response" key) from the API.
             For any failed queries, the response will be an Exception.
         """
-        request_interval = 60 / self.settings.max_queries
+        request_interval = 60 / rate_limit
         tasks = []
-        for_model_string = f"for model {model} " if model is not None else ""
+        for_group_string = f"for group {group} " if group is not None else ""
         attempt_frac = f"{attempt}/{self.settings.max_attempts}"
 
         for index, item in enumerate(
             tqdm(
                 prompt_dicts,
-                desc=f"Sending {len(prompt_dicts)} queries {for_model_string} (attempt {attempt_frac})",
+                desc=f"Sending {len(prompt_dicts)} queries {for_group_string} (attempt {attempt_frac})",
                 unit="query",
             )
         ):
@@ -421,7 +501,7 @@ class ExperimentPipeline:
         # wait for all tasks to complete before returning
         responses = await tqdm_asyncio.gather(
             *tasks,
-            desc=f"Waiting for responses {for_model_string} (attempt {attempt_frac})",
+            desc=f"Waiting for responses {for_group_string} (attempt {attempt_frac})",
             unit="query",
         )
 
@@ -431,7 +511,8 @@ class ExperimentPipeline:
         self,
         experiment: Experiment,
         prompt_dicts: list[dict],
-        model: str | None = None,
+        rate_limit: int,
+        group: str | None = None,
     ) -> None:
         """
         Send requests to the API asynchronously and retry failed queries
@@ -450,8 +531,8 @@ class ExperimentPipeline:
             to be sent to the API. Each dictionary must have keys "prompt" and "api".
             Optionally, they can have a "parameters" key. Some APIs may have
             other specific required keys
-        model : str | None, optional
-            API/Model name, by default None. If None, then the model is
+        group : str | None, optional
+            Group name, by default None. If None, then the group is
             not specified in the logs
         """
         # initialise the number of attempts
@@ -462,7 +543,8 @@ class ExperimentPipeline:
             experiment=experiment,
             prompt_dicts=prompt_dicts,
             attempt=attempt,
-            model=model,
+            rate_limit=rate_limit,
+            group=group,
         )
 
         while True:
@@ -488,7 +570,8 @@ class ExperimentPipeline:
                         experiment=experiment,
                         prompt_dicts=remaining_prompt_dicts,
                         attempt=attempt,
-                        model=model,
+                        rate_limit=rate_limit,
+                        group=group,
                     )
                 else:
                     # if there are no failed queries, break out of the loop
@@ -522,11 +605,11 @@ async def query_model_and_record_response(
     experiment : Experiment
         The experiment that is being processed
     index : int | None, optional
-        Integer containing the index of the prompt in the experiment,
+        The index of the prompt in the experiment,
         by default None. If None, then index is set to "NA".
         Useful for tagging the prompt/response received and any errors
     attempt : int
-        Integer containing the attempt number to process the prompt
+        The attempt number to process the prompt
 
     Returns
     -------
@@ -633,7 +716,7 @@ async def generate_text(
     experiment : Experiment
         The experiment that is being processed
     index : int | None, optional
-        Integer containing the index of the prompt in the experiment,
+        The index of the prompt in the experiment,
         by default None. If None, then index is set to "NA".
         Useful for tagging the prompt/response received and any errors
 
