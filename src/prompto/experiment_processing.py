@@ -194,11 +194,11 @@ class Experiment:
                 key = prompt_dict["api"]
 
             # model-specific rates may have been provided in the settings
-            if (
-                key in self.settings.max_queries_dict
-                and prompt_dict.get("model-name") in self.settings.max_queries_dict[key]
+            if key in self.settings.max_queries_dict and isinstance(
+                self.settings.max_queries_dict[key], dict
             ):
-                key = f"{key}-{prompt_dict.get('model-name')}"
+                if prompt_dict.get("model_name") in self.settings.max_queries_dict[key]:
+                    key = f"{key}-{prompt_dict.get('model_name')}"
 
             if key not in grouped_dict:
                 # initilise the key with an empty prompt_dicts list

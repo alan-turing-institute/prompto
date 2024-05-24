@@ -190,7 +190,7 @@ def test_settings_check_max_queries_dict(temporary_data_folders):
 
     # check raise error if there is a value that is a dictionary
     # which has a key that is not a string
-    max_queries_dict = {"api": {"model": 10, 1: 10}}
+    max_queries_dict = {"api": {"model_name": 10, 1: 10}}
     with pytest.raises(
         TypeError,
         match=(
@@ -202,7 +202,7 @@ def test_settings_check_max_queries_dict(temporary_data_folders):
 
     # check raise error if there is a value that is a dictionary
     # which has a value that is not an integer
-    max_queries_dict = {"api": {"model": "not_an_int"}}
+    max_queries_dict = {"api": {"model_name": "not_an_int"}}
     with pytest.raises(
         TypeError,
         match=(

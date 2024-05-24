@@ -85,46 +85,46 @@ def temporary_data_folders(tmp_path: Path):
     with open(
         Path(tmp_path / "experiment_pipeline" / "input" / "larger_no_groups.jsonl"), "w"
     ) as f:
-        f.write('{"prompt": "test prompt 1", "api": "test", "model": "model1"}\n')
+        f.write('{"prompt": "test prompt 1", "api": "test", "model_name": "model1"}\n')
         f.write('{"prompt": "test prompt 2", "api": "test"}\n')
-        f.write('{"prompt": "test prompt 3", "api": "test", "model": "model1"}\n')
-        f.write('{"prompt": "test prompt 4", "api": "test", "model": "model3"}\n')
-        f.write('{"prompt": "test prompt 5", "api": "test", "model": "model2"}\n')
-        f.write('{"prompt": "test prompt 6", "api": "test", "model": "model3"}\n')
-        f.write('{"prompt": "test prompt 7", "api": "test", "model": "model3"}\n')
+        f.write('{"prompt": "test prompt 3", "api": "test", "model_name": "model1"}\n')
+        f.write('{"prompt": "test prompt 4", "api": "test", "model_name": "model3"}\n')
+        f.write('{"prompt": "test prompt 5", "api": "test", "model_name": "model2"}\n')
+        f.write('{"prompt": "test prompt 6", "api": "test", "model_name": "model3"}\n')
+        f.write('{"prompt": "test prompt 7", "api": "test", "model_name": "model3"}\n')
         f.write('{"prompt": "test prompt 8", "api": "test"}\n')
         f.write(
-            '{"prompt": "gemini prompt 1", "api": "gemini", "model": "gemini-pro"}\n'
+            '{"prompt": "gemini prompt 1", "api": "gemini", "model_name": "gemini-pro"}\n'
         )
         f.write(
-            '{"prompt": "gemini prompt 2", "api": "gemini", "model": "gemini-pro"}\n'
+            '{"prompt": "gemini prompt 2", "api": "gemini", "model_name": "gemini-pro"}\n'
         )
         f.write('{"prompt": "gemini prompt 3", "api": "gemini"}\n')
         f.write(
-            '{"prompt": "gemini prompt 4", "api": "gemini", "model": "gemini-pro"}\n'
+            '{"prompt": "gemini prompt 4", "api": "gemini", "model_name": "gemini-pro"}\n'
         )
         f.write('{"prompt": "gemini prompt 5", "api": "gemini"}\n')
         f.write(
-            '{"prompt": "azure-openai prompt 1", "api": "azure-openai", "model": "gpt3"}\n'
+            '{"prompt": "azure-openai prompt 1", "api": "azure-openai", "model_name": "gpt3"}\n'
         )
         f.write(
-            '{"prompt": "azure-openai prompt 2", "api": "azure-openai", "model": "gpt4"}\n'
+            '{"prompt": "azure-openai prompt 2", "api": "azure-openai", "model_name": "gpt4"}\n'
         )
         f.write(
-            '{"prompt": "azure-openai prompt 3", "api": "azure-openai", "model": "gpt3"}\n'
+            '{"prompt": "azure-openai prompt 3", "api": "azure-openai", "model_name": "gpt3"}\n'
         )
         f.write('{"prompt": "azure-openai prompt 4", "api": "azure-openai"}\n')
         f.write(
-            '{"prompt": "azure-openai prompt 5", "api": "azure-openai", "model": "gpt3"}\n'
+            '{"prompt": "azure-openai prompt 5", "api": "azure-openai", "model_name": "gpt3"}\n'
         )
         f.write(
-            '{"prompt": "azure-openai prompt 6", "api": "azure-openai", "model": "gpt4"}\n'
+            '{"prompt": "azure-openai prompt 6", "api": "azure-openai", "model_name": "gpt4"}\n'
         )
         f.write(
-            '{"prompt": "azure-openai prompt 7", "api": "azure-openai", "model": "gpt3.5"}\n'
+            '{"prompt": "azure-openai prompt 7", "api": "azure-openai", "model_name": "gpt3.5"}\n'
         )
         f.write(
-            '{"prompt": "azure-openai prompt 8", "api": "azure-openai", "model": "gpt3.5"}\n'
+            '{"prompt": "azure-openai prompt 8", "api": "azure-openai", "model_name": "gpt3.5"}\n'
         )
 
     # create a file with larger number of prompts with different APIs, models and groups
@@ -133,54 +133,54 @@ def temporary_data_folders(tmp_path: Path):
         Path(tmp_path / "experiment_pipeline" / "input" / "larger_with_groups.jsonl"),
         "w",
     ) as f:
-        f.write('{"prompt": "test prompt 1", "api": "test", "model": "model1"}\n')
+        f.write('{"prompt": "test prompt 1", "api": "test", "model_name": "model1"}\n')
         f.write('{"prompt": "test prompt 2", "api": "test"}\n')
         f.write(
-            '{"prompt": "test prompt 3", "api": "test", "model": "model1", "group": "group1"}\n'
+            '{"prompt": "test prompt 3", "api": "test", "model_name": "model1", "group": "group1"}\n'
         )
-        f.write('{"prompt": "test prompt 4", "api": "test", "model": "model3"}\n')
+        f.write('{"prompt": "test prompt 4", "api": "test", "model_name": "model3"}\n')
         f.write(
-            '{"prompt": "test prompt 5", "api": "test", "model": "model2", "group": "group1"}\n'
-        )
-        f.write(
-            '{"prompt": "test prompt 6", "api": "test", "model": "model3", "group": "group1"}\n'
+            '{"prompt": "test prompt 5", "api": "test", "model_name": "model2", "group": "group1"}\n'
         )
         f.write(
-            '{"prompt": "test prompt 7", "api": "test", "model": "model3", "group": "group2"}\n'
+            '{"prompt": "test prompt 6", "api": "test", "model_name": "model3", "group": "group1"}\n'
+        )
+        f.write(
+            '{"prompt": "test prompt 7", "api": "test", "model_name": "model3", "group": "group2"}\n'
         )
         f.write('{"prompt": "test prompt 8", "api": "test", "group": "group2"}\n')
         f.write(
-            '{"prompt": "gemini prompt 1", "api": "gemini", "model": "gemini-pro", "group": "group1"}\n'
+            '{"prompt": "gemini prompt 1", "api": "gemini", "model_name": "gemini-pro", "group": "group1"}\n'
         )
         f.write(
-            '{"prompt": "gemini prompt 2", "api": "gemini", "model": "gemini-pro", "group": "group2"}\n'
+            '{"prompt": "gemini prompt 2", "api": "gemini", "model_name": "gemini-pro", "group": "group2"}\n'
         )
         f.write('{"prompt": "gemini prompt 3", "api": "gemini", "group": "group1"}\n')
         f.write(
-            '{"prompt": "gemini prompt 4", "api": "gemini", "model": "gemini-pro"}\n'
+            '{"prompt": "gemini prompt 4", "api": "gemini", "model_name": "gemini-pro"}\n'
         )
         f.write('{"prompt": "gemini prompt 5", "api": "gemini"}\n')
         f.write(
-            '{"prompt": "azure-openai prompt 1", "api": "azure-openai", "model": "gpt3", "group": "group1"}\n'
+            '{"prompt": "azure-openai prompt 1", "api": "azure-openai", "model_name": "gpt3", "group": "group1"}\n'
         )
         f.write(
-            '{"prompt": "azure-openai prompt 2", "api": "azure-openai", "model": "gpt4"}\n'
+            '{"prompt": "azure-openai prompt 2", "api": "azure-openai", "model_name": "gpt4"}\n'
         )
         f.write(
-            '{"prompt": "azure-openai prompt 3", "api": "azure-openai", "model": "gpt3", "group": "group1"}\n'
+            '{"prompt": "azure-openai prompt 3", "api": "azure-openai", "model_name": "gpt3", "group": "group1"}\n'
         )
         f.write('{"prompt": "azure-openai prompt 4", "api": "azure-openai"}\n')
         f.write(
-            '{"prompt": "azure-openai prompt 5", "api": "azure-openai", "model": "gpt3"}\n'
+            '{"prompt": "azure-openai prompt 5", "api": "azure-openai", "model_name": "gpt3"}\n'
         )
         f.write(
-            '{"prompt": "azure-openai prompt 6", "api": "azure-openai", "model": "gpt4", "group": "group1"}\n'
+            '{"prompt": "azure-openai prompt 6", "api": "azure-openai", "model_name": "gpt4", "group": "group1"}\n'
         )
         f.write(
-            '{"prompt": "azure-openai prompt 7", "api": "azure-openai", "model": "gpt3.5"}\n'
+            '{"prompt": "azure-openai prompt 7", "api": "azure-openai", "model_name": "gpt3.5"}\n'
         )
         f.write(
-            '{"prompt": "azure-openai prompt 8", "api": "azure-openai", "model": "gpt3.5", "group": "group2"}\n'
+            '{"prompt": "azure-openai prompt 8", "api": "azure-openai", "model_name": "gpt3.5", "group": "group2"}\n'
         )
 
     # store current working directory
