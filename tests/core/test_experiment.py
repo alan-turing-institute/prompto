@@ -1535,7 +1535,7 @@ def test_experiment_grouped_prompts_groups_and_models_with_groups(
     }
 
 
-def test_experiment_grouped_prompts_all_with_groups(temporary_data_folders):
+def test_experiment_grouped_prompts_all_with_groups_v1(temporary_data_folders):
     # specify rate limits for "test" and "gemini" apis and some models,
     # as well as limits for "group1" and some models,
     # and overall rate limit for "group2" and "azure-openai"
@@ -1731,4 +1731,201 @@ def test_experiment_grouped_prompts_all_with_groups(temporary_data_folders):
         "ignored": "0 queries at 10 queries per minute",
         "ignored-with-models": "0 queries at 15 queries per minute",
         "ignored-with-models-ignored-model": "0 queries at 5 queries per minute",
+    }
+
+
+def test_experiment_grouped_prompts_all_with_groups_v2(temporary_data_folders):
+    # same test as above but slight variation in the max_queries_dict
+    # specify rate limits for "test" and "gemini" apis and some models,
+    # as well as limits for "group1" and some models
+    # also add other key which should be ignored but
+    # present in the group_experiment_prompts
+    max_queries_dict = {
+        "test": {"model2": 100, "model1": 200},
+        "gemini": {"default": 25, "gemini-pro": 20},
+        "group1": {"default": 10, "gpt3": 100, "model2": 200},
+        "ignored": 1,
+        "ignored-with-models": {"default": 5, "ignored-model": 19},
+    }
+
+    # create a settings object
+    settings = Settings(
+        data_folder="experiment_pipeline",
+        max_queries=50,
+        max_attempts=5,
+        parallel=True,
+        max_queries_dict=max_queries_dict,
+    )
+    assert settings.max_queries_dict == max_queries_dict
+
+    # create an experiment object
+    experiment = Experiment("larger_with_groups.jsonl", settings=settings)
+
+    # remember "group" keys take precedence over "api" keys
+    assert experiment.grouped_experiment_prompts == {
+        "ignored": {
+            "prompt_dicts": [],
+            "rate_limit": 1,
+        },
+        "ignored-with-models": {
+            "prompt_dicts": [],
+            "rate_limit": 5,
+        },
+        "ignored-with-models-ignored-model": {
+            "prompt_dicts": [],
+            "rate_limit": 19,
+        },
+        "test": {
+            "prompt_dicts": [
+                {"prompt": "test prompt 2", "api": "test"},
+                {"prompt": "test prompt 4", "api": "test", "model_name": "model3"},
+            ],
+            "rate_limit": 50,
+        },
+        "test-model1": {
+            "prompt_dicts": [
+                {"prompt": "test prompt 1", "api": "test", "model_name": "model1"},
+            ],
+            "rate_limit": 200,
+        },
+        "test-model2": {
+            "prompt_dicts": [],
+            "rate_limit": 100,
+        },
+        "group1": {
+            "prompt_dicts": [
+                {
+                    "prompt": "test prompt 3",
+                    "api": "test",
+                    "model_name": "model1",
+                    "group": "group1",
+                },
+                {
+                    "prompt": "test prompt 6",
+                    "api": "test",
+                    "model_name": "model3",
+                    "group": "group1",
+                },
+                {
+                    "prompt": "gemini prompt 1",
+                    "api": "gemini",
+                    "model_name": "gemini-pro",
+                    "group": "group1",
+                },
+                {"prompt": "gemini prompt 3", "api": "gemini", "group": "group1"},
+                {
+                    "prompt": "azure-openai prompt 6",
+                    "api": "azure-openai",
+                    "model_name": "gpt4",
+                    "group": "group1",
+                },
+            ],
+            "rate_limit": 10,
+        },
+        "group1-model2": {
+            "prompt_dicts": [
+                {
+                    "prompt": "test prompt 5",
+                    "api": "test",
+                    "model_name": "model2",
+                    "group": "group1",
+                },
+            ],
+            "rate_limit": 200,
+        },
+        "group1-gpt3": {
+            "prompt_dicts": [
+                {
+                    "prompt": "azure-openai prompt 1",
+                    "api": "azure-openai",
+                    "model_name": "gpt3",
+                    "group": "group1",
+                },
+                {
+                    "prompt": "azure-openai prompt 3",
+                    "api": "azure-openai",
+                    "model_name": "gpt3",
+                    "group": "group1",
+                },
+            ],
+            "rate_limit": 100,
+        },
+        "group2": {
+            "prompt_dicts": [
+                {
+                    "prompt": "test prompt 7",
+                    "api": "test",
+                    "model_name": "model3",
+                    "group": "group2",
+                },
+                {"prompt": "test prompt 8", "api": "test", "group": "group2"},
+                {
+                    "prompt": "gemini prompt 2",
+                    "api": "gemini",
+                    "model_name": "gemini-pro",
+                    "group": "group2",
+                },
+                {
+                    "prompt": "azure-openai prompt 8",
+                    "api": "azure-openai",
+                    "model_name": "gpt3.5",
+                    "group": "group2",
+                },
+            ],
+            "rate_limit": 50,
+        },
+        "gemini": {
+            "prompt_dicts": [
+                {"prompt": "gemini prompt 5", "api": "gemini"},
+            ],
+            "rate_limit": 25,
+        },
+        "gemini-gemini-pro": {
+            "prompt_dicts": [
+                {
+                    "prompt": "gemini prompt 4",
+                    "api": "gemini",
+                    "model_name": "gemini-pro",
+                },
+            ],
+            "rate_limit": 20,
+        },
+        "azure-openai": {
+            "prompt_dicts": [
+                {
+                    "prompt": "azure-openai prompt 2",
+                    "api": "azure-openai",
+                    "model_name": "gpt4",
+                },
+                {"prompt": "azure-openai prompt 4", "api": "azure-openai"},
+                {
+                    "prompt": "azure-openai prompt 5",
+                    "api": "azure-openai",
+                    "model_name": "gpt3",
+                },
+                {
+                    "prompt": "azure-openai prompt 7",
+                    "api": "azure-openai",
+                    "model_name": "gpt3.5",
+                },
+            ],
+            "rate_limit": 50,
+        },
+    }
+
+    # test grouped_experiment_prompts_summary
+    assert experiment.grouped_experiment_prompts_summary() == {
+        "test": "2 queries at 50 queries per minute",
+        "group1": "5 queries at 10 queries per minute",
+        "group2": "4 queries at 50 queries per minute",
+        "group1-model2": "1 queries at 200 queries per minute",
+        "group1-gpt3": "2 queries at 100 queries per minute",
+        "test-model1": "1 queries at 200 queries per minute",
+        "test-model2": "0 queries at 100 queries per minute",
+        "gemini": "1 queries at 25 queries per minute",
+        "gemini-gemini-pro": "1 queries at 20 queries per minute",
+        "azure-openai": "4 queries at 50 queries per minute",
+        "ignored": "0 queries at 1 queries per minute",
+        "ignored-with-models": "0 queries at 5 queries per minute",
+        "ignored-with-models-ignored-model": "0 queries at 19 queries per minute",
     }
