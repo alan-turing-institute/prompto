@@ -21,7 +21,9 @@ prompto_run_experiment --file path/to/experiment.jsonl --data-folder data --max-
 
 ## Using parallel processing
 
-When the `--parallel` flag is set, we will always try to perform a grouping of the prompts and rate limits can be specified for each API and each model, and for a user-specified group of prompts. This is done by using the `--max-queries-json` or `-mqj` flag. This can be a path to another json file which contains the maximum number of queries to send within a minute for each API, model or group. In this json, the keys are API names (e.g. "openai", "gemini", etc.) or group names and the values can either be integers which represent the corresponding rate limit for the API or group. The values can also themselves be another dictionary where keys are model names and values are integers representing the rate limit for that model. If the json file is not provided, the `--max-queries` value is used for all APIs or groups.
+When the `--parallel` flag is set, we will always try to perform a grouping of the prompts and we group prompts according to the "group" or "api" key in the `prompt_dict` (line in the jsonl experiment file) and the (optional) user-specified rate limits for each group or API are set using the `--max-queries-json` or `-mqj` flag.
+
+When using the `--max-queries-json` flag, you must pass a path to a json file which contains the maximum number of queries to send within a minute for each API, model or group. In this json, the keys are API names (e.g. "openai", "gemini", etc.) or group names and the values can either be integers which represent the corresponding rate limit for the API or group. The values can also themselves be another dictionary where keys are model names and values are integers representing the rate limit for that model. If the json file is not provided, the `--max-queries` value is used for all APIs or groups.
 
 To summarise, the json file should have the following structure:
 - The keys are the API names or group names
