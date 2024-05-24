@@ -1,6 +1,10 @@
 # Specifying rate limits
 
-When running the pipeline or an experiment, there are certain settings to define how to run the experiments which are described in the [pipeline documentation](./pipeline.md#pipeline-settings). These can be set using the command line interfaces. One of the key settings is the rate limit which is the maximum number of queries that can be sent to an API/model within a minute. This is important to prevent the API from being overloaded and to prevent the user from being blocked by the API. The (default) rate limit can be set using the `--max-queries` or `-m` flag. By default, the rate limit is set to `10` queries per minute. Another key setting is whether or not to process the prompts in the experiments in parallel meaning that we send the queries to the different APIs (which typically have separate and independent rate limits) in parallel. This can be set using the `--parallel` or `-p` flag. In this document, we will describe how to set the rate limits for each API or group of APIs when the `--parallel` flag is set.
+When running the pipeline or an experiment, there are certain settings to define how to run the experiments which are described in the [pipeline documentation](./pipeline.md#pipeline-settings). These can be set using the command line interfaces.
+
+One of the key settings is the rate limit which is the maximum number of queries that can be sent to an API/model within a minute. This is important to prevent the API from being overloaded and to prevent the user from being blocked by the API. The (default) rate limit can be set using the `--max-queries` or `-m` flag. By default, the rate limit is set to `10` queries per minute.
+
+Another key setting is whether or not to process the prompts in the experiments in parallel meaning that we send the queries to the different APIs (which typically have separate and independent rate limits) in parallel. This can be set using the `--parallel` or `-p` flag. In this document, we will describe how to set the rate limits for each API or group of APIs when the `--parallel` flag is set and how to use the `--max-queries-json` or `-mqj` flag to do this.
 
 ## Using no parallel processing
 
@@ -8,7 +12,6 @@ If the `--parallel` flag is not set, the rate limit is set using the `--max-quer
 ```json
 {"id": 0, "api": "gemini", "model": "gemini-1.5-pro", "prompt": "What is the capital of France?"}
 {"id": 1, "api": "gemini", "model": "gemini-1.5-pro", "prompt": "What is the capital of Germany?"}
-...
 ```
 
 In this case, there is only one model to query through the same API and so parallel processing is not necessary. The rate limit can be set using the `--max-queries` flag, e.g. to send 5 per minute (the default is 10):
@@ -46,13 +49,13 @@ Concretely, the json file should look like this:
 
 In the codebase, this json defines the `max_queries_dict` which is a dictionary which defines the rate limits to set for different groups of prompts. We use this dictionary to generate several different _groups/queues of prompts_ which are then processed in parallel.
 
-When the `--parallel` flag is set, we will always try to perform a grouping of the prompts based on first the "group" key and then the "api" key. If there is a "model_name" key and the model name has been specified in the `max_queries_dict` for the group or API, then the prompt is assigned to the model-specific queue for that group or API.
+When the `--parallel` flag is set, we will always try to perform a grouping of the prompts based on first the "group" key and then the "api" key. If there is a "model_name" key and the model name has been specified in the `max_queries_dict` for the group or API (by having a sub-dictionary as a value to the group or API name), then the prompt is assigned to the model-specific queue for that group or API.
 
 In particular, we use the `max_queries_dict` and loop through the `prompt_dicts` in the experiment file to determine which group/queue the prompt belongs to. When deciding this, the following hierarchy is used:
 1. If the prompt has a "group" key, then the prompt is assigned to the group defined by the value of the "group" key.
-    - If the prompt has a "model_name" key, and this model name has been specified in the `max_queries_dict`, then the prompt is assigned to the group defined by the {group}-{model_name}
+    - If the prompt has a "model_name" key, and this model name has been specified in the `max_queries_dict`, then the prompt is assigned to the group defined by the `{group}-{model_name}`
 2. If the prompt has an "api" key, then the prompt is assigned to the group defined by the value of the "api" key.
-    - If the prompt has a "model_name" key, and this model name has been specified in the `max_queries_dict`, then the prompt is assigned to the group defined by the {api}-{model_name}
+    - If the prompt has a "model_name" key, and this model name has been specified in the `max_queries_dict`, then the prompt is assigned to the group defined by the `{api}-{model_name}`
 
 By first looking for a "group" key, this allows the user to have full control over how the prompts are split into different groups/queues.
 
@@ -137,17 +140,17 @@ prompto_run_experiment --file path/to/experiment.jsonl --data-folder data --max-
 ```
 
 In this case, there are actually 6 groups/queues of prompts created (although not all of them will have prompts in the queues):
-1. Gemini API with model "gemini-1.0-pro" with rate limit of 20
-2. Gemini API with rate limit of 5 (default rate limit provided) - i.e. all the prompts with the "gemini" API that are not "gemini-1.5-pro"
-3. OpenAI API with model "gpt4" with rate limit of 10
-4. OpenAI API with model "gpt3.5-turbo" with rate limit of 20
-5. OpenAI API with rate limit of 5 (default rate limit provided) - i.e. all the prompts with the "openai" API that are not "gpt4" or "gpt3.5-turbo"
-6. Ollama API with rate limit of 5 (default rate limit provided) - i.e. all the prompts with the "ollama" API
+1. `gemini-gemini-1.0-pro`: Gemini API with model "gemini-1.0-pro" with rate limit of 20
+2. `gemini`: Gemini API with rate limit of 5 (default rate limit provided) - i.e. all the prompts with the "gemini" API that are not "gemini-1.5-pro"
+3. `openai-gpt4`: OpenAI API with model "gpt4" with rate limit of 10
+4. `openai-gpt3.5-turbo`: OpenAI API with model "gpt3.5-turbo" with rate limit of 20
+5. `openai`: OpenAI API with rate limit of 5 (default rate limit provided) - i.e. all the prompts with the "openai" API that are not "gpt4" or "gpt3.5-turbo"
+6. `ollama`: Ollama API with rate limit of 5 (default rate limit provided) - i.e. all the prompts with the "ollama" API
 
 Note here that:
-- Group 5 here does not have any prompts in it as all the prompts with the "openai" API are either "gpt4" or "gpt3.5-turbo"
-- Groups 2, 5 and 6 are generated by the API types which will always be generated if the `--parallel` flag is set
-- Groups 1, 3 and 4 are generated by the models which are generated by the keys in the sub-dictionaries of the `max_queries_dict`
+- Group 5 (`openai`) here does not have any prompts in it as all the prompts with the "openai" API are either "gpt4" or "gpt3.5-turbo"
+- Groups 2 (`gemini`), 5 (`openai`) and 6 (`ollama`) are generated by the API types which will always be generated if the `--parallel` flag is set
+- Groups 1 (`gemini-gemini-1.0-pro`), 3 (`openai-gpt4`) and 4 (`openai-gpt3.5-turbo`) are generated by the models which are generated by the keys in the sub-dictionaries of the `max_queries_dict`
 
 If we wanted to adjust the default rate limit for a given API type, we can do so by specifing a rate limit for `"default"` in the sub-dictionary. For example, consider the following json file `max_queries.json`:
 ```json
@@ -237,7 +240,7 @@ In this case, we are creating two queues which have "ollama" prompts. One of the
 In addition, we also have the separate queues for each API type which are generated by the API types which will always be generated if the `--parallel` flag is set.
 
 In this example, a total of 4 queues are created:
-1. Gemini API with rate limit of 5
-2. OpenAI API with rate limit of 5
-3. Ollama API with "llama3" and "mistral" models with rate limit of 5
-4. Ollama API with "gemma" and "phi3" models with rate limit of 10
+1. `gemini`: Gemini API with rate limit of 5
+2. `openai`: OpenAI API with rate limit of 5
+3. `group1`: Ollama API with "llama3" and "mistral" models with rate limit of 5
+4. `group2`: Ollama API with "gemma" and "phi3" models with rate limit of 10
