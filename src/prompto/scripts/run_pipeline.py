@@ -43,7 +43,7 @@ def main():
         default=False,
     )
     parser.add_argument(
-        "--max-query-json",
+        "--max-queries-json",
         "-mqj",
         help=(
             "Path to the json file containing the maximum queries per minute "
