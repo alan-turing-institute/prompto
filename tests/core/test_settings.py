@@ -188,19 +188,27 @@ def test_settings_check_max_queries_dict(temporary_data_folders):
     ):
         Settings(max_queries_dict=max_queries_dict)
 
-    # check raise error if there is a value that is a dictionary which has a key that is not a string
+    # check raise error if there is a value that is a dictionary
+    # which has a key that is not a string
     max_queries_dict = {"api": {"model": 10, 1: 10}}
     with pytest.raises(
         TypeError,
-        match="if a value of max_queries_dict is a dictionary, the sub-keys must be strings, not <class 'int'>",
+        match=(
+            "if a value of max_queries_dict is a dictionary, "
+            "the sub-keys must be strings, not <class 'int'>"
+        ),
     ):
         Settings(max_queries_dict=max_queries_dict)
 
-    # check raise error if there is a value that is a dictionary which has a value that is not an integer
+    # check raise error if there is a value that is a dictionary
+    # which has a value that is not an integer
     max_queries_dict = {"api": {"model": "not_an_int"}}
     with pytest.raises(
         TypeError,
-        match="if a value of max_queries_dict is a dictionary, the sub-values must be integers, not <class 'str'>",
+        match=(
+            "if a value of max_queries_dict is a dictionary, "
+            "the sub-values must be integers, not <class 'str'>"
+        ),
     ):
         Settings(max_queries_dict=max_queries_dict)
 

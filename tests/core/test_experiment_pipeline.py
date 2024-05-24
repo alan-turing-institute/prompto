@@ -35,12 +35,12 @@ def test_update_experiment_files(temporary_data_folders):
 
     # call the update_experiment_files method
     pipeline.update_experiment_files()
-    assert pipeline.experiment_files == ["first.jsonl", "second.jsonl"]
+    assert pipeline.experiment_files == ["first.jsonl", "second.jsonl", "larger.jsonl"]
 
     # remove second.jsonl from the folder
     os.remove("experiment_pipeline/input/second.jsonl")
     pipeline.update_experiment_files()
-    assert pipeline.experiment_files == ["first.jsonl"]
+    assert pipeline.experiment_files == ["first.jsonl", "larger.jsonl"]
 
 
 def test_log_estimate(temporary_data_folders, caplog):
@@ -124,12 +124,12 @@ def test_log_progress(temporary_data_folders, caplog):
     # call the log_progress method on first experiment
     pipeline.log_progress(experiment=first)
     # check the experiment_files attribute is updated (should only have second.jsonl)
-    assert pipeline.experiment_files == ["second.jsonl"]
+    assert pipeline.experiment_files == ["second.jsonl", "larger.jsonl"]
     # check the log messages have been written
     assert "Completed experiment: first.jsonl!" in caplog.text
     assert "- Overall average time per query: 0.0" in caplog.text
-    assert "- Remaining number of experiments: 1" in caplog.text
-    assert "- Remaining experiments: ['second.jsonl']" in caplog.text
+    assert "- Remaining number of experiments: 2" in caplog.text
+    assert "- Remaining experiments: ['second.jsonl', 'larger.jsonl']" in caplog.text
 
     # move second.jsonl to the output folder (simulating it being processed)
     output_experiment_dir = "experiment_pipeline/output/second"
@@ -144,9 +144,9 @@ def test_log_progress(temporary_data_folders, caplog):
     # call the log_progress method on second experiment
     pipeline.log_progress(experiment=second)
     # check the experiment_files attribute is empty
-    assert pipeline.experiment_files == []
+    assert pipeline.experiment_files == ["larger.jsonl"]
     # check the log messages have been written
     assert "Completed experiment: second.jsonl!" in caplog.text
     assert "- Overall average time per query: 0.5" in caplog.text
-    assert "- Remaining number of experiments: 0" in caplog.text
-    assert "- Remaining experiments: []" in caplog.text
+    assert "- Remaining number of experiments: 1" in caplog.text
+    assert "- Remaining experiments: ['larger.jsonl']" in caplog.text

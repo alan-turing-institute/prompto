@@ -118,6 +118,7 @@ class Settings:
         max_queries_dict_str = (
             f", max_queries_dict={self.max_queries_dict}\n" if self.parallel else "\n"
         )
+
         return (
             "Settings: "
             f"data_folder={self.data_folder}, "

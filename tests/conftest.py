@@ -51,9 +51,11 @@ def temporary_data_folders(tmp_path: Path):
     utils_dir = Path(tmp_path / "utils").mkdir()
     with open(Path(tmp_path / "utils" / "first.jsonl"), "w") as f:
         f.write('{"prompt": "test prompt 1", "api": "test"}\n')
+
     time.sleep(0.01)
     with open(Path(tmp_path / "utils" / "second.jsonl"), "w") as f:
         f.write('{"prompt": "test prompt 2", "api": "test"}\n')
+
     time.sleep(0.01)
     with open(Path(tmp_path / "utils" / "third.jsonl"), "w") as f:
         f.write('{"prompt": "test prompt 3", "api": "test"}\n')
@@ -71,11 +73,67 @@ def temporary_data_folders(tmp_path: Path):
         f.write('{"prompt": "test prompt 1", "api": "test"}\n')
         f.write('{"prompt": "test prompt 2", "api": "test"}\n')
         f.write('{"prompt": "test prompt 3", "api": "test"}\n')
+
     time.sleep(0.01)
     with open(
         Path(tmp_path / "experiment_pipeline" / "input" / "second.jsonl"), "w"
     ) as f:
         f.write('{"prompt": "test prompt 2", "api": "test"}\n')
+
+    # create a file with larger number of prompts with different APIs, models and groups
+    time.sleep(0.01)
+    with open(
+        Path(tmp_path / "experiment_pipeline" / "input" / "larger.jsonl"), "w"
+    ) as f:
+        f.write('{"prompt": "test prompt 1", "api": "test", "model": "model1"}\n')
+        f.write('{"prompt": "test prompt 2", "api": "test"}\n')
+        f.write(
+            '{"prompt": "test prompt 3", "api": "test", "model": "model1", "group": "group1"}\n'
+        )
+        f.write('{"prompt": "test prompt 4", "api": "test", "model": "model3"}\n')
+        f.write(
+            '{"prompt": "test prompt 5", "api": "test", "model": "model2", "group": "group1"}\n'
+        )
+        f.write(
+            '{"prompt": "test prompt 6", "api": "test", "model": "model3", "group": "group1"}\n'
+        )
+        f.write(
+            '{"prompt": "test prompt 7", "api": "test", "model": "model3", "group": "group2"}\n'
+        )
+        f.write('{"prompt": "test prompt 8", "api": "test", "group": "group2"}\n')
+        f.write(
+            '{"prompt": "gemini prompt 1", "api": "gemini", "model": "gemini-pro", "group": "group1"}\n'
+        )
+        f.write(
+            '{"prompt": "gemini prompt 2", "api": "gemini", "model": "gemini-pro", "group": "group2"}\n'
+        )
+        f.write('{"prompt": "gemini prompt 3", "api": "gemini", "group": "group1"}\n')
+        f.write(
+            '{"prompt": "gemini prompt 4", "api": "gemini", "model": "gemini-pro"}\n'
+        )
+        f.write('{"prompt": "gemini prompt 5", "api": "gemini"}\n')
+        f.write(
+            '{"prompt": "azure-openai prompt 1", "api": "azure-openai", "model": "gpt3", "group": "group1"}\n'
+        )
+        f.write(
+            '{"prompt": "azure-openai prompt 2", "api": "azure-openai", "model": "gpt4"}\n'
+        )
+        f.write(
+            '{"prompt": "azure-openai prompt 3", "api": "azure-openai", "model": "gpt3", "group": "group1"}\n'
+        )
+        f.write('{"prompt": "azure-openai prompt 4", "api": "azure-openai"}\n')
+        f.write(
+            '{"prompt": "azure-openai prompt 5", "api": "azure-openai", "model": "gpt3"}\n'
+        )
+        f.write(
+            '{"prompt": "azure-openai prompt 6", "api": "azure-openai", "model": "gpt4", "group": "group1"}\n'
+        )
+        f.write(
+            '{"prompt": "azure-openai prompt 7", "api": "azure-openai", "model": "gpt3.5"}\n'
+        )
+        f.write(
+            '{"prompt": "azure-openai prompt 8", "api": "azure-openai", "model": "gpt3.5", "group": "group2"}\n'
+        )
 
     # store current working directory
     cwd = os.getcwd()

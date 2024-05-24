@@ -68,3 +68,36 @@ def test_experiment_init(temporary_data_folders):
 
     # test str method
     assert str(experiment) == "test_in_input.jsonl"
+
+    # test that grouped experiments have not been created yet
+    assert experiment._grouped_experiment_prompts == {}
+
+
+def test_experiment_grouped_prompts_simple(temporary_data_folders):
+    # create a settings object
+    settings = Settings(data_folder="data", max_queries=50, max_attempts=5)
+
+    # create a jsonl file in the input folder (which is created when initialising Settings object)
+    with open("data/input/test_in_input.jsonl", "w") as f:
+        f.write('{"id": 0, "prompt": "test prompt 0", "api": "test"}\n')
+        f.write('{"id": 1, "prompt": "test prompt 1", "api": "test"}\n')
+
+    # create an experiment object
+    experiment = Experiment("test_in_input.jsonl", settings=settings)
+
+    # check the experiment_prompts attribute is correct
+    assert experiment.experiment_prompts == [
+        {"id": 0, "prompt": "test prompt 0", "api": "test"},
+        {"id": 1, "prompt": "test prompt 1", "api": "test"},
+    ]
+
+    # test that grouped experiments have not been created yet
+    assert experiment._grouped_experiment_prompts == {}
+
+    # when the attribute is called, it will get the grouped prompts by calling group_prompts method
+    grouped_prompts = experiment.grouped_experiment_prompts
+    # when settings.max_queries_dict is empty, we just group by "group" or "api"
+    # here, prompts only have "api" key with "test", so should be a dictionary of one "test" key
+    assert grouped_prompts == {
+        "test": {"prompt_dicts": experiment.experiment_prompts, "rate_limit": 50}
+    }
