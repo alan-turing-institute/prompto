@@ -70,15 +70,17 @@ class Experiment:
 
         # read in the experiment data
         with open(self.input_file_path, "r") as f:
-            self.experiment_prompts: list[dict] = [dict(json.loads(line)) for line in f]
+            self._experiment_prompts: list[dict] = [
+                dict(json.loads(line)) for line in f
+            ]
             # sort the prompts by model_name key for the ollama api
             # (for avoiding constantly switching and loading models between prompts)
-            self.experiment_prompts = sort_prompts_by_model_for_api(
-                self.experiment_prompts, api="ollama"
+            self._experiment_prompts = sort_prompts_by_model_for_api(
+                self._experiment_prompts, api="ollama"
             )
 
         # set the number of queries
-        self.number_queries: int = len(self.experiment_prompts)
+        self.number_queries: int = len(self._experiment_prompts)
 
         # get the time which the experiment file is created
         self.creation_time: str = datetime.fromtimestamp(
@@ -103,6 +105,14 @@ class Experiment:
 
     def __str__(self) -> str:
         return self.file_name
+
+    @property
+    def experiment_prompts(self) -> list[dict]:
+        return self._experiment_prompts
+
+    @experiment_prompts.setter
+    def experiment_prompts(self, value: list[dict]) -> None:
+        raise AttributeError("Cannot set the experiment_prompts attribute")
 
     @property
     def grouped_experiment_prompts(self) -> dict[str, list[dict]]:
@@ -175,7 +185,7 @@ class Experiment:
                             }
 
         # add the prompts to the grouped dictionary
-        for prompt_dict in self.experiment_prompts:
+        for prompt_dict in self._experiment_prompts:
             # obtain the key to add the prompt_dict to
             # "group" key is used if it exists, otherwise use "api"
             if "group" in prompt_dict:
