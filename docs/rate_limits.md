@@ -6,6 +6,8 @@ One of the key settings is the rate limit which is the maximum number of queries
 
 Another key setting is whether or not to process the prompts in the experiments in parallel meaning that we send the queries to the different APIs (which typically have separate and independent rate limits) in parallel. This can be set using the `--parallel` or `-p` flag. In this document, we will describe how to set the rate limits for each API or group of APIs when the `--parallel` flag is set and how to use the `--max-queries-json` or `-mqj` flag to do this.
 
+For more examples and a walkthrough of how to set the rate limits for parallel processing of prompts, see the [Grouping prompts and specifying rate limits notebook](../examples/notebooks/grouping_prompts_and_specifying_rate_limits.ipynb).
+
 ## Using no parallel processing
 
 If the `--parallel` flag is not set, the rate limit is set using the `--max-queries` flag. This is the simplest pipeline setting and typically should only be used when the experiment file contains prompts for a single API and model, e.g.:
