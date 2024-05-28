@@ -197,6 +197,20 @@ def temporary_data_folders(tmp_path: Path):
 
 @pytest.fixture()
 def temporary_rate_limit_doc_examples(tmp_path: Path):
+    """
+    Creates a temporary folder structure for testing rate limit examples
+    from the docs/rate_limit.md file.
+
+    Has the following structure:
+    tmp_path
+    ├── data/
+        ├── input/
+            └── rate_limit_docs_example.jsonl
+            └── rate_limit_docs_example_groups.jsonl
+            └── rate_limit_docs_example_groups_2.jsonl
+        ├── output/
+        ├── media/
+    """
     # create a folder for testing the experiment pipeline
     data_dir = Path(tmp_path / "data").mkdir()
     # create subfolders for the experiment pipeline
