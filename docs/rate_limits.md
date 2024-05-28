@@ -49,7 +49,7 @@ Concretely, the json file should look like this:
 }
 ```
 
-In the codebase, this json defines the `max_queries_dict` which is a dictionary which defines the rate limits to set for different groups of prompts. We use this dictionary to generate several different _groups/queues of prompts_ which are then processed in parallel.
+In the codebase, this json defines the `max_queries_dict` which is a dictionary which defines the rate limits to set for different groups of prompts. We use this dictionary to generate several different _groups/queues of prompts_ which are then processed in parallel. Note that this dictionary/json is only used to specify any rate limits which are _different_ from the default rate limit which is set using the `--max-queries` flag. Anything that is not specified in the json file will be set to the default rate limit.
 
 When the `--parallel` flag is set, we will always try to perform a grouping of the prompts based on first the "group" key and then the "api" key. If there is a "model_name" key and the model name has been specified in the `max_queries_dict` for the group or API (by having a sub-dictionary as a value to the group or API name), then the prompt is assigned to the model-specific queue for that group or API.
 
@@ -91,10 +91,14 @@ As noted above, since there are no "group" keys in the experiment file, the prom
 
 If `--parallel` flag is used but no `max_queries_dict` is provided (i.e. the `--max-queries-json` flag is not used in the CLI), then we simply group the prompts by the "api" key and send the prompts to the different APIs in parallel with the same rate limit, e.g.:
 ```bash
-prompto_run_experiment --file path/to/experiment.jsonl --data-folder data --max-queries 5 --parallel
+prompto_run_experiment \
+    --file path/to/experiment.jsonl \
+    --data-folder data \
+    --max-queries 5 \
+    --parallel
 ```
 
-In this case, three groups/queues of prompts are created: one for the "gemini" API, one for the "openai" API and one for the "ollama" API. The rate limit of 5 queries per minute is applied to both groups.
+In this case, three groups/queues of prompts are created: one for the "gemini" API, one for the "openai" API and one for the "ollama" API. The rate limit of 5 queries per minute is applied to both groups since we specified `--max-queries 5`.
 
 ### Different rate limits for each API type
 
@@ -108,10 +112,15 @@ To build on the above example, if we want to set different rate limits for each 
 
 Then we can run the experiment with the following command:
 ```bash
-prompto_run_experiment --file path/to/experiment.jsonl --data-folder data --max-queries 5 --max-queries-json max_queries.json --parallel
+prompto_run_experiment \
+    --file path/to/experiment.jsonl \
+    --data-folder data \
+    --max-queries 5 \
+    --max-queries-json max_queries.json \
+    --parallel
 ```
 
-In this case, three groups/queues of prompts are created: one for the "gemini" API, one for the "openai" API and one for the "ollama" API. The rate limit of 10 queries per minute is applied to the "gemini" group, the rate limit of 20 queries per minute is applied to the "openai" group and since we did not specify a rate limit for "ollama", they are sent to the endpoint at the default 5 per minute rate.
+In this case, three groups/queues of prompts are created: one for the "gemini" API, one for the "openai" API and one for the "ollama" API. The rate limit of 10 queries per minute is applied to the "gemini" group, the rate limit of 20 queries per minute is applied to the "openai" group and since we did not specify a rate limit for "ollama", they are sent to the endpoint at the default 5 per minute rate established by the `--max-queries 5` flag in the command.
 
 It is important to note that the keys in the json file must match the values of the "api" key in the experiment file. If there is an API in the experiment file that is not in the json file, then the rate limit for that API will be set to the default rate limit which is set using the `--max-queries` flag.
 If we had accidentally misspelled "openai" as "openaii" in the json file, then the rate limit for the "openai" prompts would have been set to the default rate.
@@ -138,7 +147,12 @@ In general, _you only specify the rate limits for the models that you want to se
 
 Then we can run the experiment with the following command:
 ```bash
-prompto_run_experiment --file path/to/experiment.jsonl --data-folder data --max-queries 5 --max-queries-json max_queries.json --parallel
+prompto_run_experiment \
+    --file path/to/experiment.jsonl \
+    --data-folder data \
+    --max-queries 5 \
+    --max-queries-json max_queries.json \
+    --parallel
 ```
 
 In this case, there are actually 6 groups/queues of prompts created (although not all of them will have prompts in the queues):
