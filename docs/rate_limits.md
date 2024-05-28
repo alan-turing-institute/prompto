@@ -10,8 +10,8 @@ Another key setting is whether or not to process the prompts in the experiments 
 
 If the `--parallel` flag is not set, the rate limit is set using the `--max-queries` flag. This is the simplest pipeline setting and typically should only be used when the experiment file contains prompts for a single API and model, e.g.:
 ```json
-{"id": 0, "api": "gemini", "model": "gemini-1.5-pro", "prompt": "What is the capital of France?"}
-{"id": 1, "api": "gemini", "model": "gemini-1.5-pro", "prompt": "What is the capital of Germany?"}
+{"id": 0, "api": "gemini", "model_name": "gemini-1.5-pro", "prompt": "What is the capital of France?"}
+{"id": 1, "api": "gemini", "model_name": "gemini-1.5-pro", "prompt": "What is the capital of Germany?"}
 ```
 
 In this case, there is only one model to query through the same API and so parallel processing is not necessary. The rate limit can be set using the `--max-queries` flag, e.g. to send 5 per minute (the default is 10):
@@ -73,18 +73,18 @@ If the `--parallel` flag is set but the `--max-queries-json` flag is not used, t
 
 For example, consider the following experiment file:
 ```json
-{"id": 0, "api": "gemini", "model": "gemini-1.0-pro", "prompt": "What is the capital of France?"}
-{"id": 1, "api": "gemini", "model": "gemini-1.0-pro", "prompt": "What is the capital of Germany?"}
-{"id": 2, "api": "gemini", "model": "gemini-1.5-pro", "prompt": "What is the capital of France?"}
-{"id": 3, "api": "gemini", "model": "gemini-1.5-pro", "prompt": "What is the capital of Germany?"}
-{"id": 4, "api": "openai", "model": "gpt3.5-turbo", "prompt": "What is the capital of France?"}
-{"id": 5, "api": "openai", "model": "gpt3.5-turbo", "prompt": "What is the capital of Germany?"}
-{"id": 6, "api": "openai", "model": "gpt4", "prompt": "What is the capital of France?"}
-{"id": 7, "api": "openai", "model": "gpt4", "prompt": "What is the capital of Germany?"}
-{"id": 8, "api": "ollama", "model": "llama3", "prompt": "What is the capital of France?"}
-{"id": 9, "api": "ollama", "model": "llama3", "prompt": "What is the capital of Germany?"}
-{"id": 10, "api": "ollama", "model": "mistral", "prompt": "What is the capital of France?"}
-{"id": 11, "api": "ollama", "model": "mistral", "prompt": "What is the capital of Germany?"}
+{"id": 0, "api": "gemini", "model_name": "gemini-1.0-pro", "prompt": "What is the capital of France?"}
+{"id": 1, "api": "gemini", "model_name": "gemini-1.0-pro", "prompt": "What is the capital of Germany?"}
+{"id": 2, "api": "gemini", "model_name": "gemini-1.5-pro", "prompt": "What is the capital of France?"}
+{"id": 3, "api": "gemini", "model_name": "gemini-1.5-pro", "prompt": "What is the capital of Germany?"}
+{"id": 4, "api": "openai", "model_name": "gpt3.5-turbo", "prompt": "What is the capital of France?"}
+{"id": 5, "api": "openai", "model_name": "gpt3.5-turbo", "prompt": "What is the capital of Germany?"}
+{"id": 6, "api": "openai", "model_name": "gpt4", "prompt": "What is the capital of France?"}
+{"id": 7, "api": "openai", "model_name": "gpt4", "prompt": "What is the capital of Germany?"}
+{"id": 8, "api": "ollama", "model_name": "llama3", "prompt": "What is the capital of France?"}
+{"id": 9, "api": "ollama", "model_name": "llama3", "prompt": "What is the capital of Germany?"}
+{"id": 10, "api": "ollama", "model_name": "mistral", "prompt": "What is the capital of France?"}
+{"id": 11, "api": "ollama", "model_name": "mistral", "prompt": "What is the capital of Germany?"}
 ```
 
 As noted above, since there are no "group" keys in the experiment file, the prompts are simply grouped by the "api" key.
@@ -193,18 +193,18 @@ Again it is important to note that the keys in the json file must match the valu
 
 If you want full control over how the prompts are split into different groups/queues, you can use the "groups" key in the experiment file to define user-specified groups of prompts. This is useful when you want to group the prompts in a way that is not based on the "api" key. For example, consider the following experiment file:
 ```json
-{"id": 0, "api": "gemini", "model": "gemini-1.0-pro", "prompt": "What is the capital of France?", "group": "group1"}
-{"id": 1, "api": "gemini", "model": "gemini-1.0-pro", "prompt": "What is the capital of Germany?", "group": "group2"}
-{"id": 2, "api": "gemini", "model": "gemini-1.5-pro", "prompt": "What is the capital of France?", "group": "group1"}
-{"id": 3, "api": "gemini", "model": "gemini-1.5-pro", "prompt": "What is the capital of Germany?", "group": "group2"}
-{"id": 4, "api": "openai", "model": "gpt3.5-turbo", "prompt": "What is the capital of France?", "group": "group1"}
-{"id": 5, "api": "openai", "model": "gpt3.5-turbo", "prompt": "What is the capital of Germany?", "group": "group2"}
-{"id": 6, "api": "openai", "model": "gpt4", "prompt": "What is the capital of France?", "group": "group1"}
-{"id": 7, "api": "openai", "model": "gpt4", "prompt": "What is the capital of Germany?", "group": "group2"}
-{"id": 8, "api": "ollama", "model": "llama3", "prompt": "What is the capital of France?", "group": "group3"}
-{"id": 9, "api": "ollama", "model": "llama3", "prompt": "What is the capital of Germany?", "group": "group3"}
-{"id": 10, "api": "ollama", "model": "mistral", "prompt": "What is the capital of France?", "group": "group3"}
-{"id": 11, "api": "ollama", "model": "mistral", "prompt": "What is the capital of Germany?", "group": "group3"}
+{"id": 0, "api": "gemini", "model_name": "gemini-1.0-pro", "prompt": "What is the capital of France?", "group": "group1"}
+{"id": 1, "api": "gemini", "model_name": "gemini-1.0-pro", "prompt": "What is the capital of Germany?", "group": "group2"}
+{"id": 2, "api": "gemini", "model_name": "gemini-1.5-pro", "prompt": "What is the capital of France?", "group": "group1"}
+{"id": 3, "api": "gemini", "model_name": "gemini-1.5-pro", "prompt": "What is the capital of Germany?", "group": "group2"}
+{"id": 4, "api": "openai", "model_name": "gpt3.5-turbo", "prompt": "What is the capital of France?", "group": "group1"}
+{"id": 5, "api": "openai", "model_name": "gpt3.5-turbo", "prompt": "What is the capital of Germany?", "group": "group2"}
+{"id": 6, "api": "openai", "model_name": "gpt4", "prompt": "What is the capital of France?", "group": "group1"}
+{"id": 7, "api": "openai", "model_name": "gpt4", "prompt": "What is the capital of Germany?", "group": "group2"}
+{"id": 8, "api": "ollama", "model_name": "llama3", "prompt": "What is the capital of France?", "group": "group3"}
+{"id": 9, "api": "ollama", "model_name": "llama3", "prompt": "What is the capital of Germany?", "group": "group3"}
+{"id": 10, "api": "ollama", "model_name": "mistral", "prompt": "What is the capital of France?", "group": "group3"}
+{"id": 11, "api": "ollama", "model_name": "mistral", "prompt": "What is the capital of Germany?", "group": "group3"}
 ```
 
 In this case, we have defined 3 groups of prompts: "group1", "group2" and "group3". We can then set the rate limits for each of these groups using the `--max-queries-json` flag. For example, consider the following json file `max_queries.json`:
@@ -220,22 +220,22 @@ In this case, we have defined 3 groups of prompts: "group1", "group2" and "group
 
 It is possible to have an experiment file where only some of the prompts have a "group" key. This can be useful in cases where you might want to only group a few prompts within a certain API type. An example might be if one had two Ollama endpoints and wanted to split up the prompts to different models to the different Ollama endpoints they had available to them. For example, consider the following experiment file:
 ```json
-{"id": 0, "api": "gemini", "model": "gemini-1.0-pro", "prompt": "What is the capital of France?"}
-{"id": 1, "api": "gemini", "model": "gemini-1.0-pro", "prompt": "What is the capital of Germany?"}
-{"id": 2, "api": "gemini", "model": "gemini-1.5-pro", "prompt": "What is the capital of France?"}
-{"id": 3, "api": "gemini", "model": "gemini-1.5-pro", "prompt": "What is the capital of Germany?"}
-{"id": 4, "api": "openai", "model": "gpt3.5-turbo", "prompt": "What is the capital of France?"}
-{"id": 5, "api": "openai", "model": "gpt3.5-turbo", "prompt": "What is the capital of Germany?"}
-{"id": 6, "api": "openai", "model": "gpt4", "prompt": "What is the capital of France?"}
-{"id": 7, "api": "openai", "model": "gpt4", "prompt": "What is the capital of Germany?"}
-{"id": 8, "api": "ollama", "model": "llama3", "prompt": "What is the capital of France?", "group": "group1"}
-{"id": 9, "api": "ollama", "model": "llama3", "prompt": "What is the capital of Germany?", "group": "group1"}
-{"id": 10, "api": "ollama", "model": "mistral", "prompt": "What is the capital of France?", "group": "group1"}
-{"id": 11, "api": "ollama", "model": "mistral", "prompt": "What is the capital of Germany?", "group": "group1"}
-{"id": 10, "api": "ollama", "model": "gemma", "prompt": "What is the capital of France?", "group": "group2"}
-{"id": 11, "api": "ollama", "model": "gemma", "prompt": "What is the capital of Germany?", "group": "group2"}
-{"id": 10, "api": "ollama", "model": "phi3", "prompt": "What is the capital of France?", "group": "group2"}
-{"id": 11, "api": "ollama", "model": "phi3", "prompt": "What is the capital of Germany?", "group": "group2"}
+{"id": 0, "api": "gemini", "model_name": "gemini-1.0-pro", "prompt": "What is the capital of France?"}
+{"id": 1, "api": "gemini", "model_name": "gemini-1.0-pro", "prompt": "What is the capital of Germany?"}
+{"id": 2, "api": "gemini", "model_name": "gemini-1.5-pro", "prompt": "What is the capital of France?"}
+{"id": 3, "api": "gemini", "model_name": "gemini-1.5-pro", "prompt": "What is the capital of Germany?"}
+{"id": 4, "api": "openai", "model_name": "gpt3.5-turbo", "prompt": "What is the capital of France?"}
+{"id": 5, "api": "openai", "model_name": "gpt3.5-turbo", "prompt": "What is the capital of Germany?"}
+{"id": 6, "api": "openai", "model_name": "gpt4", "prompt": "What is the capital of France?"}
+{"id": 7, "api": "openai", "model_name": "gpt4", "prompt": "What is the capital of Germany?"}
+{"id": 8, "api": "ollama", "model_name": "llama3", "prompt": "What is the capital of France?", "group": "group1"}
+{"id": 9, "api": "ollama", "model_name": "llama3", "prompt": "What is the capital of Germany?", "group": "group1"}
+{"id": 10, "api": "ollama", "model_name": "mistral", "prompt": "What is the capital of France?", "group": "group1"}
+{"id": 11, "api": "ollama", "model_name": "mistral", "prompt": "What is the capital of Germany?", "group": "group1"}
+{"id": 12, "api": "ollama", "model_name": "gemma", "prompt": "What is the capital of France?", "group": "group2"}
+{"id": 13, "api": "ollama", "model_name": "gemma", "prompt": "What is the capital of Germany?", "group": "group2"}
+{"id": 14, "api": "ollama", "model_name": "phi3", "prompt": "What is the capital of France?", "group": "group2"}
+{"id": 15, "api": "ollama", "model_name": "phi3", "prompt": "What is the capital of Germany?", "group": "group2"}
 ```
 
 In this case, we have defined 2 groups of prompts: "group1" and "group2". We can then set the rate limits for each of these groups using the `--max-queries-json` flag. For example, consider the following json file `max_queries.json`:

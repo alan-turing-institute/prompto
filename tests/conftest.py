@@ -193,3 +193,162 @@ def temporary_data_folders(tmp_path: Path):
 
     # change back to original directory
     os.chdir(cwd)
+
+
+@pytest.fixture()
+def temporary_rate_limit_doc_examples(tmp_path: Path):
+    # create a folder for testing the experiment pipeline
+    data_dir = Path(tmp_path / "data").mkdir()
+    # create subfolders for the experiment pipeline
+    Path(tmp_path / "data" / "input").mkdir()
+    Path(tmp_path / "data" / "output").mkdir()
+    Path(tmp_path / "data" / "media").mkdir()
+
+    # add a jsonl file with rate limit examples from the docs/rate_limit.md fileå
+    with open(
+        Path(tmp_path / "data" / "input" / "rate_limit_docs_example.jsonl"),
+        "w",
+    ) as f:
+        f.write(
+            '{"id": 0, "api": "gemini", "model_name": "gemini-1.0-pro", "prompt": "What is the capital of France?"}\n'
+        )
+        f.write(
+            '{"id": 1, "api": "gemini", "model_name": "gemini-1.0-pro", "prompt": "What is the capital of Germany?"}\n'
+        )
+        f.write(
+            '{"id": 2, "api": "gemini", "model_name": "gemini-1.5-pro", "prompt": "What is the capital of France?"}\n'
+        )
+        f.write(
+            '{"id": 3, "api": "gemini", "model_name": "gemini-1.5-pro", "prompt": "What is the capital of Germany?"}\n'
+        )
+        f.write(
+            '{"id": 4, "api": "openai", "model_name": "gpt3.5-turbo", "prompt": "What is the capital of France?"}\n'
+        )
+        f.write(
+            '{"id": 5, "api": "openai", "model_name": "gpt3.5-turbo", "prompt": "What is the capital of Germany?"}\n'
+        )
+        f.write(
+            '{"id": 6, "api": "openai", "model_name": "gpt4", "prompt": "What is the capital of France?"}\n'
+        )
+        f.write(
+            '{"id": 7, "api": "openai", "model_name": "gpt4", "prompt": "What is the capital of Germany?"}\n'
+        )
+        f.write(
+            '{"id": 8, "api": "ollama", "model_name": "llama3", "prompt": "What is the capital of France?"}\n'
+        )
+        f.write(
+            '{"id": 9, "api": "ollama", "model_name": "llama3", "prompt": "What is the capital of Germany?"}\n'
+        )
+        f.write(
+            '{"id": 10, "api": "ollama", "model_name": "mistral", "prompt": "What is the capital of France?"}\n'
+        )
+        f.write(
+            '{"id": 11, "api": "ollama", "model_name": "mistral", "prompt": "What is the capital of Germany?"}\n'
+        )
+
+    # add a jsonl file with rate limit examples from the docs/rate_limit.md file
+    with open(
+        Path(tmp_path / "data" / "input" / "rate_limit_docs_example_groups.jsonl"),
+        "w",
+    ) as f:
+        f.write(
+            '{"id": 0, "api": "gemini", "model_name": "gemini-1.0-pro", "prompt": "What is the capital of France?", "group": "group1"}\n'
+        )
+        f.write(
+            '{"id": 1, "api": "gemini", "model_name": "gemini-1.0-pro", "prompt": "What is the capital of Germany?", "group": "group2"}\n'
+        )
+        f.write(
+            '{"id": 2, "api": "gemini", "model_name": "gemini-1.5-pro", "prompt": "What is the capital of France?", "group": "group1"}\n'
+        )
+        f.write(
+            '{"id": 3, "api": "gemini", "model_name": "gemini-1.5-pro", "prompt": "What is the capital of Germany?", "group": "group2"}\n'
+        )
+        f.write(
+            '{"id": 4, "api": "openai", "model_name": "gpt3.5-turbo", "prompt": "What is the capital of France?", "group": "group1"}\n'
+        )
+        f.write(
+            '{"id": 5, "api": "openai", "model_name": "gpt3.5-turbo", "prompt": "What is the capital of Germany?", "group": "group2"}\n'
+        )
+        f.write(
+            '{"id": 6, "api": "openai", "model_name": "gpt4", "prompt": "What is the capital of France?", "group": "group1"}\n'
+        )
+        f.write(
+            '{"id": 7, "api": "openai", "model_name": "gpt4", "prompt": "What is the capital of Germany?", "group": "group2"}\n'
+        )
+        f.write(
+            '{"id": 8, "api": "ollama", "model_name": "llama3", "prompt": "What is the capital of France?", "group": "group3"}\n'
+        )
+        f.write(
+            '{"id": 9, "api": "ollama", "model_name": "llama3", "prompt": "What is the capital of Germany?", "group": "group3"}\n'
+        )
+        f.write(
+            '{"id": 10, "api": "ollama", "model_name": "mistral", "prompt": "What is the capital of France?", "group": "group3"}\n'
+        )
+        f.write(
+            '{"id": 11, "api": "ollama", "model_name": "mistral", "prompt": "What is the capital of Germany?", "group": "group3"}\n'
+        )
+
+    # add a jsonl file with rate limit examples from the docs/rate_limit.md file
+    with open(
+        Path(tmp_path / "data" / "input" / "rate_limit_docs_example_groups_2.jsonl"),
+        "w",
+    ) as f:
+        f.write(
+            '{"id": 0, "api": "gemini", "model_name": "gemini-1.0-pro", "prompt": "What is the capital of France?"}\n'
+        )
+        f.write(
+            '{"id": 1, "api": "gemini", "model_name": "gemini-1.0-pro", "prompt": "What is the capital of Germany?"}\n'
+        )
+        f.write(
+            '{"id": 2, "api": "gemini", "model_name": "gemini-1.5-pro", "prompt": "What is the capital of France?"}\n'
+        )
+        f.write(
+            '{"id": 3, "api": "gemini", "model_name": "gemini-1.5-pro", "prompt": "What is the capital of Germany?"}\n'
+        )
+        f.write(
+            '{"id": 4, "api": "openai", "model_name": "gpt3.5-turbo", "prompt": "What is the capital of France?"}\n'
+        )
+        f.write(
+            '{"id": 5, "api": "openai", "model_name": "gpt3.5-turbo", "prompt": "What is the capital of Germany?"}\n'
+        )
+        f.write(
+            '{"id": 6, "api": "openai", "model_name": "gpt4", "prompt": "What is the capital of France?"}\n'
+        )
+        f.write(
+            '{"id": 7, "api": "openai", "model_name": "gpt4", "prompt": "What is the capital of Germany?"}\n'
+        )
+        f.write(
+            '{"id": 8, "api": "ollama", "model_name": "llama3", "prompt": "What is the capital of France?", "group": "group1"}\n'
+        )
+        f.write(
+            '{"id": 9, "api": "ollama", "model_name": "llama3", "prompt": "What is the capital of Germany?", "group": "group1"}\n'
+        )
+        f.write(
+            '{"id": 10, "api": "ollama", "model_name": "mistral", "prompt": "What is the capital of France?", "group": "group1"}\n'
+        )
+        f.write(
+            '{"id": 11, "api": "ollama", "model_name": "mistral", "prompt": "What is the capital of Germany?", "group": "group1"}\n'
+        )
+        f.write(
+            '{"id": 12, "api": "ollama", "model_name": "gemma", "prompt": "What is the capital of France?", "group": "group2"}\n'
+        )
+        f.write(
+            '{"id": 13, "api": "ollama", "model_name": "gemma", "prompt": "What is the capital of Germany?", "group": "group2"}\n'
+        )
+        f.write(
+            '{"id": 14, "api": "ollama", "model_name": "phi3", "prompt": "What is the capital of France?", "group": "group2"}\n'
+        )
+        f.write(
+            '{"id": 15, "api": "ollama", "model_name": "phi3", "prompt": "What is the capital of Germany?", "group": "group2"}\n'
+        )
+
+    # store current working directory
+    cwd = os.getcwd()
+
+    # change to temporary directory
+    os.chdir(tmp_path)
+
+    yield data_dir
+
+    # change back to original directory
+    os.chdir(cwd)

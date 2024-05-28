@@ -139,7 +139,7 @@ For example, if you have set up a endpoint for [google/flan-t5-xl](https://huggi
 - `HUGGINGFACE_TGI_API_KEY_flan_t5_xl`
 
 However, note for the Huggingface `text-generation-inference` API, the model name is only used as an identifier for the pipeline. The model that the endpoint is querying is returned in the response from the API and saved in the output `prompt_dict` in the `"model"` key.
-In this case, the completed `prompt_dict` should include the `"model": "google/flan-t5-xl"` key-value pair to confirm that the endpoint is indeed querying the correct model.
+In this case, the completed `prompt_dict` should include the `"model_name": "google/flan-t5-xl"` key-value pair to confirm that the endpoint is indeed querying the correct model.
 
 **Required environment variables**:
 
@@ -179,7 +179,7 @@ As described in the [model-specific environment variables](#model-specific-envir
 - `QUART_API_ENDPOINT_vicgalle_gpt2_open_instruct_v1`
 
 Similarly to the Huggingface `text-generation-inference` API, the model name is only used as an identifier for the pipeline. The model that the endpoint is querying is returned in the response from the API and saved in the output `prompt_dict` in the `"model"` key.
-In this case, the completed `prompt_dict` should include the `"model": "vicgalle/gpt2-open-instruct-v1"` key-value pair to confirm that the endpoint is indeed querying the correct model.
+In this case, the completed `prompt_dict` should include the `"model_name": "vicgalle/gpt2-open-instruct-v1"` key-value pair to confirm that the endpoint is indeed querying the correct model.
 
 **Required environment variables**:
 

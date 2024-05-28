@@ -116,6 +116,14 @@ class Experiment:
 
     @property
     def grouped_experiment_prompts(self) -> dict[str, list[dict]]:
+        # if settings.parallel is False, then we won't utilise the grouping
+        if not self.settings.parallel:
+            logging.warning(
+                "The 'parallel' attribute in the Settings object is set to False, "
+                "so grouping will not be used when processing the experiment prompts. "
+                "Set 'parallel' to True to use grouping and parallel processing of prompts."
+            )
+
         # only group the prompts on the first call to the property
         # i.e. we only group the experiment prompts when we need to
         if self._grouped_experiment_prompts == {}:
@@ -159,6 +167,9 @@ class Experiment:
         grouped_dict = {}
         # initialise some keys with the rate limits if provided
         if self.settings.max_queries_dict != {}:
+            logging.info(
+                f"Grouping prompts using 'settings.max_queries_dict': {self.settings.max_queries_dict}..."
+            )
             for key, value in self.settings.max_queries_dict.items():
                 if isinstance(value, int):
                     # a default was provided for this api / group
@@ -183,6 +194,8 @@ class Experiment:
                                 "prompt_dicts": [],
                                 "rate_limit": sub_value,
                             }
+        else:
+            logging.info("Grouping prompts by 'group' or 'api' key...")
 
         # add the prompts to the grouped dictionary
         for prompt_dict in self._experiment_prompts:
@@ -193,13 +206,6 @@ class Experiment:
             else:
                 key = prompt_dict["api"]
 
-            # model-specific rates may have been provided in the settings
-            if key in self.settings.max_queries_dict and isinstance(
-                self.settings.max_queries_dict[key], dict
-            ):
-                if prompt_dict.get("model_name") in self.settings.max_queries_dict[key]:
-                    key = f"{key}-{prompt_dict.get('model_name')}"
-
             if key not in grouped_dict:
                 # initilise the key with an empty prompt_dicts list
                 # and the rate limit is just the default max_queries
@@ -208,6 +214,20 @@ class Experiment:
                     "prompt_dicts": [],
                     "rate_limit": self.settings.max_queries,
                 }
+
+            # model-specific rates may have been provided in the settings
+            if key in self.settings.max_queries_dict and isinstance(
+                self.settings.max_queries_dict[key], dict
+            ):
+                if prompt_dict.get("model_name") in self.settings.max_queries_dict[key]:
+                    key = f"{key}-{prompt_dict.get('model_name')}"
+
+                if key not in grouped_dict:
+                    # initialise model-specific key
+                    grouped_dict[key] = {
+                        "prompt_dicts": [],
+                        "rate_limit": self.settings.max_queries,
+                    }
 
             grouped_dict[key]["prompt_dicts"].append(prompt_dict)
 

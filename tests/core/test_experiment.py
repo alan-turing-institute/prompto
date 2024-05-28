@@ -1,3 +1,5 @@
+import logging
+
 import pytest
 
 from prompto.experiment_processing import Experiment
@@ -78,7 +80,9 @@ def test_experiment_init(temporary_data_folders):
     assert experiment._grouped_experiment_prompts == {}
 
 
-def test_experiment_grouped_prompts_simple(temporary_data_folders):
+def test_experiment_grouped_prompts_simple(temporary_data_folders, caplog):
+    caplog.set_level(logging.WARNING)
+
     # create a settings object
     settings = Settings(data_folder="data", max_queries=50, max_attempts=5)
 
@@ -113,6 +117,15 @@ def test_experiment_grouped_prompts_simple(temporary_data_folders):
     }
     # check that this attribute comes from the group_prompts method
     assert experiment._grouped_experiment_prompts == experiment.group_prompts()
+
+    # check the warning message was given for calling the grouped_experiment_prompts
+    # attribute when the parallel attribute is False
+    log_msg = (
+        "The 'parallel' attribute in the Settings object is set to False, "
+        "so grouping will not be used when processing the experiment prompts. "
+        "Set 'parallel' to True to use grouping and parallel processing of prompts."
+    )
+    assert log_msg in caplog.text
 
 
 def test_experiment_experiment_prompts_getter(temporary_data_folders):
@@ -218,7 +231,9 @@ def test_experiment_grouped_prompts_setter(temporary_data_folders):
         experiment.grouped_experiment_prompts = {"hello": "world"}
 
 
-def test_experiment_grouped_prompts_default_no_groups(temporary_data_folders):
+def test_experiment_grouped_prompts_default_no_groups(temporary_data_folders, caplog):
+    caplog.set_level(logging.WARNING)
+
     # create a settings object without max_queries_dict (i.e. it's {} by default)
     settings = Settings(
         data_folder="experiment_pipeline", max_queries=50, max_attempts=5
@@ -318,6 +333,15 @@ def test_experiment_grouped_prompts_default_no_groups(temporary_data_folders):
         "gemini": "5 queries at 50 queries per minute",
         "azure-openai": "8 queries at 50 queries per minute",
     }
+
+    # check the warning message was given for calling the grouped_experiment_prompts
+    # attribute when the parallel attribute is False
+    log_msg = (
+        "The 'parallel' attribute in the Settings object is set to False, "
+        "so grouping will not be used when processing the experiment prompts. "
+        "Set 'parallel' to True to use grouping and parallel processing of prompts."
+    )
+    assert log_msg in caplog.text
 
 
 def test_experiment_grouped_prompts_apis_only_no_groups(temporary_data_folders):
@@ -733,7 +757,9 @@ def test_experiment_grouped_prompts_apis_and_models_no_groups_v2(
     }
 
 
-def test_experiment_grouped_prompts_default_with_groups(temporary_data_folders):
+def test_experiment_grouped_prompts_default_with_groups(temporary_data_folders, caplog):
+    caplog.set_level(logging.WARNING)
+
     # create a settings object without max_queries_dict (i.e. it's {} by default)
     settings = Settings(
         data_folder="experiment_pipeline", max_queries=50, max_attempts=5
@@ -871,6 +897,15 @@ def test_experiment_grouped_prompts_default_with_groups(temporary_data_folders):
         "gemini": "2 queries at 50 queries per minute",
         "azure-openai": "4 queries at 50 queries per minute",
     }
+
+    # check the warning message was given for calling the grouped_experiment_prompts
+    # attribute when the parallel attribute is False
+    log_msg = (
+        "The 'parallel' attribute in the Settings object is set to False, "
+        "so grouping will not be used when processing the experiment prompts. "
+        "Set 'parallel' to True to use grouping and parallel processing of prompts."
+    )
+    assert log_msg in caplog.text
 
 
 def test_experiment_grouped_prompts_apis_only_with_groups(temporary_data_folders):
@@ -1928,4 +1963,757 @@ def test_experiment_grouped_prompts_all_with_groups_v2(temporary_data_folders):
         "ignored": "0 queries at 1 queries per minute",
         "ignored-with-models": "0 queries at 5 queries per minute",
         "ignored-with-models-ignored-model": "0 queries at 19 queries per minute",
+    }
+
+
+def test_rate_limit_docs_example_1(temporary_rate_limit_doc_examples):
+    # create a settings object
+    settings = Settings(
+        max_queries=5,
+        parallel=True,
+    )
+    assert settings.max_queries_dict == {}
+
+    # create an experiment object
+    experiment = Experiment("rate_limit_docs_example.jsonl", settings=settings)
+
+    assert experiment.grouped_experiment_prompts == {
+        "gemini": {
+            "prompt_dicts": [
+                {
+                    "id": 0,
+                    "api": "gemini",
+                    "model_name": "gemini-1.0-pro",
+                    "prompt": "What is the capital of France?",
+                },
+                {
+                    "id": 1,
+                    "api": "gemini",
+                    "model_name": "gemini-1.0-pro",
+                    "prompt": "What is the capital of Germany?",
+                },
+                {
+                    "id": 2,
+                    "api": "gemini",
+                    "model_name": "gemini-1.5-pro",
+                    "prompt": "What is the capital of France?",
+                },
+                {
+                    "id": 3,
+                    "api": "gemini",
+                    "model_name": "gemini-1.5-pro",
+                    "prompt": "What is the capital of Germany?",
+                },
+            ],
+            "rate_limit": 5,
+        },
+        "openai": {
+            "prompt_dicts": [
+                {
+                    "id": 4,
+                    "api": "openai",
+                    "model_name": "gpt3.5-turbo",
+                    "prompt": "What is the capital of France?",
+                },
+                {
+                    "id": 5,
+                    "api": "openai",
+                    "model_name": "gpt3.5-turbo",
+                    "prompt": "What is the capital of Germany?",
+                },
+                {
+                    "id": 6,
+                    "api": "openai",
+                    "model_name": "gpt4",
+                    "prompt": "What is the capital of France?",
+                },
+                {
+                    "id": 7,
+                    "api": "openai",
+                    "model_name": "gpt4",
+                    "prompt": "What is the capital of Germany?",
+                },
+            ],
+            "rate_limit": 5,
+        },
+        "ollama": {
+            "prompt_dicts": [
+                {
+                    "id": 8,
+                    "api": "ollama",
+                    "model_name": "llama3",
+                    "prompt": "What is the capital of France?",
+                },
+                {
+                    "id": 9,
+                    "api": "ollama",
+                    "model_name": "llama3",
+                    "prompt": "What is the capital of Germany?",
+                },
+                {
+                    "id": 10,
+                    "api": "ollama",
+                    "model_name": "mistral",
+                    "prompt": "What is the capital of France?",
+                },
+                {
+                    "id": 11,
+                    "api": "ollama",
+                    "model_name": "mistral",
+                    "prompt": "What is the capital of Germany?",
+                },
+            ],
+            "rate_limit": 5,
+        },
+    }
+
+    assert experiment.grouped_experiment_prompts_summary() == {
+        "gemini": "4 queries at 5 queries per minute",
+        "openai": "4 queries at 5 queries per minute",
+        "ollama": "4 queries at 5 queries per minute",
+    }
+
+
+def test_rate_limit_docs_example_2(temporary_rate_limit_doc_examples):
+    max_queries_dict = {"openai": 20, "gemini": 10}
+    # create a settings object
+    settings = Settings(
+        max_queries=5,
+        parallel=True,
+        max_queries_dict=max_queries_dict,
+    )
+    assert settings.max_queries_dict == max_queries_dict
+
+    # create an experiment object
+    experiment = Experiment("rate_limit_docs_example.jsonl", settings=settings)
+
+    assert experiment.grouped_experiment_prompts == {
+        "gemini": {
+            "prompt_dicts": [
+                {
+                    "id": 0,
+                    "api": "gemini",
+                    "model_name": "gemini-1.0-pro",
+                    "prompt": "What is the capital of France?",
+                },
+                {
+                    "id": 1,
+                    "api": "gemini",
+                    "model_name": "gemini-1.0-pro",
+                    "prompt": "What is the capital of Germany?",
+                },
+                {
+                    "id": 2,
+                    "api": "gemini",
+                    "model_name": "gemini-1.5-pro",
+                    "prompt": "What is the capital of France?",
+                },
+                {
+                    "id": 3,
+                    "api": "gemini",
+                    "model_name": "gemini-1.5-pro",
+                    "prompt": "What is the capital of Germany?",
+                },
+            ],
+            "rate_limit": 10,
+        },
+        "openai": {
+            "prompt_dicts": [
+                {
+                    "id": 4,
+                    "api": "openai",
+                    "model_name": "gpt3.5-turbo",
+                    "prompt": "What is the capital of France?",
+                },
+                {
+                    "id": 5,
+                    "api": "openai",
+                    "model_name": "gpt3.5-turbo",
+                    "prompt": "What is the capital of Germany?",
+                },
+                {
+                    "id": 6,
+                    "api": "openai",
+                    "model_name": "gpt4",
+                    "prompt": "What is the capital of France?",
+                },
+                {
+                    "id": 7,
+                    "api": "openai",
+                    "model_name": "gpt4",
+                    "prompt": "What is the capital of Germany?",
+                },
+            ],
+            "rate_limit": 20,
+        },
+        "ollama": {
+            "prompt_dicts": [
+                {
+                    "id": 8,
+                    "api": "ollama",
+                    "model_name": "llama3",
+                    "prompt": "What is the capital of France?",
+                },
+                {
+                    "id": 9,
+                    "api": "ollama",
+                    "model_name": "llama3",
+                    "prompt": "What is the capital of Germany?",
+                },
+                {
+                    "id": 10,
+                    "api": "ollama",
+                    "model_name": "mistral",
+                    "prompt": "What is the capital of France?",
+                },
+                {
+                    "id": 11,
+                    "api": "ollama",
+                    "model_name": "mistral",
+                    "prompt": "What is the capital of Germany?",
+                },
+            ],
+            "rate_limit": 5,
+        },
+    }
+
+    assert experiment.grouped_experiment_prompts_summary() == {
+        "gemini": "4 queries at 10 queries per minute",
+        "openai": "4 queries at 20 queries per minute",
+        "ollama": "4 queries at 5 queries per minute",
+    }
+
+
+def test_rate_limit_docs_example_3(temporary_rate_limit_doc_examples):
+    max_queries_dict = {
+        "gemini": {"gemini-1.5-pro": 20},
+        "openai": {"gpt4": 10, "gpt3.5-turbo": 20},
+    }
+
+    # create a settings object
+    settings = Settings(
+        max_queries=5,
+        parallel=True,
+        max_queries_dict=max_queries_dict,
+    )
+    assert settings.max_queries_dict == max_queries_dict
+
+    # create an experiment object
+    experiment = Experiment("rate_limit_docs_example.jsonl", settings=settings)
+
+    assert experiment.grouped_experiment_prompts == {
+        "gemini-gemini-1.5-pro": {
+            "prompt_dicts": [
+                {
+                    "id": 2,
+                    "api": "gemini",
+                    "model_name": "gemini-1.5-pro",
+                    "prompt": "What is the capital of France?",
+                },
+                {
+                    "id": 3,
+                    "api": "gemini",
+                    "model_name": "gemini-1.5-pro",
+                    "prompt": "What is the capital of Germany?",
+                },
+            ],
+            "rate_limit": 20,
+        },
+        "gemini": {
+            "prompt_dicts": [
+                {
+                    "id": 0,
+                    "api": "gemini",
+                    "model_name": "gemini-1.0-pro",
+                    "prompt": "What is the capital of France?",
+                },
+                {
+                    "id": 1,
+                    "api": "gemini",
+                    "model_name": "gemini-1.0-pro",
+                    "prompt": "What is the capital of Germany?",
+                },
+            ],
+            "rate_limit": 5,
+        },
+        "openai-gpt3.5-turbo": {
+            "prompt_dicts": [
+                {
+                    "id": 4,
+                    "api": "openai",
+                    "model_name": "gpt3.5-turbo",
+                    "prompt": "What is the capital of France?",
+                },
+                {
+                    "id": 5,
+                    "api": "openai",
+                    "model_name": "gpt3.5-turbo",
+                    "prompt": "What is the capital of Germany?",
+                },
+            ],
+            "rate_limit": 20,
+        },
+        "openai": {
+            "prompt_dicts": [],
+            "rate_limit": 5,
+        },
+        "openai-gpt4": {
+            "prompt_dicts": [
+                {
+                    "id": 6,
+                    "api": "openai",
+                    "model_name": "gpt4",
+                    "prompt": "What is the capital of France?",
+                },
+                {
+                    "id": 7,
+                    "api": "openai",
+                    "model_name": "gpt4",
+                    "prompt": "What is the capital of Germany?",
+                },
+            ],
+            "rate_limit": 10,
+        },
+        "ollama": {
+            "prompt_dicts": [
+                {
+                    "id": 8,
+                    "api": "ollama",
+                    "model_name": "llama3",
+                    "prompt": "What is the capital of France?",
+                },
+                {
+                    "id": 9,
+                    "api": "ollama",
+                    "model_name": "llama3",
+                    "prompt": "What is the capital of Germany?",
+                },
+                {
+                    "id": 10,
+                    "api": "ollama",
+                    "model_name": "mistral",
+                    "prompt": "What is the capital of France?",
+                },
+                {
+                    "id": 11,
+                    "api": "ollama",
+                    "model_name": "mistral",
+                    "prompt": "What is the capital of Germany?",
+                },
+            ],
+            "rate_limit": 5,
+        },
+    }
+
+    assert experiment.grouped_experiment_prompts_summary() == {
+        "gemini": "2 queries at 5 queries per minute",
+        "openai": "0 queries at 5 queries per minute",
+        "gemini-gemini-1.5-pro": "2 queries at 20 queries per minute",
+        "openai-gpt3.5-turbo": "2 queries at 20 queries per minute",
+        "openai-gpt4": "2 queries at 10 queries per minute",
+        "ollama": "4 queries at 5 queries per minute",
+    }
+
+
+def test_rate_limit_docs_example_4(temporary_rate_limit_doc_examples):
+    max_queries_dict = {
+        "gemini": {"default": 30, "gemini-1.5-pro": 20},
+        "openai": {"gpt4": 10, "gpt3.5-turbo": 20},
+        "ollama": 4,
+    }
+
+    # create a settings object
+    settings = Settings(
+        max_queries=5,
+        parallel=True,
+        max_queries_dict=max_queries_dict,
+    )
+    assert settings.max_queries_dict == max_queries_dict
+
+    # create an experiment object
+    experiment = Experiment("rate_limit_docs_example.jsonl", settings=settings)
+
+    assert experiment.grouped_experiment_prompts == {
+        "gemini-gemini-1.5-pro": {
+            "prompt_dicts": [
+                {
+                    "id": 2,
+                    "api": "gemini",
+                    "model_name": "gemini-1.5-pro",
+                    "prompt": "What is the capital of France?",
+                },
+                {
+                    "id": 3,
+                    "api": "gemini",
+                    "model_name": "gemini-1.5-pro",
+                    "prompt": "What is the capital of Germany?",
+                },
+            ],
+            "rate_limit": 20,
+        },
+        "gemini": {
+            "prompt_dicts": [
+                {
+                    "id": 0,
+                    "api": "gemini",
+                    "model_name": "gemini-1.0-pro",
+                    "prompt": "What is the capital of France?",
+                },
+                {
+                    "id": 1,
+                    "api": "gemini",
+                    "model_name": "gemini-1.0-pro",
+                    "prompt": "What is the capital of Germany?",
+                },
+            ],
+            "rate_limit": 30,
+        },
+        "openai-gpt3.5-turbo": {
+            "prompt_dicts": [
+                {
+                    "id": 4,
+                    "api": "openai",
+                    "model_name": "gpt3.5-turbo",
+                    "prompt": "What is the capital of France?",
+                },
+                {
+                    "id": 5,
+                    "api": "openai",
+                    "model_name": "gpt3.5-turbo",
+                    "prompt": "What is the capital of Germany?",
+                },
+            ],
+            "rate_limit": 20,
+        },
+        "openai": {
+            "prompt_dicts": [],
+            "rate_limit": 5,
+        },
+        "openai-gpt4": {
+            "prompt_dicts": [
+                {
+                    "id": 6,
+                    "api": "openai",
+                    "model_name": "gpt4",
+                    "prompt": "What is the capital of France?",
+                },
+                {
+                    "id": 7,
+                    "api": "openai",
+                    "model_name": "gpt4",
+                    "prompt": "What is the capital of Germany?",
+                },
+            ],
+            "rate_limit": 10,
+        },
+        "ollama": {
+            "prompt_dicts": [
+                {
+                    "id": 8,
+                    "api": "ollama",
+                    "model_name": "llama3",
+                    "prompt": "What is the capital of France?",
+                },
+                {
+                    "id": 9,
+                    "api": "ollama",
+                    "model_name": "llama3",
+                    "prompt": "What is the capital of Germany?",
+                },
+                {
+                    "id": 10,
+                    "api": "ollama",
+                    "model_name": "mistral",
+                    "prompt": "What is the capital of France?",
+                },
+                {
+                    "id": 11,
+                    "api": "ollama",
+                    "model_name": "mistral",
+                    "prompt": "What is the capital of Germany?",
+                },
+            ],
+            "rate_limit": 4,
+        },
+    }
+
+    assert experiment.grouped_experiment_prompts_summary() == {
+        "gemini": "2 queries at 30 queries per minute",
+        "openai": "0 queries at 5 queries per minute",
+        "gemini-gemini-1.5-pro": "2 queries at 20 queries per minute",
+        "openai-gpt3.5-turbo": "2 queries at 20 queries per minute",
+        "openai-gpt4": "2 queries at 10 queries per minute",
+        "ollama": "4 queries at 4 queries per minute",
+    }
+
+
+def test_rate_limit_docs_example_5(temporary_rate_limit_doc_examples):
+    max_queries_dict = {"group1": 5, "group2": 10, "group3": 15}
+
+    # create a settings object
+    settings = Settings(
+        max_queries=5,
+        parallel=True,
+        max_queries_dict=max_queries_dict,
+    )
+    assert settings.max_queries_dict == max_queries_dict
+
+    # create an experiment object
+    experiment = Experiment("rate_limit_docs_example_groups.jsonl", settings=settings)
+
+    assert experiment.grouped_experiment_prompts == {
+        "group1": {
+            "prompt_dicts": [
+                {
+                    "id": 0,
+                    "api": "gemini",
+                    "model_name": "gemini-1.0-pro",
+                    "prompt": "What is the capital of France?",
+                    "group": "group1",
+                },
+                {
+                    "id": 2,
+                    "api": "gemini",
+                    "model_name": "gemini-1.5-pro",
+                    "prompt": "What is the capital of France?",
+                    "group": "group1",
+                },
+                {
+                    "id": 4,
+                    "api": "openai",
+                    "model_name": "gpt3.5-turbo",
+                    "prompt": "What is the capital of France?",
+                    "group": "group1",
+                },
+                {
+                    "id": 6,
+                    "api": "openai",
+                    "model_name": "gpt4",
+                    "prompt": "What is the capital of France?",
+                    "group": "group1",
+                },
+            ],
+            "rate_limit": 5,
+        },
+        "group2": {
+            "prompt_dicts": [
+                {
+                    "id": 1,
+                    "api": "gemini",
+                    "model_name": "gemini-1.0-pro",
+                    "prompt": "What is the capital of Germany?",
+                    "group": "group2",
+                },
+                {
+                    "id": 3,
+                    "api": "gemini",
+                    "model_name": "gemini-1.5-pro",
+                    "prompt": "What is the capital of Germany?",
+                    "group": "group2",
+                },
+                {
+                    "id": 5,
+                    "api": "openai",
+                    "model_name": "gpt3.5-turbo",
+                    "prompt": "What is the capital of Germany?",
+                    "group": "group2",
+                },
+                {
+                    "id": 7,
+                    "api": "openai",
+                    "model_name": "gpt4",
+                    "prompt": "What is the capital of Germany?",
+                    "group": "group2",
+                },
+            ],
+            "rate_limit": 10,
+        },
+        "group3": {
+            "prompt_dicts": [
+                {
+                    "id": 8,
+                    "api": "ollama",
+                    "model_name": "llama3",
+                    "prompt": "What is the capital of France?",
+                    "group": "group3",
+                },
+                {
+                    "id": 9,
+                    "api": "ollama",
+                    "model_name": "llama3",
+                    "prompt": "What is the capital of Germany?",
+                    "group": "group3",
+                },
+                {
+                    "id": 10,
+                    "api": "ollama",
+                    "model_name": "mistral",
+                    "prompt": "What is the capital of France?",
+                    "group": "group3",
+                },
+                {
+                    "id": 11,
+                    "api": "ollama",
+                    "model_name": "mistral",
+                    "prompt": "What is the capital of Germany?",
+                    "group": "group3",
+                },
+            ],
+            "rate_limit": 15,
+        },
+    }
+
+    assert experiment.grouped_experiment_prompts_summary() == {
+        "group1": "4 queries at 5 queries per minute",
+        "group2": "4 queries at 10 queries per minute",
+        "group3": "4 queries at 15 queries per minute",
+    }
+
+
+def test_rate_limit_docs_example_6(temporary_rate_limit_doc_examples):
+    max_queries_dict = {"group1": 5, "group2": 10}
+
+    # create a settings object
+    settings = Settings(
+        max_queries=5,
+        parallel=True,
+        max_queries_dict=max_queries_dict,
+    )
+    assert settings.max_queries_dict == max_queries_dict
+
+    # create an experiment object
+    experiment = Experiment("rate_limit_docs_example_groups_2.jsonl", settings=settings)
+
+    assert experiment.grouped_experiment_prompts == {
+        "gemini": {
+            "prompt_dicts": [
+                {
+                    "id": 0,
+                    "api": "gemini",
+                    "model_name": "gemini-1.0-pro",
+                    "prompt": "What is the capital of France?",
+                },
+                {
+                    "id": 1,
+                    "api": "gemini",
+                    "model_name": "gemini-1.0-pro",
+                    "prompt": "What is the capital of Germany?",
+                },
+                {
+                    "id": 2,
+                    "api": "gemini",
+                    "model_name": "gemini-1.5-pro",
+                    "prompt": "What is the capital of France?",
+                },
+                {
+                    "id": 3,
+                    "api": "gemini",
+                    "model_name": "gemini-1.5-pro",
+                    "prompt": "What is the capital of Germany?",
+                },
+            ],
+            "rate_limit": 5,
+        },
+        "openai": {
+            "prompt_dicts": [
+                {
+                    "id": 4,
+                    "api": "openai",
+                    "model_name": "gpt3.5-turbo",
+                    "prompt": "What is the capital of France?",
+                },
+                {
+                    "id": 5,
+                    "api": "openai",
+                    "model_name": "gpt3.5-turbo",
+                    "prompt": "What is the capital of Germany?",
+                },
+                {
+                    "id": 6,
+                    "api": "openai",
+                    "model_name": "gpt4",
+                    "prompt": "What is the capital of France?",
+                },
+                {
+                    "id": 7,
+                    "api": "openai",
+                    "model_name": "gpt4",
+                    "prompt": "What is the capital of Germany?",
+                },
+            ],
+            "rate_limit": 5,
+        },
+        "group1": {
+            "prompt_dicts": [
+                {
+                    "id": 8,
+                    "api": "ollama",
+                    "model_name": "llama3",
+                    "prompt": "What is the capital of France?",
+                    "group": "group1",
+                },
+                {
+                    "id": 9,
+                    "api": "ollama",
+                    "model_name": "llama3",
+                    "prompt": "What is the capital of Germany?",
+                    "group": "group1",
+                },
+                {
+                    "id": 10,
+                    "api": "ollama",
+                    "model_name": "mistral",
+                    "prompt": "What is the capital of France?",
+                    "group": "group1",
+                },
+                {
+                    "id": 11,
+                    "api": "ollama",
+                    "model_name": "mistral",
+                    "prompt": "What is the capital of Germany?",
+                    "group": "group1",
+                },
+            ],
+            "rate_limit": 5,
+        },
+        "group2": {
+            "prompt_dicts": [
+                {
+                    "id": 12,
+                    "api": "ollama",
+                    "model_name": "gemma",
+                    "prompt": "What is the capital of France?",
+                    "group": "group2",
+                },
+                {
+                    "id": 13,
+                    "api": "ollama",
+                    "model_name": "gemma",
+                    "prompt": "What is the capital of Germany?",
+                    "group": "group2",
+                },
+                {
+                    "id": 14,
+                    "api": "ollama",
+                    "model_name": "phi3",
+                    "prompt": "What is the capital of France?",
+                    "group": "group2",
+                },
+                {
+                    "id": 15,
+                    "api": "ollama",
+                    "model_name": "phi3",
+                    "prompt": "What is the capital of Germany?",
+                    "group": "group2",
+                },
+            ],
+            "rate_limit": 10,
+        },
+    }
+
+    assert experiment.grouped_experiment_prompts_summary() == {
+        "group1": "4 queries at 5 queries per minute",
+        "group2": "4 queries at 10 queries per minute",
+        "gemini": "4 queries at 5 queries per minute",
+        "openai": "4 queries at 5 queries per minute",
     }
