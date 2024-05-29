@@ -1,7 +1,0 @@
-29-05-2024, 17:11: Next experiment: test2.jsonl, Number of queries: 3, Estimated completion time: [unknown], Estimated completion by: [unknown]
-29-05-2024, 17:11: Next experiment: test2.jsonl, Number of queries: 3, Estimated completion time: [unknown], Estimated completion by: [unknown]
-29-05-2024, 17:12: Next experiment: test2.jsonl, Number of queries: 3, Estimated completion time: [unknown], Estimated completion by: [unknown]
-29-05-2024, 17:21: Next experiment: test2.jsonl, Number of queries: 3, Estimated completion time: [unknown], Estimated completion by: [unknown]
-29-05-2024, 17:21: Error (i=2) [id=10]. ValueError - This is a test error which we should handle and return
-29-05-2024, 17:21: Error (i=3) [id=11]. ValueError - This is a test error which we should handle and return
-29-05-2024, 17:21: Completed experiment test2.jsonl! Experiment processing time: 16.239 seconds, Average time per query: 5.413 seconds

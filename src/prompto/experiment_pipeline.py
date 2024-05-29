@@ -4,7 +4,11 @@ from datetime import datetime, timedelta
 
 from prompto.experiment import Experiment
 from prompto.settings import Settings
-from prompto.utils import sort_jsonl_files_by_creation_time, write_log_message
+from prompto.utils import (
+    create_folder,
+    sort_jsonl_files_by_creation_time,
+    write_log_message,
+)
 
 
 class ExperimentPipeline:
@@ -45,6 +49,9 @@ class ExperimentPipeline:
                 next_experiment = Experiment(
                     file_name=self.experiment_files[0], settings=self.settings
                 )
+
+                # create the output folder for the experiment
+                create_folder(next_experiment.output_folder)
 
                 # log the estimated time of completion of the next experiment
                 self.log_estimate(experiment=next_experiment)
