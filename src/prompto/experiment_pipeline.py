@@ -2,13 +2,10 @@ import asyncio
 import logging
 from datetime import datetime, timedelta
 
-
-from prompto.settings import Settings
 from prompto.experiment import Experiment
-from prompto.utils import (
-    sort_jsonl_files_by_creation_time,
-    write_log_message,
-)
+from prompto.settings import Settings
+from prompto.utils import sort_jsonl_files_by_creation_time, write_log_message
+
 
 class ExperimentPipeline:
     """
@@ -51,12 +48,14 @@ class ExperimentPipeline:
 
                 # log the estimated time of completion of the next experiment
                 self.log_estimate(experiment=next_experiment)
-                
+
                 # proccess the next experiment
                 _, avg_query_processing_time = asyncio.run(next_experiment.process())
 
                 # keep track of the average processing time per query for the experiment
-                self.average_per_query_processing_times.append(avg_query_processing_time)
+                self.average_per_query_processing_times.append(
+                    avg_query_processing_time
+                )
 
                 # update the overall average processing time per query
                 self.overall_avg_proc_times = sum(

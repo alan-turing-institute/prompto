@@ -101,7 +101,7 @@ class Experiment:
         # grouped experiment prompts by
         # only group the prompts on the first call to the property
         self._grouped_experiment_prompts: dict[str, list[dict]] = {}
-        
+
         # initialise the completed responses
         self.completed_responses: list[dict] = []
 
@@ -268,7 +268,7 @@ class Experiment:
 
         All output files are timestamped with the creation/change time of the
         experiment file.
-        
+
         Returns
         -------
         tuple[dict, float]
@@ -334,16 +334,14 @@ class Experiment:
             f"Average time per query: {round(avg_query_processing_time, 3)} seconds"
         )
         async with FILE_WRITE_LOCK:
-            write_log_message(
-                log_file=self.log_file, log_message=log_message, log=True
-            )
+            write_log_message(log_file=self.log_file, log_message=log_message, log=True)
 
         # read the output file
         with open(self.output_completed_file_path, "r") as f:
             self.completed_responses: list[dict] = [
                 dict(json.loads(line)) for line in f
             ]
-            
+
         return self.completed_responses, avg_query_processing_time
 
     async def send_requests(
@@ -498,7 +496,7 @@ class Experiment:
             else:
                 # if the maximum number of attempts has been reached, break out of the loop
                 break
-    
+
     async def query_model_and_record_response(
         self,
         prompt_dict: dict,
@@ -645,7 +643,9 @@ class Experiment:
         if index is None:
             index = "NA"
         if "api" not in prompt_dict:
-            raise KeyError("API is not specified in the prompt_dict. Must have 'api' key")
+            raise KeyError(
+                "API is not specified in the prompt_dict. Must have 'api' key"
+            )
 
         # obtain api class
         try:
