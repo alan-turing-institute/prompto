@@ -2,7 +2,7 @@ import logging
 
 import pytest
 
-from prompto.experiment_processing import Experiment
+from prompto.experiment import Experiment
 from prompto.settings import Settings
 
 

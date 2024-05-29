@@ -3,7 +3,7 @@ import json
 import logging
 import os
 import time
-from datetime import datetime, timedelta
+from datetime import datetime
 
 from tqdm import tqdm
 from tqdm.asyncio import tqdm_asyncio
@@ -14,7 +14,6 @@ from prompto.utils import (
     FILE_WRITE_LOCK,
     create_folder,
     move_file,
-    sort_jsonl_files_by_creation_time,
     sort_prompts_by_model_for_api,
     write_log_message,
 )
@@ -102,6 +101,9 @@ class Experiment:
         # grouped experiment prompts by
         # only group the prompts on the first call to the property
         self._grouped_experiment_prompts: dict[str, list[dict]] = {}
+        
+        # initialise the completed responses
+        self.completed_responses: list[dict] = []
 
     def __str__(self) -> str:
         return self.file_name
@@ -252,123 +254,9 @@ class Experiment:
 
         return queries_and_rates_per_group
 
-
-class ExperimentPipeline:
-    """
-    A class for the experiment pipeline process.
-
-    Parameters
-    ----------
-    settings : Settings
-        Settings for the pipeline which includes the data folder locations,
-        the maximum number of queries to send per minute, the maximum number
-        of attempts when retrying, and whether to run the experiment in parallel
-    """
-
-    def __init__(
-        self,
-        settings: Settings,
-    ):
-        self.settings: Settings = settings
-        self.average_per_query_processing_times: list[float] = []
-        self.overall_avg_proc_times: float = 0.0
-        self.experiment_files: list[str] = []
-
-    def run(self) -> None:
+    async def process(self) -> tuple[dict, float]:
         """
-        Run the pipeline process of continually by checking for
-        new experiment files and running the experiments sequentially
-        in the order that the files were created.
-
-        The process will continue to run until the program is stopped.
-        """
-        while True:
-            # obtain experiment files sorted by creation/change time
-            self.update_experiment_files()
-
-            if len(self.experiment_files) != 0:
-                # obtain the next experiment to process
-                next_experiment = Experiment(
-                    file_name=self.experiment_files[0], settings=self.settings
-                )
-
-                # proccess the next experiment
-                asyncio.run(self.process_experiment(experiment=next_experiment))
-
-                # log the progress of the queue of experiments
-                self.log_progress(experiment=next_experiment)
-
-    def update_experiment_files(self) -> None:
-        """
-        Function to update the list of experiment files by sorting
-        the files by creation/change time (using `os.path.getctime`).
-        """
-        self.experiment_files = sort_jsonl_files_by_creation_time(
-            input_folder=self.settings.input_folder
-        )
-
-    def log_estimate(
-        self,
-        experiment: Experiment,
-    ) -> None:
-        """
-        Function to log the estimated time of completion of the next experiment.
-
-        Parameters
-        ----------
-        experiment : Experiment
-            The experiment that is being processed
-        """
-        now = datetime.now()
-        if self.overall_avg_proc_times == 0:
-            estimated_completion_time = "[unknown]"
-            estimated_completion = "[unknown]"
-        else:
-            estimated_completion_time = round(
-                self.overall_avg_proc_times * experiment.number_queries, 3
-            )
-            estimated_completion = (
-                now + timedelta(seconds=estimated_completion_time)
-            ).strftime("%d-%m-%Y, %H:%M")
-
-        # log the estimated time of completion of the next experiment
-        log_message = (
-            f"Next experiment: {experiment}, "
-            f"Number of queries: {experiment.number_queries}, "
-            f"Estimated completion time: {estimated_completion_time}, "
-            f"Estimated completion by: {estimated_completion}"
-        )
-        write_log_message(log_file=experiment.log_file, log_message=log_message)
-
-    def log_progress(
-        self,
-        experiment: Experiment,
-    ) -> None:
-        """
-        Function to log the progress of the queue of experiments.
-
-        Parameters
-        ----------
-        experiment : Experiment
-            The experiment that was just processed
-        """
-        # log completion of experiment
-        logging.info(f"Completed experiment: {experiment}!")
-        logging.info(
-            f"- Overall average time per query: {round(self.overall_avg_proc_times, 3)} seconds"
-        )
-
-        # log remaining of experiments
-        self.update_experiment_files()
-        logging.info(f"- Remaining number of experiments: {len(self.experiment_files)}")
-        logging.info(f"- Remaining experiments: {self.experiment_files}")
-
-    async def process_experiment(
-        self,
-        experiment: Experiment,
-    ) -> None:
-        """
-        Function to process an experiment.
+        Function to process the experiment.
 
         The method will first create a folder for the experiment in the output
         folder named after the experiment name (filename without the .jsonl extension).
@@ -380,60 +268,56 @@ class ExperimentPipeline:
 
         All output files are timestamped with the creation/change time of the
         experiment file.
-
-        Parameters
-        ----------
-        experiment : Experiment
-            The experiment that is being processed
+        
+        Returns
+        -------
+        tuple[dict, float]
+            A tuple containing the completed prompt_dicts from the API and the
+            average processing time per query for the experiment
         """
-        logging.info(f"Processing experiment: {experiment}...")
+        logging.info(f"Processing experiment: {self.__str__()}...")
         start_time = time.time()
 
         # create the output folder for the experiment
-        create_folder(experiment.output_folder)
+        create_folder(self.output_folder)
 
         # move the experiment file to the output folder
         logging.info(
-            f"Moving {experiment.input_file_path} to {experiment.output_folder} as "
-            f"{experiment.output_input_file_out_path}..."
+            f"Moving {self.input_file_path} to {self.output_folder} as "
+            f"{self.output_input_file_out_path}..."
         )
         move_file(
-            source=experiment.input_file_path,
-            destination=experiment.output_input_file_out_path,
+            source=self.input_file_path,
+            destination=self.output_input_file_out_path,
         )
-
-        # log the estimated time of completion of the next experiment
-        self.log_estimate(experiment=experiment)
 
         # run the experiment asynchronously
         if self.settings.parallel:
             logging.info(
-                f"Sending {experiment.number_queries} queries in parallel by grouping prompts..."
+                f"Sending {self.number_queries} queries in parallel by grouping prompts..."
             )
             logging.info(
-                f"Queries per group: {experiment.grouped_experiment_prompts_summary()}"
+                f"Queries per group: {self.grouped_experiment_prompts_summary()}"
             )
 
             # create tasks for each group which we will run in parallel using asyncio.gather
             tasks = [
                 asyncio.create_task(
                     self.send_requests_retry(
-                        experiment=experiment,
                         prompt_dicts=values["prompt_dicts"],
                         group=group,
                         rate_limit=values["rate_limit"],
                     )
                 )
-                for group, values in experiment.grouped_experiment_prompts.items()
+                for group, values in self.grouped_experiment_prompts.items()
             ]
             await tqdm_asyncio.gather(
                 *tasks, desc="Waiting for all groups to complete", unit="group"
             )
         else:
-            logging.info(f"Sending {experiment.number_queries} queries...")
+            logging.info(f"Sending {self.number_queries} queries...")
             await self.send_requests_retry(
-                experiment=experiment,
-                prompt_dicts=experiment.experiment_prompts,
+                prompt_dicts=self.experiment_prompts,
                 group=None,
                 rate_limit=self.settings.max_queries,
             )
@@ -441,30 +325,29 @@ class ExperimentPipeline:
         # calculate average processing time per query for the experiment
         end_time = time.time()
         processing_time = end_time - start_time
-        avg_query_processing_time = processing_time / experiment.number_queries
+        avg_query_processing_time = processing_time / self.number_queries
 
         # log completion of experiment
         log_message = (
-            f"Completed experiment {experiment}! "
+            f"Completed experiment {self.__str__()}! "
             f"Experiment processing time: {round(processing_time, 3)} seconds, "
             f"Average time per query: {round(avg_query_processing_time, 3)} seconds"
         )
         async with FILE_WRITE_LOCK:
             write_log_message(
-                log_file=experiment.log_file, log_message=log_message, log=True
+                log_file=self.log_file, log_message=log_message, log=True
             )
 
-        # keep track of the average processing time per query for the experiment
-        self.average_per_query_processing_times.append(avg_query_processing_time)
-
-        # update the overall average processing time per query
-        self.overall_avg_proc_times = sum(
-            self.average_per_query_processing_times
-        ) / len(self.average_per_query_processing_times)
+        # read the output file
+        with open(self.output_completed_file_path, "r") as f:
+            self.completed_responses: list[dict] = [
+                dict(json.loads(line)) for line in f
+            ]
+            
+        return self.completed_responses, avg_query_processing_time
 
     async def send_requests(
         self,
-        experiment: Experiment,
         prompt_dicts: list[dict],
         attempt: int,
         rate_limit: int,
@@ -490,8 +373,6 @@ class ExperimentPipeline:
 
         Parameters
         ----------
-        experiment : Experiment
-            The experiment that is being processed
         prompt_dicts : list[dict]
             List of dictionaries containing the prompt and other parameters
             to be sent to the API. Each dictionary must have keys "prompt" and "api".
@@ -530,10 +411,9 @@ class ExperimentPipeline:
 
             # query the API asynchronously and collect the task
             task = asyncio.create_task(
-                query_model_and_record_response(
+                self.query_model_and_record_response(
                     prompt_dict=item,
                     settings=self.settings,
-                    experiment=experiment,
                     index=index + 1,
                     attempt=attempt,
                 )
@@ -551,7 +431,6 @@ class ExperimentPipeline:
 
     async def send_requests_retry(
         self,
-        experiment: Experiment,
         prompt_dicts: list[dict],
         rate_limit: int,
         group: str | None = None,
@@ -582,7 +461,6 @@ class ExperimentPipeline:
 
         # send off the requests
         remaining_prompt_dicts, responses = await self.send_requests(
-            experiment=experiment,
             prompt_dicts=prompt_dicts,
             attempt=attempt,
             rate_limit=rate_limit,
@@ -609,7 +487,6 @@ class ExperimentPipeline:
 
                     # send off the failed queries
                     remaining_prompt_dicts, responses = await self.send_requests(
-                        experiment=experiment,
                         prompt_dicts=remaining_prompt_dicts,
                         attempt=attempt,
                         rate_limit=rate_limit,
@@ -621,169 +498,166 @@ class ExperimentPipeline:
             else:
                 # if the maximum number of attempts has been reached, break out of the loop
                 break
+    
+    async def query_model_and_record_response(
+        self,
+        prompt_dict: dict,
+        settings: Settings,
+        index: int | str | None,
+        attempt: int,
+    ) -> dict | Exception:
+        """
+        Send request to generate response from a LLM and record the response in a jsonl file.
 
+        Parameters
+        ----------
+        prompt_dict : dict
+            Dictionary containing the prompt and other parameters to be
+            used for text generation. Required keys are "prompt" and "api".
+            Optionally can have a "parameters" key. Some APIs may have
+            other specific required keys
+        settings : Settings
+            Settings for the pipeline which includes the data folder locations,
+            the maximum number of queries to send per minute, the maximum number
+            of attempts when retrying, and whether to run the experiment in parallel
+        experiment : Experiment
+            The experiment that is being processed
+        index : int | None, optional
+            The index of the prompt in the experiment,
+            by default None. If None, then index is set to "NA".
+            Useful for tagging the prompt/response received and any errors
+        attempt : int
+            The attempt number to process the prompt
 
-async def query_model_and_record_response(
-    prompt_dict: dict,
-    settings: Settings,
-    experiment: Experiment,
-    index: int | str | None,
-    attempt: int,
-) -> dict | Exception:
-    """
-    Send request to generate response from a LLM and record the response in a jsonl file.
-
-    Parameters
-    ----------
-    prompt_dict : dict
-        Dictionary containing the prompt and other parameters to be
-        used for text generation. Required keys are "prompt" and "api".
-        Optionally can have a "parameters" key. Some APIs may have
-        other specific required keys
-    settings : Settings
-        Settings for the pipeline which includes the data folder locations,
-        the maximum number of queries to send per minute, the maximum number
-        of attempts when retrying, and whether to run the experiment in parallel
-    experiment : Experiment
-        The experiment that is being processed
-    index : int | None, optional
-        The index of the prompt in the experiment,
-        by default None. If None, then index is set to "NA".
-        Useful for tagging the prompt/response received and any errors
-    attempt : int
-        The attempt number to process the prompt
-
-    Returns
-    -------
-    dict | Exception
-        Completed prompt_dict with "response" key storing the response(s)
-        from the LLM.
-        A dictionary is returned if the response is received successfully or
-        if the maximum number of attempts is reached (i.e. an Exception
-        was caught but we have attempt==max_attempts).
-        An Exception is returned (not raised) if an error is caught and we have
-        attempt < max_attempts, indicating that we could try this
-        prompt again later in the queue.
-    """
-    if attempt > settings.max_attempts:
-        raise ValueError(
-            f"Number of attempts ({attempt}) cannot be greater than max_attempts ({settings.max_attempts})"
-        )
-    if index is None:
-        index = "NA"
-
-    # query the API
-    timeout_seconds = 300
-    # attempt to query the API max_attempts times (for timeout errors)
-    # if response or another error is received, only try once and break out of the loop
-    try:
-        async with asyncio.timeout(timeout_seconds):
-            completed_prompt_dict = await generate_text(
-                prompt_dict=prompt_dict,
-                settings=settings,
-                experiment=experiment,
-                index=index,
+        Returns
+        -------
+        dict | Exception
+            Completed prompt_dict with "response" key storing the response(s)
+            from the LLM.
+            A dictionary is returned if the response is received successfully or
+            if the maximum number of attempts is reached (i.e. an Exception
+            was caught but we have attempt==max_attempts).
+            An Exception is returned (not raised) if an error is caught and we have
+            attempt < max_attempts, indicating that we could try this
+            prompt again later in the queue.
+        """
+        if attempt > settings.max_attempts:
+            raise ValueError(
+                f"Number of attempts ({attempt}) cannot be greater than max_attempts ({settings.max_attempts})"
             )
-    except (NotImplementedError, KeyError, ValueError, TypeError) as err:
-        # don't retry for selected errors, log the error and save an error response
-        log_message = (
-            f"Error (i={index}) [id={prompt_dict.get('id', 'NA')}]. "
-            f"{type(err).__name__} - {err}"
-        )
-        async with FILE_WRITE_LOCK:
-            write_log_message(
-                log_file=experiment.log_file, log_message=log_message, log=True
-            )
-        # fill in response with error message
-        completed_prompt_dict = prompt_dict
-        completed_prompt_dict["response"] = f"{type(err).__name__} - {err}"
-    except (Exception, asyncio.CancelledError, asyncio.TimeoutError) as err:
-        if attempt == settings.max_attempts:
-            # we've already tried max_attempts times, so log the error and save an error response
+        if index is None:
+            index = "NA"
+
+        # query the API
+        timeout_seconds = 300
+        # attempt to query the API max_attempts times (for timeout errors)
+        # if response or another error is received, only try once and break out of the loop
+        try:
+            async with asyncio.timeout(timeout_seconds):
+                completed_prompt_dict = await self.generate_text(
+                    prompt_dict=prompt_dict,
+                    settings=settings,
+                    index=index,
+                )
+        except (NotImplementedError, KeyError, ValueError, TypeError) as err:
+            # don't retry for selected errors, log the error and save an error response
             log_message = (
-                f"Error (i={index}) [id={prompt_dict.get('id', 'NA')}] after maximum {settings.max_attempts} attempts: "
+                f"Error (i={index}) [id={prompt_dict.get('id', 'NA')}]. "
                 f"{type(err).__name__} - {err}"
             )
             async with FILE_WRITE_LOCK:
                 write_log_message(
-                    log_file=experiment.log_file, log_message=log_message, log=True
+                    log_file=self.log_file, log_message=log_message, log=True
                 )
-            # fill in response with error message and note that we've tried max_attempts times
+            # fill in response with error message
             completed_prompt_dict = prompt_dict
-            completed_prompt_dict["response"] = (
-                f"An unexpected error occurred when querying the API: {type(err).__name__} - {err} "
-                f"after maximum {settings.max_attempts} attempts"
-            )
-        else:
-            # we haven't tried max_attempts times yet, so log the error and return an Exception
-            log_message = (
-                f"Error (i={index}) [id={prompt_dict.get('id', 'NA')}] on attempt {attempt} of {settings.max_attempts}: "
-                f"{type(err).__name__} - {err} - adding to the queue to try again later"
-            )
-            async with FILE_WRITE_LOCK:
-                write_log_message(
-                    log_file=experiment.log_file, log_message=log_message, log=True
+            completed_prompt_dict["response"] = f"{type(err).__name__} - {err}"
+        except (Exception, asyncio.CancelledError, asyncio.TimeoutError) as err:
+            if attempt == settings.max_attempts:
+                # we've already tried max_attempts times, so log the error and save an error response
+                log_message = (
+                    f"Error (i={index}) [id={prompt_dict.get('id', 'NA')}] after maximum {settings.max_attempts} attempts: "
+                    f"{type(err).__name__} - {err}"
                 )
-            # return Execption to indicate that we should try this prompt again later
-            return Exception(f"{type(err).__name__} - {err}\n")
+                async with FILE_WRITE_LOCK:
+                    write_log_message(
+                        log_file=self.log_file, log_message=log_message, log=True
+                    )
+                # fill in response with error message and note that we've tried max_attempts times
+                completed_prompt_dict = prompt_dict
+                completed_prompt_dict["response"] = (
+                    f"An unexpected error occurred when querying the API: {type(err).__name__} - {err} "
+                    f"after maximum {settings.max_attempts} attempts"
+                )
+            else:
+                # we haven't tried max_attempts times yet, so log the error and return an Exception
+                log_message = (
+                    f"Error (i={index}) [id={prompt_dict.get('id', 'NA')}] on attempt {attempt} of {settings.max_attempts}: "
+                    f"{type(err).__name__} - {err} - adding to the queue to try again later"
+                )
+                async with FILE_WRITE_LOCK:
+                    write_log_message(
+                        log_file=self.log_file, log_message=log_message, log=True
+                    )
+                # return Execption to indicate that we should try this prompt again later
+                return Exception(f"{type(err).__name__} - {err}\n")
 
-    # record the response in a jsonl file asynchronously using FILE_WRITE_LOCK
-    async with FILE_WRITE_LOCK:
-        with open(experiment.output_completed_file_path, "a") as f:
-            json.dump(completed_prompt_dict, f)
-            f.write("\n")
+        # record the response in a jsonl file asynchronously using FILE_WRITE_LOCK
+        async with FILE_WRITE_LOCK:
+            with open(self.output_completed_file_path, "a") as f:
+                json.dump(completed_prompt_dict, f)
+                f.write("\n")
 
-    return completed_prompt_dict
+        return completed_prompt_dict
 
+    async def generate_text(
+        self,
+        prompt_dict: dict,
+        settings: Settings,
+        index: int | None,
+    ) -> dict:
+        """
+        Generate text by querying an LLM.
 
-async def generate_text(
-    prompt_dict: dict,
-    settings: Settings,
-    experiment: Experiment,
-    index: int | None,
-) -> dict:
-    """
-    Generate text by querying an LLM.
+        Parameters
+        ----------
+        prompt_dict : dict
+            Dictionary containing the prompt and other parameters to be
+            used for text generation. Required keys are "prompt" and "api".
+            Some models may have other required keys.
+        settings : Settings
+            Settings for the pipeline which includes the data folder locations,
+            the maximum number of queries to send per minute, the maximum number
+            of attempts when retrying, and whether to run the experiment in parallel
+        experiment : Experiment
+            The experiment that is being processed
+        index : int | None, optional
+            The index of the prompt in the experiment,
+            by default None. If None, then index is set to "NA".
+            Useful for tagging the prompt/response received and any errors
 
-    Parameters
-    ----------
-    prompt_dict : dict
-        Dictionary containing the prompt and other parameters to be
-        used for text generation. Required keys are "prompt" and "api".
-        Some models may have other required keys.
-    settings : Settings
-        Settings for the pipeline which includes the data folder locations,
-        the maximum number of queries to send per minute, the maximum number
-        of attempts when retrying, and whether to run the experiment in parallel
-    experiment : Experiment
-        The experiment that is being processed
-    index : int | None, optional
-        The index of the prompt in the experiment,
-        by default None. If None, then index is set to "NA".
-        Useful for tagging the prompt/response received and any errors
+        Returns
+        -------
+        dict
+            Completed prompt_dict with "response" key storing the response(s)
+            from the LLM
+        """
+        if index is None:
+            index = "NA"
+        if "api" not in prompt_dict:
+            raise KeyError("API is not specified in the prompt_dict. Must have 'api' key")
 
-    Returns
-    -------
-    dict
-        Completed prompt_dict with "response" key storing the response(s)
-        from the LLM
-    """
-    if index is None:
-        index = "NA"
-    if "api" not in prompt_dict:
-        raise KeyError("API is not specified in the prompt_dict. Must have 'api' key")
+        # obtain api class
+        try:
+            api = ASYNC_APIS[prompt_dict["api"]](
+                settings=settings, log_file=self.log_file
+            )
+        except KeyError:
+            raise NotImplementedError(
+                f"API {prompt_dict['api']} not recognised or implemented"
+            )
 
-    # obtain api class
-    try:
-        api = ASYNC_APIS[prompt_dict["api"]](
-            settings=settings, log_file=experiment.log_file
-        )
-    except KeyError:
-        raise NotImplementedError(
-            f"API {prompt_dict['api']} not recognised or implemented"
-        )
+        # query the model
+        response = await api.async_query(prompt_dict=prompt_dict, index=index)
 
-    # query the model
-    response = await api.async_query(prompt_dict=prompt_dict, index=index)
-
-    return response
+        return response
