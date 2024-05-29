@@ -18,5 +18,8 @@ In addition, there are other optional keys that can be included in the `prompt_d
     - For most API endpoints, it is possible to define the name of the model to query. For example, for the OpenAI API (`"api": "openai"`), the model name could be `"gpt-3.5-turbo"`, `"gpt-4"`, etc.
     - This is optional since you can also set the model name in the environment variable (e.g. `OPENAI_MODEL_NAME` for the OpenAI API) and avoid passing it in the `prompt_dict` each time if using the same one consistently
     - It is still possible to have a default model name set in the environment variable and override it in the `prompt_dict` if you want to use a different model for a particular prompt
+- `group`: a user-specified grouping of the prompts
+    - This is a string that can be used to group the prompts together. This is useful when you want to process groups of prompts in parallel (e.g. when using the `--parallel` flag in the pipeline)
+    - Note that you can use parallel processing without using the "group" key, but using this key allows you to have full control in order group the prompts in a way that makes sense for your use case. See the [specifying rate limits documentation](rate_limits.md) for more details on parallel processing
 
 Lastly, there are other optional keys that are only available for certain APIs/models. For example, for the Gemini API, you can have a `multimedia` key which is a list of dictionaries defining the multimedia files (e.g. images/videos) to be used in the prompt to a multimodal LLM. For these, see the documentation for the specific API/model for more details.

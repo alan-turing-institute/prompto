@@ -22,7 +22,7 @@ prompto_run_pipeline --data-folder data
 
 This initialises the process of continually checking the input folder for new experiments to process. If an experiment is found, it is processed and the results are stored in the output folder. The pipeline will continue to check for new experiments until the process is stopped.
 
-If there are several experiments in the input folder, the pipeline will process the experiments in the order that the files were created/modified in the input folder (i.e. the oldest file will be processed first). This ordering is computed by using `os.path.getctime` which on some systems (e.g. Unix) is the time of the last metadata change and for tohers (e.g. Windows) is the creation time of the path.
+If there are several experiments in the input folder, the pipeline will process the experiments in the order that the files were created/modified in the input folder (i.e. the oldest file will be processed first). This ordering is computed by using `os.path.getctime` which on some systems (e.g. Unix) is the time of the last metadata change and for others (e.g. Windows) is the creation time of the path.
 
 ## Run a single experiment
 
@@ -37,9 +37,12 @@ This will process the experiment defined in the jsonl file and store the results
 
 When running the pipeline or an experiment, there are certain settings to define how to run the experiments. These can be set using the above command line interfaces via the following argument flags:
 - `--data-folder` or `-d`: the path to the data folder which contains the input, output and media folders for the experiments (by default, `./data`)
-- `--max-queries` or `-m`: the maximum number of queries to send within a minute (i.e. the query rate limit) (by default, `10`)
+- `--max-queries` or `-m`: the _default_ maximum number of queries to send within a minute (i.e. the query rate limit) (by default, `10`)
 - `--max-attempts` or `-a`: the maximum number of attempts to try querying the model before giving up (by default, `5`)
 - `--parallel` or `-p`: when the experiment files has different APIs to query, this flag allows the pipeline to send the queries to the different APIs in parallel (by default, `False`)
+- `--max-queries-json` or `-mqj`: this can be a path to another json file which contains the maximum number of queries to send within a minute for each API or group (by default, `None`). In this json, the keys are API names (e.g. "openai", "gemini", etc.) or group names and the values can either be integers which represent the corresponding rate limit for the API or group, or they can be themselves another dictionary where keys are model names and values are integers representing the rate limit for that model. This is only used when the `--parallel` flag is set. If the json file is not provided, the `--max-queries` value is used for all APIs or groups.
+
+More detailed information on parallel processing and examples can be found in the [specifying rate limits documentation](./rate_limits.md).
 
 For example, to run the pipeline in `pipline-data/`, with a maximum of 5 queries per minute, have a maximum of 3 attempts for each query, and to send calls to separate API endpoints in parallel, you can run:
 ```bash

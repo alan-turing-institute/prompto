@@ -11,6 +11,7 @@
 * [Setting up an experiment file](./experiment_file.md)
 * [prompto Pipeline and running experiments](./pipeline.md)
 * [prompto commands](./commands.md)
+* [Specifying rate limits](./rate_limits.md)
 
 ### Reference
 

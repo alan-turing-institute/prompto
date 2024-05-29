@@ -1,6 +1,7 @@
 import asyncio
 import logging
 import os
+import shutil
 from datetime import datetime
 
 FILE_WRITE_LOCK = asyncio.Lock()
@@ -64,6 +65,24 @@ def move_file(source: str, destination: str) -> None:
 
     logging.info(f"Moving file from {source} to {destination}")
     os.rename(source, destination)
+
+
+def copy_file(source: str, destination: str) -> None:
+    """
+    Function to copy a file from one location to another.
+
+    Parameters
+    ----------
+    source : str
+        File path of the file to be moved.
+    destination : str
+        File path of the destination of the file.
+    """
+    if not os.path.exists(source):
+        raise FileNotFoundError(f"File '{source}' does not exist")
+
+    logging.info(f"Copying file from {source} to {destination}")
+    shutil.copyfile(source, destination)
 
 
 def write_log_message(log_file: str, log_message: str, log: bool = True) -> None:
@@ -342,7 +361,7 @@ def get_model_name_identifier(model_name: str) -> str:
 
     Some model names can contain characters that are not allowed in
     environment variable names. This function replaces those characters
-    ("-", "/", ".", " ") with underscores ("_").
+    ("-", "/", ".", ":", " ") with underscores ("_").
 
     Parameters
     ----------
@@ -358,6 +377,7 @@ def get_model_name_identifier(model_name: str) -> str:
     model_name = model_name.replace("-", "_")
     model_name = model_name.replace("/", "_")
     model_name = model_name.replace(".", "_")
+    model_name = model_name.replace(":", "_")
     model_name = model_name.replace(" ", "_")
 
     return model_name

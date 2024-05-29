@@ -1,11 +1,12 @@
 import argparse
 import asyncio
+import json
 import logging
 import os
 
 from prompto.experiment_processing import Experiment, ExperimentPipeline
 from prompto.settings import Settings
-from prompto.utils import move_file
+from prompto.utils import copy_file, move_file
 
 
 async def main():
@@ -26,6 +27,19 @@ async def main():
         required=True,
     )
     parser.add_argument(
+        "--move-to-input",
+        "-m",
+        help=(
+            "If used, the file will be moved to the input folder to run. "
+            "By default the file is only copied to the input folder. "
+            "Note if the file is already in the input folder, this flag has no effect "
+            "but the file will still be processed which would lead it to be "
+            "moved to the output folder."
+        ),
+        action="store_true",
+        default=False,
+    )
+    parser.add_argument(
         "--data-folder",
         "-d",
         help="Path to the folder containing the data",
@@ -35,7 +49,7 @@ async def main():
     parser.add_argument(
         "--max-queries",
         "-m",
-        help="Maximum number of queries to send within a minute",
+        help="The default maximum number of queries to send per minute",
         type=int,
         default=10,
     )
@@ -53,6 +67,16 @@ async def main():
         action="store_true",
         default=False,
     )
+    parser.add_argument(
+        "--max-queries-json",
+        "-mqj",
+        help=(
+            "Path to the json file containing the maximum queries per minute "
+            "for each API and model or group"
+        ),
+        type=str,
+        default=None,
+    )
     args = parser.parse_args()
 
     # initialise logging
@@ -62,12 +86,28 @@ async def main():
         level=logging.INFO,
     )
 
+    if args.max_query_json is not None:
+        # check if file exists
+        if not os.path.exists(args.max_query_json):
+            raise FileNotFoundError(f"File {args.max_query_json} not found")
+
+        # check if file is a json file
+        if not args.max_query_json.endswith(".json"):
+            raise ValueError("max_query_json must be a json file")
+
+        # load the json file
+        with open(args.max_query_json, "r") as f:
+            max_queries_dict = json.load(f)
+    else:
+        max_queries_dict = {}
+
     # initialise settings
     settings = Settings(
         data_folder=args.data_folder,
         max_queries=args.max_queries,
         max_attempts=args.max_attempts,
         parallel=args.parallel,
+        max_queries_dict=max_queries_dict,
     )
     # log the settings that are set for the pipeline
     logging.info(settings)
@@ -87,7 +127,16 @@ async def main():
         logging.info(
             f"File {args.file} is not in the input folder {settings.input_folder}"
         )
-        move_file(args.file, f"{settings.input_folder}/{experiment_file_name}")
+        if args.move_to_input:
+            move_file(
+                source=args.file,
+                destination=f"{settings.input_folder}/{experiment_file_name}",
+            )
+        else:
+            copy_file(
+                source=args.file,
+                destination=f"{settings.input_folder}/{experiment_file_name}",
+            )
 
     # initialise experiment pipeline
     experiment_pipeline = ExperimentPipeline(settings=settings)
