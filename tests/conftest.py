@@ -80,11 +80,41 @@ def temporary_data_folders(tmp_path: Path):
     ) as f:
         f.write('{"prompt": "test prompt 2", "api": "test"}\n')
 
+    # store current working directory
+    cwd = os.getcwd()
+
+    # change to temporary directory
+    os.chdir(tmp_path)
+
+    yield data_dir, dummy_data_dir, utils_dir, experiment_pipeline
+
+    # change back to original directory
+    os.chdir(cwd)
+
+
+@pytest.fixture()
+def temporary_data_folder_for_grouping_prompts(tmp_path: Path):
+    """
+    Creates a temporary folder structure for testing grouping prompts.
+
+    Has the following structure:
+    tmp_path
+    ├── data/
+        ├── input/
+            └── larger_no_groups.jsonl
+            └── larger_with_groups.jsonl
+        ├── output/
+        ├── media/
+    """
+    # create a folder for testing the experiment pipeline
+    data_dir = Path(tmp_path / "data").mkdir()
+    # create subfolders for the experiment pipeline
+    Path(tmp_path / "data" / "input").mkdir()
+    Path(tmp_path / "data" / "output").mkdir()
+    Path(tmp_path / "data" / "media").mkdir()
+
     # create a file with larger number of prompts with different APIs, models (no groups)
-    time.sleep(0.01)
-    with open(
-        Path(tmp_path / "experiment_pipeline" / "input" / "larger_no_groups.jsonl"), "w"
-    ) as f:
+    with open(Path(tmp_path / "data" / "input" / "larger_no_groups.jsonl"), "w") as f:
         f.write('{"prompt": "test prompt 1", "api": "test", "model_name": "model1"}\n')
         f.write('{"prompt": "test prompt 2", "api": "test"}\n')
         f.write('{"prompt": "test prompt 3", "api": "test", "model_name": "model1"}\n')
@@ -128,9 +158,8 @@ def temporary_data_folders(tmp_path: Path):
         )
 
     # create a file with larger number of prompts with different APIs, models and groups
-    time.sleep(0.01)
     with open(
-        Path(tmp_path / "experiment_pipeline" / "input" / "larger_with_groups.jsonl"),
+        Path(tmp_path / "data" / "input" / "larger_with_groups.jsonl"),
         "w",
     ) as f:
         f.write('{"prompt": "test prompt 1", "api": "test", "model_name": "model1"}\n')
@@ -189,7 +218,7 @@ def temporary_data_folders(tmp_path: Path):
     # change to temporary directory
     os.chdir(tmp_path)
 
-    yield data_dir, dummy_data_dir, utils_dir, experiment_pipeline
+    yield data_dir
 
     # change back to original directory
     os.chdir(cwd)

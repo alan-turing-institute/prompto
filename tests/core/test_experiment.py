@@ -79,6 +79,8 @@ def test_experiment_init(temporary_data_folders):
     # test that grouped experiments have not been created yet
     assert experiment._grouped_experiment_prompts == {}
 
+    assert experiment.completed_responses == []
+
 
 def test_experiment_grouped_prompts_simple(temporary_data_folders, caplog):
     caplog.set_level(logging.WARNING)
@@ -231,13 +233,13 @@ def test_experiment_grouped_prompts_setter(temporary_data_folders):
         experiment.grouped_experiment_prompts = {"hello": "world"}
 
 
-def test_experiment_grouped_prompts_default_no_groups(temporary_data_folders, caplog):
+def test_experiment_grouped_prompts_default_no_groups(
+    temporary_data_folder_for_grouping_prompts, caplog
+):
     caplog.set_level(logging.WARNING)
 
     # create a settings object without max_queries_dict (i.e. it's {} by default)
-    settings = Settings(
-        data_folder="experiment_pipeline", max_queries=50, max_attempts=5
-    )
+    settings = Settings(data_folder="data", max_queries=50, max_attempts=5)
     assert settings.max_queries_dict == {}
 
     # parallel is by default False too but we will group the prompts when calling the attribute
@@ -344,14 +346,16 @@ def test_experiment_grouped_prompts_default_no_groups(temporary_data_folders, ca
     assert log_msg in caplog.text
 
 
-def test_experiment_grouped_prompts_apis_only_no_groups(temporary_data_folders):
+def test_experiment_grouped_prompts_apis_only_no_groups(
+    temporary_data_folder_for_grouping_prompts,
+):
     # specify rate limits for "test" and "gemini", but leave "azure-openai" to default
     # also add another key which should be ignored but present in the group_experiment_prompts
     max_queries_dict = {"test": 100, "gemini": 200, "ignored": 10}
 
     # create a settings object
     settings = Settings(
-        data_folder="experiment_pipeline",
+        data_folder="data",
         max_queries=50,
         max_attempts=5,
         parallel=True,
@@ -455,7 +459,7 @@ def test_experiment_grouped_prompts_apis_only_no_groups(temporary_data_folders):
 
 
 def test_experiment_grouped_prompts_apis_and_models_no_groups_v1(
-    temporary_data_folders,
+    temporary_data_folder_for_grouping_prompts,
 ):
     # specify rate limits for "test" and "gemini" apis and some models,
     # but only specify overall rate limit for "azure-openai"
@@ -471,7 +475,7 @@ def test_experiment_grouped_prompts_apis_and_models_no_groups_v1(
 
     # create a settings object
     settings = Settings(
-        data_folder="experiment_pipeline",
+        data_folder="data",
         max_queries=50,
         max_attempts=5,
         parallel=True,
@@ -603,7 +607,7 @@ def test_experiment_grouped_prompts_apis_and_models_no_groups_v1(
 
 
 def test_experiment_grouped_prompts_apis_and_models_no_groups_v2(
-    temporary_data_folders,
+    temporary_data_folder_for_grouping_prompts,
 ):
     # same test as above but slight variation in the max_queries_dict
     # specify rate limits for "test" and "azure-open" apis and some models,
@@ -620,7 +624,7 @@ def test_experiment_grouped_prompts_apis_and_models_no_groups_v2(
 
     # create a settings object
     settings = Settings(
-        data_folder="experiment_pipeline",
+        data_folder="data",
         max_queries=50,
         max_attempts=5,
         parallel=True,
@@ -757,13 +761,13 @@ def test_experiment_grouped_prompts_apis_and_models_no_groups_v2(
     }
 
 
-def test_experiment_grouped_prompts_default_with_groups(temporary_data_folders, caplog):
+def test_experiment_grouped_prompts_default_with_groups(
+    temporary_data_folder_for_grouping_prompts, caplog
+):
     caplog.set_level(logging.WARNING)
 
     # create a settings object without max_queries_dict (i.e. it's {} by default)
-    settings = Settings(
-        data_folder="experiment_pipeline", max_queries=50, max_attempts=5
-    )
+    settings = Settings(data_folder="data", max_queries=50, max_attempts=5)
     assert settings.max_queries_dict == {}
 
     # parallel is by default False too but we will group the prompts when calling the attribute
@@ -908,14 +912,16 @@ def test_experiment_grouped_prompts_default_with_groups(temporary_data_folders, 
     assert log_msg in caplog.text
 
 
-def test_experiment_grouped_prompts_apis_only_with_groups(temporary_data_folders):
+def test_experiment_grouped_prompts_apis_only_with_groups(
+    temporary_data_folder_for_grouping_prompts,
+):
     # specify rate limits for "test" and "gemini", but leave "azure-openai" and groups to default
     # also add another key which should be ignored but present in the group_experiment_prompts
     max_queries_dict = {"test": 100, "gemini": 200, "ignored": 10}
 
     # create a settings object
     settings = Settings(
-        data_folder="experiment_pipeline",
+        data_folder="data",
         max_queries=50,
         max_attempts=5,
         parallel=True,
@@ -1057,14 +1063,16 @@ def test_experiment_grouped_prompts_apis_only_with_groups(temporary_data_folders
     }
 
 
-def test_experiment_grouped_prompts_groups_only_with_groups(temporary_data_folders):
+def test_experiment_grouped_prompts_groups_only_with_groups(
+    temporary_data_folder_for_grouping_prompts,
+):
     # specify rate limits for "group1" but everything else to default
     # also add another key which should be ignored but present in the group_experiment_prompts
     max_queries_dict = {"group1": 100, "ignored": 10}
 
     # create a settings object
     settings = Settings(
-        data_folder="experiment_pipeline",
+        data_folder="data",
         max_queries=50,
         max_attempts=5,
         parallel=True,
@@ -1206,7 +1214,9 @@ def test_experiment_grouped_prompts_groups_only_with_groups(temporary_data_folde
     }
 
 
-def test_experiment_grouped_prompts_apis_and_models_with_groups(temporary_data_folders):
+def test_experiment_grouped_prompts_apis_and_models_with_groups(
+    temporary_data_folder_for_grouping_prompts,
+):
     # specify rate limits for "test" and "gemini" apis and some models,
     # but only specify overall rate limit for "azure-openai"
     # also add other key which should be ignored but
@@ -1221,7 +1231,7 @@ def test_experiment_grouped_prompts_apis_and_models_with_groups(temporary_data_f
 
     # create a settings object
     settings = Settings(
-        data_folder="experiment_pipeline",
+        data_folder="data",
         max_queries=50,
         max_attempts=5,
         parallel=True,
@@ -1391,7 +1401,7 @@ def test_experiment_grouped_prompts_apis_and_models_with_groups(temporary_data_f
 
 
 def test_experiment_grouped_prompts_groups_and_models_with_groups(
-    temporary_data_folders,
+    temporary_data_folder_for_grouping_prompts,
 ):
     # specify rate limits for "group1" and some models,
     # and overall rate limit for "group2"
@@ -1406,7 +1416,7 @@ def test_experiment_grouped_prompts_groups_and_models_with_groups(
 
     # create a settings object
     settings = Settings(
-        data_folder="experiment_pipeline",
+        data_folder="data",
         max_queries=50,
         max_attempts=5,
         parallel=True,
@@ -1570,7 +1580,9 @@ def test_experiment_grouped_prompts_groups_and_models_with_groups(
     }
 
 
-def test_experiment_grouped_prompts_all_with_groups_v1(temporary_data_folders):
+def test_experiment_grouped_prompts_all_with_groups_v1(
+    temporary_data_folder_for_grouping_prompts,
+):
     # specify rate limits for "test" and "gemini" apis and some models,
     # as well as limits for "group1" and some models,
     # and overall rate limit for "group2" and "azure-openai"
@@ -1588,7 +1600,7 @@ def test_experiment_grouped_prompts_all_with_groups_v1(temporary_data_folders):
 
     # create a settings object
     settings = Settings(
-        data_folder="experiment_pipeline",
+        data_folder="data",
         max_queries=50,
         max_attempts=5,
         parallel=True,
@@ -1769,7 +1781,9 @@ def test_experiment_grouped_prompts_all_with_groups_v1(temporary_data_folders):
     }
 
 
-def test_experiment_grouped_prompts_all_with_groups_v2(temporary_data_folders):
+def test_experiment_grouped_prompts_all_with_groups_v2(
+    temporary_data_folder_for_grouping_prompts,
+):
     # same test as above but slight variation in the max_queries_dict
     # specify rate limits for "test" and "gemini" apis and some models,
     # as well as limits for "group1" and some models
@@ -1785,7 +1799,7 @@ def test_experiment_grouped_prompts_all_with_groups_v2(temporary_data_folders):
 
     # create a settings object
     settings = Settings(
-        data_folder="experiment_pipeline",
+        data_folder="data",
         max_queries=50,
         max_attempts=5,
         parallel=True,

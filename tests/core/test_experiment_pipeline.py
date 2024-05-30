@@ -39,8 +39,6 @@ def test_update_experiment_files(temporary_data_folders):
     assert pipeline.experiment_files == [
         "first.jsonl",
         "second.jsonl",
-        "larger_no_groups.jsonl",
-        "larger_with_groups.jsonl",
     ]
 
     # remove second.jsonl from the folder
@@ -48,8 +46,6 @@ def test_update_experiment_files(temporary_data_folders):
     pipeline.update_experiment_files()
     assert pipeline.experiment_files == [
         "first.jsonl",
-        "larger_no_groups.jsonl",
-        "larger_with_groups.jsonl",
     ]
 
 
@@ -136,17 +132,12 @@ def test_log_progress(temporary_data_folders, caplog):
     # check the experiment_files attribute is updated (should only have second.jsonl)
     assert pipeline.experiment_files == [
         "second.jsonl",
-        "larger_no_groups.jsonl",
-        "larger_with_groups.jsonl",
     ]
     # check the log messages have been written
     assert "Completed experiment: first.jsonl!" in caplog.text
     assert "- Overall average time per query: 0.0" in caplog.text
-    assert "- Remaining number of experiments: 3" in caplog.text
-    assert (
-        "- Remaining experiments: ['second.jsonl', 'larger_no_groups.jsonl', 'larger_with_groups.jsonl']"
-        in caplog.text
-    )
+    assert "- Remaining number of experiments: 1" in caplog.text
+    assert "- Remaining experiments: ['second.jsonl']" in caplog.text
 
     # move second.jsonl to the output folder (simulating it being processed)
     output_experiment_dir = "experiment_pipeline/output/second"
@@ -161,15 +152,9 @@ def test_log_progress(temporary_data_folders, caplog):
     # call the log_progress method on second experiment
     pipeline.log_progress(experiment=second)
     # check the experiment_files attribute is empty
-    assert pipeline.experiment_files == [
-        "larger_no_groups.jsonl",
-        "larger_with_groups.jsonl",
-    ]
+    assert pipeline.experiment_files == []
     # check the log messages have been written
     assert "Completed experiment: second.jsonl!" in caplog.text
     assert "- Overall average time per query: 0.5" in caplog.text
-    assert "- Remaining number of experiments: 2" in caplog.text
-    assert (
-        "- Remaining experiments: ['larger_no_groups.jsonl', 'larger_with_groups.jsonl']"
-        in caplog.text
-    )
+    assert "- Remaining number of experiments: 0" in caplog.text
+    assert "- Remaining experiments: []" in caplog.text
