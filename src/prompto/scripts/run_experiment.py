@@ -4,7 +4,7 @@ import json
 import logging
 import os
 
-from prompto.experiment_processing import Experiment, ExperimentPipeline
+from prompto.experiment import Experiment
 from prompto.settings import Settings
 from prompto.utils import copy_file, move_file
 
@@ -138,15 +138,12 @@ async def main():
                 destination=f"{settings.input_folder}/{experiment_file_name}",
             )
 
-    # initialise experiment pipeline
-    experiment_pipeline = ExperimentPipeline(settings=settings)
-
     # create Experiment object
     experiment = Experiment(file_name=experiment_file_name, settings=settings)
 
     # process the experiment
     logging.info(f"Processing experiment {experiment.experiment_name}...")
-    await experiment_pipeline.process_experiment(experiment=experiment)
+    await experiment.process()
 
 
 if __name__ == "__main__":

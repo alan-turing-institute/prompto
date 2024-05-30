@@ -1,0 +1,4 @@
+29-05-2024, 17:38: Error (i=1) [id=9]. NotImplementedError - API unknown-model-name not recognised or implemented
+29-05-2024, 17:38: Error (i=2) [id=10]. NotImplementedError - API unknown-model-name not recognised or implemented
+29-05-2024, 17:38: Error (i=3) [id=11]. NotImplementedError - API unknown-model-name not recognised or implemented
+29-05-2024, 17:38: Completed experiment test.jsonl! Experiment processing time: 3.666 seconds, Average time per query: 1.222 seconds
