@@ -395,3 +395,46 @@ def temporary_rate_limit_doc_examples(tmp_path: Path):
 
     # change back to original directory
     os.chdir(cwd)
+
+
+@pytest.fixture()
+def temporary_data_folder_for_processing(tmp_path: Path):
+    """
+    Creates a temporary folder structure for testing processing of experiments.
+
+    Has the following structure:
+    tmp_path
+    ├── data/
+        ├── input/
+            └── test_experiment.jsonl
+        ├── output/
+        ├── media/
+    """
+    # create a folder for testing the experiment pipeline
+    data_dir = Path(tmp_path / "data").mkdir()
+    # create subfolders for the experiment pipeline
+    Path(tmp_path / "data" / "input").mkdir()
+    Path(tmp_path / "data" / "output").mkdir()
+    Path(tmp_path / "data" / "media").mkdir()
+
+    # create a file with larger number of prompts with different APIs, models (no groups)
+    with open(Path(tmp_path / "data" / "input" / "test_experiment.jsonl"), "w") as f:
+        f.write('{"prompt": "test prompt 1", "api": "test", "model_name": "model1"}\n')
+        f.write('{"prompt": "test prompt 2", "api": "test"}\n')
+        f.write('{"prompt": "test prompt 3", "api": "test", "model_name": "model1"}\n')
+        f.write('{"prompt": "test prompt 4", "api": "test", "model_name": "model3"}\n')
+        f.write('{"prompt": "test prompt 5", "api": "test", "model_name": "model2"}\n')
+        f.write('{"prompt": "test prompt 6", "api": "test", "model_name": "model3"}\n')
+        f.write('{"prompt": "test prompt 7", "api": "test", "model_name": "model3"}\n')
+        f.write('{"prompt": "test prompt 8", "api": "test"}\n')
+
+    # store current working directory
+    cwd = os.getcwd()
+
+    # change to temporary directory
+    os.chdir(tmp_path)
+
+    yield data_dir
+
+    # change back to original directory
+    os.chdir(cwd)
