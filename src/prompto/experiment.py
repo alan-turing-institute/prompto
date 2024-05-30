@@ -500,7 +500,6 @@ class Experiment:
     async def query_model_and_record_response(
         self,
         prompt_dict: dict,
-        settings: Settings,
         index: int | str | None,
         attempt: int,
     ) -> dict | Exception:
@@ -514,10 +513,6 @@ class Experiment:
             used for text generation. Required keys are "prompt" and "api".
             Optionally can have a "parameters" key. Some APIs may have
             other specific required keys
-        settings : Settings
-            Settings for the pipeline which includes the data folder locations,
-            the maximum number of queries to send per minute, the maximum number
-            of attempts when retrying, and whether to run the experiment in parallel
         experiment : Experiment
             The experiment that is being processed
         index : int | None, optional
@@ -539,9 +534,9 @@ class Experiment:
             attempt < max_attempts, indicating that we could try this
             prompt again later in the queue.
         """
-        if attempt > settings.max_attempts:
+        if attempt > self.settings.max_attempts:
             raise ValueError(
-                f"Number of attempts ({attempt}) cannot be greater than max_attempts ({settings.max_attempts})"
+                f"Number of attempts ({attempt}) cannot be greater than max_attempts ({self.settings.max_attempts})"
             )
         if index is None:
             index = "NA"
@@ -554,7 +549,6 @@ class Experiment:
             async with asyncio.timeout(timeout_seconds):
                 completed_prompt_dict = await self.generate_text(
                     prompt_dict=prompt_dict,
-                    settings=settings,
                     index=index,
                 )
         except (NotImplementedError, KeyError, ValueError, TypeError) as err:
@@ -571,10 +565,10 @@ class Experiment:
             completed_prompt_dict = prompt_dict
             completed_prompt_dict["response"] = f"{type(err).__name__} - {err}"
         except (Exception, asyncio.CancelledError, asyncio.TimeoutError) as err:
-            if attempt == settings.max_attempts:
+            if attempt == self.settings.max_attempts:
                 # we've already tried max_attempts times, so log the error and save an error response
                 log_message = (
-                    f"Error (i={index}) [id={prompt_dict.get('id', 'NA')}] after maximum {settings.max_attempts} attempts: "
+                    f"Error (i={index}) [id={prompt_dict.get('id', 'NA')}] after maximum {self.settings.max_attempts} attempts: "
                     f"{type(err).__name__} - {err}"
                 )
                 async with FILE_WRITE_LOCK:
@@ -585,12 +579,12 @@ class Experiment:
                 completed_prompt_dict = prompt_dict
                 completed_prompt_dict["response"] = (
                     f"An unexpected error occurred when querying the API: {type(err).__name__} - {err} "
-                    f"after maximum {settings.max_attempts} attempts"
+                    f"after maximum {self.settings.max_attempts} attempts"
                 )
             else:
                 # we haven't tried max_attempts times yet, so log the error and return an Exception
                 log_message = (
-                    f"Error (i={index}) [id={prompt_dict.get('id', 'NA')}] on attempt {attempt} of {settings.max_attempts}: "
+                    f"Error (i={index}) [id={prompt_dict.get('id', 'NA')}] on attempt {attempt} of {self.settings.max_attempts}: "
                     f"{type(err).__name__} - {err} - adding to the queue to try again later"
                 )
                 async with FILE_WRITE_LOCK:
@@ -611,7 +605,6 @@ class Experiment:
     async def generate_text(
         self,
         prompt_dict: dict,
-        settings: Settings,
         index: int | None,
     ) -> dict:
         """
@@ -623,10 +616,6 @@ class Experiment:
             Dictionary containing the prompt and other parameters to be
             used for text generation. Required keys are "prompt" and "api".
             Some models may have other required keys.
-        settings : Settings
-            Settings for the pipeline which includes the data folder locations,
-            the maximum number of queries to send per minute, the maximum number
-            of attempts when retrying, and whether to run the experiment in parallel
         experiment : Experiment
             The experiment that is being processed
         index : int | None, optional
@@ -650,7 +639,7 @@ class Experiment:
         # obtain api class
         try:
             api = ASYNC_APIS[prompt_dict["api"]](
-                settings=settings, log_file=self.log_file
+                settings=self.settings, log_file=self.log_file
             )
         except KeyError:
             raise NotImplementedError(
