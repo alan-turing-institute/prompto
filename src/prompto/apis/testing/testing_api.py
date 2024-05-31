@@ -49,8 +49,7 @@ class AsyncTestAPI(AsyncBaseAPI):
             )
             raise ValueError(error_msg)
         else:
-            # wait 5 seconds to simulate a running task
-            await asyncio.sleep(5)
+            await asyncio.sleep(1)
 
         response_text = "This is a test response"
         log_success_response_query(
