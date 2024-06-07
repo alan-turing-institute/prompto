@@ -201,7 +201,7 @@ def log_error_response_query(
     log_message = (
         f"Error with model {model} (i={index})\n"
         f"Prompt: {prompt[:50]}...\n"
-        f"Error: {error_as_string}"
+        f"Error: {error_as_string}\n"
     )
     logging.info(log_message)
     return log_message
@@ -245,7 +245,7 @@ def log_error_response_chat(
         f"Error with model {model} (i={index}, message={message_index+1}/{n_messages})\n"
         f"Prompt: {message[:50]}...\n"
         f"Responses so far: {responses_so_far}...\n"
-        f"Error: {error_as_string}"
+        f"Error: {error_as_string}\n"
     )
     logging.info(log_message)
     return log_message

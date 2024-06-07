@@ -9,12 +9,14 @@ from prompto.utils import (
     check_optional_env_variables_set,
     check_required_env_variables_set,
     create_folder,
+    get_model_name_identifier,
     log_error_response_chat,
     log_error_response_query,
     log_success_response_chat,
     log_success_response_query,
     move_file,
     sort_jsonl_files_by_creation_time,
+    sort_prompts_by_model_for_api,
     write_log_message,
 )
 
@@ -195,7 +197,7 @@ def test_log_error_response_query(caplog):
     )
 
     expected_log_message = (
-        "Error with model test (i=0)\n" "Prompt: test prompt...\n" "Error: test error"
+        "Error with model test (i=0)\nPrompt: test prompt...\nError: test error\n"
     )
     assert log_message == expected_log_message
     assert expected_log_message in caplog.text
@@ -224,7 +226,7 @@ def test_log_error_response_chat(caplog):
         "Error with model test (i=0, message=3/4)\n"
         "Prompt: test prompt...\n"
         "Responses so far: ['hi', 'hello']...\n"
-        "Error: test error"
+        "Error: test error\n"
     )
     assert log_message == expected_log_message
     assert expected_log_message in caplog.text
@@ -437,3 +439,114 @@ def test_check_either_required_env_variables_set():
         ),
     ):
         raise test_case[3]
+
+
+def test_get_model_name_identifier():
+    # raise error if no model_name is passed
+    with pytest.raises(TypeError, match="missing 1 required positional argument"):
+        get_model_name_identifier()
+
+    assert get_model_name_identifier("test") == "test"
+    assert get_model_name_identifier("test_model") == "test_model"
+    assert get_model_name_identifier("test-model") == "test_model"
+    assert get_model_name_identifier("test/model") == "test_model"
+    assert get_model_name_identifier("test.model") == "test_model"
+    assert get_model_name_identifier("test:model") == "test_model"
+    assert get_model_name_identifier("test model") == "test_model"
+
+    # test some real use cases
+    assert (
+        get_model_name_identifier("vicgalle/gpt2-open-instruct-v1")
+        == "vicgalle_gpt2_open_instruct_v1"
+    )
+    assert (
+        get_model_name_identifier("EleutherAI/gpt-neo-2.7B")
+        == "EleutherAI_gpt_neo_2_7B"
+    )
+
+
+def test_sort_prompts_by_model_for_api():
+    # raise error if no prompts is passed
+    with pytest.raises(TypeError, match="missing 2 required positional arguments"):
+        sort_prompts_by_model_for_api()
+
+    # raise error if only prompts is passed (no api passed)
+    with pytest.raises(TypeError, match="missing 1 required positional argument"):
+        sort_prompts_by_model_for_api(prompt_dicts=[{}])
+
+    # raise error if only api is passed (no prompts passed)
+    with pytest.raises(TypeError, match="missing 1 required positional argument"):
+        sort_prompts_by_model_for_api(api="test")
+
+    # test cases where there's only one "api" type in the list
+    assert sort_prompts_by_model_for_api(prompt_dicts=[{}], api="test") == [{}]
+    assert sort_prompts_by_model_for_api(
+        prompt_dicts=[{"api": "test", "prompt": "test prompt"}], api="test"
+    ) == [{"api": "test", "prompt": "test prompt"}]
+    assert sort_prompts_by_model_for_api(
+        prompt_dicts=[
+            {"api": "test", "prompt": "test prompt 1"},
+            {"api": "test", "model_name": "b", "prompt": "test prompt 2"},
+            {"api": "test", "model_name": "a", "prompt": "test prompt 3"},
+        ],
+        api="test",
+    ) == [
+        {"api": "test", "prompt": "test prompt 1"},
+        {"api": "test", "model_name": "a", "prompt": "test prompt 3"},
+        {"api": "test", "model_name": "b", "prompt": "test prompt 2"},
+    ]
+    assert sort_prompts_by_model_for_api(
+        prompt_dicts=[
+            {"api": "test", "model_name": "b", "prompt": "test prompt 1"},
+            {"api": "test", "model_name": "a", "prompt": "test prompt 2"},
+            {"api": "test", "prompt": "test prompt 3"},
+        ],
+        api="test",
+    ) == [
+        {"api": "test", "prompt": "test prompt 3"},
+        {"api": "test", "model_name": "a", "prompt": "test prompt 2"},
+        {"api": "test", "model_name": "b", "prompt": "test prompt 1"},
+    ]
+
+    # test cases where there are multiple "api" types in the list
+    # the items with "api" type not equal to the one passed should stay in the same locations
+    assert sort_prompts_by_model_for_api(
+        prompt_dicts=[
+            {"api": "other", "prompt": "prompt 1"},
+            {"api": "other", "prompt": "prompt 2"},
+            {"api": "test", "prompt": "test prompt 1"},
+            {"api": "other", "prompt": "prompt 3"},
+            {"api": "test", "model_name": "b", "prompt": "test prompt 2"},
+            {"api": "other", "prompt": "prompt 4"},
+            {"api": "test", "model_name": "a", "prompt": "test prompt 3"},
+        ],
+        api="test",
+    ) == [
+        {"api": "other", "prompt": "prompt 1"},
+        {"api": "other", "prompt": "prompt 2"},
+        {"api": "test", "prompt": "test prompt 1"},
+        {"api": "other", "prompt": "prompt 3"},
+        {"api": "test", "model_name": "a", "prompt": "test prompt 3"},
+        {"api": "other", "prompt": "prompt 4"},
+        {"api": "test", "model_name": "b", "prompt": "test prompt 2"},
+    ]
+    assert sort_prompts_by_model_for_api(
+        prompt_dicts=[
+            {"api": "test", "model_name": "b", "prompt": "test prompt 1"},
+            {"api": "other", "prompt": "prompt 1"},
+            {"api": "test", "model_name": "a", "prompt": "test prompt 2"},
+            {"api": "other", "prompt": "prompt 2"},
+            {"api": "other2", "prompt": "prompt 1"},
+            {"api": "test", "prompt": "test prompt 3"},
+            {"api": "other", "prompt": "prompt 3"},
+        ],
+        api="test",
+    ) == [
+        {"api": "test", "prompt": "test prompt 3"},
+        {"api": "other", "prompt": "prompt 1"},
+        {"api": "test", "model_name": "a", "prompt": "test prompt 2"},
+        {"api": "other", "prompt": "prompt 2"},
+        {"api": "other2", "prompt": "prompt 1"},
+        {"api": "test", "model_name": "b", "prompt": "test prompt 1"},
+        {"api": "other", "prompt": "prompt 3"},
+    ]

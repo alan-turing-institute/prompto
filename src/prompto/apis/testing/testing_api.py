@@ -27,8 +27,18 @@ class AsyncTestAPI(AsyncBaseAPI):
         return []
 
     async def async_query(self, prompt_dict: dict, index: int | str) -> dict:
-        # return an error 1/5 times
-        raise_error = random.randint(1, 5) == 1
+        # get the raise_error parameter from the prompt_dict
+        # if not either "True" or "False", we error 1/5 times
+        generation_config = prompt_dict.get("parameters", {})
+        raise_error_option = generation_config.get("raise_error", "")
+
+        if raise_error_option == "True":
+            raise_error = True
+        elif raise_error_option == "False":
+            raise_error = False
+        else:
+            raise_error = random.randint(1, 5) == 1
+
         if raise_error:
             error_msg = "This is a test error which we should handle and return"
             log_error_response_query(
@@ -39,8 +49,7 @@ class AsyncTestAPI(AsyncBaseAPI):
             )
             raise ValueError(error_msg)
         else:
-            # wait 15 seconds to simulate a running task
-            await asyncio.sleep(15)
+            await asyncio.sleep(1)
 
         response_text = "This is a test response"
         log_success_response_query(
