@@ -1,6 +1,7 @@
 import warnings
 
 from prompto.apis.base import AsyncBaseAPI
+from prompto.apis.requests_get.requests_get import AsyncRequestsGetAPI
 from prompto.apis.testing import AsyncTestAPI
 
 
@@ -16,6 +17,9 @@ ASYNC_APIS: dict[str, AsyncBaseAPI] = {}
 
 # test model is always available
 ASYNC_APIS["test"] = AsyncTestAPI
+
+# requests.get model is always available
+ASYNC_APIS["requests-get"] = AsyncRequestsGetAPI
 
 # import the other APIs if the dependencies are available
 try:

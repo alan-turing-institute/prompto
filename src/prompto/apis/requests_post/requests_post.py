@@ -4,7 +4,7 @@ from typing import Any
 import requests
 
 from prompto.apis.base import AsyncBaseAPI
-from prompto.apis.quart.quart_utils import async_client_generate
+from prompto.apis.requests_post.requests_post_utils import async_client_generate
 from prompto.settings import Settings
 from prompto.utils import (
     FILE_WRITE_LOCK,
@@ -17,12 +17,13 @@ from prompto.utils import (
     write_log_message,
 )
 
-API_ENDPOINT_VAR_NAME = "QUART_API_ENDPOINT"
+API_ENDPOINT_VAR_NAME = "REQUESTS_POST_API_ENDPOINT"
 
 
-class AsyncQuartAPI(AsyncBaseAPI):
+class AsyncRequestsPostAPI(AsyncBaseAPI):
     """
-    Class for querying the Quart API asynchronously.
+    Class for querying the an API endpoint via a
+    requests.post call asynchronously.
 
     Parameters
     ----------
@@ -44,8 +45,8 @@ class AsyncQuartAPI(AsyncBaseAPI):
     @staticmethod
     def check_environment_variables() -> list[Exception]:
         """
-        For Quart, there are some optional environment variables:
-        - QUART_API_ENDPOINT
+        For the RequestsPost API, there are some optional environment variables:
+        - REQUESTS_POST_API_ENDPOINT
 
         These are optional only if the model_name is passed
         in the prompt dictionary. If the model_name is not
@@ -55,7 +56,7 @@ class AsyncQuartAPI(AsyncBaseAPI):
         These are checked in the check_prompt_dict method to ensure that
         the required environment variables are set.
 
-        If QUART_API_ENDPOINT is set, we check if the API endpoint.
+        If REQUESTS_POST_API_ENDPOINT is set, we check if the API endpoint.
 
         Returns
         -------
@@ -70,7 +71,7 @@ class AsyncQuartAPI(AsyncBaseAPI):
 
         # check if the API endpoint is a valid endpoint
         if API_ENDPOINT_VAR_NAME in os.environ:
-            response = requests.get(os.environ[API_ENDPOINT_VAR_NAME])
+            response = requests.post(os.environ[API_ENDPOINT_VAR_NAME])
             if response.status_code != 200:
                 issues.append(
                     ValueError(
@@ -82,14 +83,14 @@ class AsyncQuartAPI(AsyncBaseAPI):
     @staticmethod
     def check_prompt_dict(prompt_dict: dict) -> list[Exception]:
         """
-        For Quart, we make the following model-specific checks:
+        For the RequestsPost API, we make the following model-specific checks:
         - "prompt" must be a string
         - if "model_name" is not passed in the prompt dictionary,
-          then the default environment variables (QUART_API_ENDPOINT)
+          then the default environment variables (REQUESTS_POST_API_ENDPOINT)
           must be set
         - if "model_name" is passed in the prompt dictionary, then
           then for the API endpoint, either the model-specific endpoint
-          (QUART_API_ENDPOINT_{identifier}) (where identifier is the
+          (REQUESTS_POST_API_ENDPOINT_{identifier}) (where identifier is the
           model name with invalid characters replaced by underscores
           obtained using get_model_name_identifier function) or the
           default endpoint must be set
@@ -109,12 +110,12 @@ class AsyncQuartAPI(AsyncBaseAPI):
 
         # check prompt is of the right type
         match prompt_dict["prompt"]:
-            case str(_):
+            case {}:
                 pass
             case _:
                 issues.append(
                     TypeError(
-                        "if api == 'quart', then prompt must be a string, "
+                        "if api == 'requests-post', then prompt must be a dictionary, "
                         f"not {type(prompt_dict['prompt'])}"
                     )
                 )
@@ -141,7 +142,7 @@ class AsyncQuartAPI(AsyncBaseAPI):
 
     async def _obtain_model_inputs(
         self, prompt_dict: dict
-    ) -> tuple[str, str, str, dict]:
+    ) -> tuple[dict, str, str, dict]:
         """
         Async method to obtain the model inputs from the prompt dictionary.
 
@@ -162,73 +163,61 @@ class AsyncQuartAPI(AsyncBaseAPI):
         model_name = prompt_dict.get("model_name", None)
         if model_name is None:
             # use the default environment variables
-            QUART_ENDPOINT = API_ENDPOINT_VAR_NAME
+            REQUESTS_POST_ENDPOINT = API_ENDPOINT_VAR_NAME
         else:
             # use the model specific environment variables if they exist
             # replace any invalid characters in the model name
             identifier = get_model_name_identifier(model_name)
 
-            QUART_ENDPOINT = f"{API_ENDPOINT_VAR_NAME}_{identifier}"
-            if QUART_ENDPOINT not in os.environ:
-                QUART_ENDPOINT = API_ENDPOINT_VAR_NAME
+            REQUESTS_POST_ENDPOINT = f"{API_ENDPOINT_VAR_NAME}_{identifier}"
+            if REQUESTS_POST_ENDPOINT not in os.environ:
+                REQUESTS_POST_ENDPOINT = API_ENDPOINT_VAR_NAME
 
-        quart_endpoint = os.environ.get(QUART_ENDPOINT)
+        requests_endpoint = os.environ.get(REQUESTS_POST_ENDPOINT)
 
-        if quart_endpoint is None:
-            raise ValueError(f"{QUART_ENDPOINT} environment variable not found")
+        if requests_endpoint is None:
+            raise ValueError(f"{REQUESTS_POST_ENDPOINT} environment variable not found")
 
-        # get parameters dict (if any)
-        generation_config = prompt_dict.get("parameters", None)
-        if generation_config is None:
-            generation_config = {}
-        if type(generation_config) is not dict:
-            raise TypeError(
-                f"parameters must be a dictionary, not {type(generation_config)}"
-            )
+        # get headers dict (if any)
+        headers = prompt_dict.get("headers", None)
+        if headers is None:
+            headers = {}
+        if type(headers) is not dict:
+            raise TypeError(f"headers must be a dictionary, not {type(headers)}")
 
-        return prompt, model_name, quart_endpoint, generation_config
+        return prompt, model_name, requests_endpoint, headers
 
-    async def _async_query_string(self, prompt_dict: dict, index: int | str) -> dict:
+    async def _async_query_dict(self, prompt_dict: dict, index: int | str) -> dict:
         """
-        Async method for querying the model with a string prompt
-        (prompt_dict["prompt"] is a string),
-        i.e. single-turn completion or chat.
+        Async method for querying the model with a dictionary prompt
+        (prompt_dict["prompt"] is a dictionary which is the data sent).
         """
-        prompt, model_name, quart_endpoint, generation_config = (
+        prompt, model_name, requests_endpoint, headers = (
             await self._obtain_model_inputs(prompt_dict)
         )
 
         try:
             response = await async_client_generate(
-                data={
-                    "text": prompt,
-                    "model": model_name,
-                    "options": generation_config,
-                },
-                url=quart_endpoint,
-                headers={"Content-Type": "application/json"},
+                data=prompt,
+                url=requests_endpoint,
+                headers=headers,
             )
-
-            response_text = response["response"][0]["generated_text"]
-
-            # obtain model name
-            prompt_dict["model"] = response["model"]
 
             log_success_response_query(
                 index=index,
-                model=f"Quart ({model_name})",
+                model=f"RequestsPost ({model_name})",
                 prompt=prompt,
-                response_text=response_text,
+                response_text=str(response),
             )
 
-            prompt_dict["response"] = response_text
+            prompt_dict["response"] = str(response)
             return prompt_dict
 
         except Exception as err:
             error_as_string = f"{type(err).__name__} - {err}"
             log_message = log_error_response_query(
                 index=index,
-                model=f"Quart ({model_name})",
+                model=f"RequestsPost ({model_name})",
                 prompt=prompt,
                 error_as_string=error_as_string,
             )
@@ -263,8 +252,8 @@ class AsyncQuartAPI(AsyncBaseAPI):
             If an error occurs during the querying process
         """
         match prompt_dict["prompt"]:
-            case str(_):
-                return await self._async_query_string(
+            case {}:
+                return await self._async_query_dict(
                     prompt_dict=prompt_dict,
                     index=index,
                 )
@@ -272,6 +261,6 @@ class AsyncQuartAPI(AsyncBaseAPI):
                 pass
 
         raise TypeError(
-            f"if api == 'quart', then prompt must be a string, "
+            f"if api == 'requests-post', then prompt must be a dictionary, "
             f"not {type(prompt_dict['prompt'])}"
         )
