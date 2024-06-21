@@ -1,7 +1,7 @@
 from openai.types.chat import ChatCompletion
 from openai.types.completion import Completion
 
-chat_roles = set(["system", "user", "assistant"])
+openai_chat_roles = set(["system", "user", "assistant"])
 
 
 def process_response(response: ChatCompletion | Completion) -> str | list[str]:
