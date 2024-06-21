@@ -37,8 +37,9 @@ This will process the experiment defined in the jsonl file and store the results
 
 When running the pipeline or an experiment, there are certain settings to define how to run the experiments. These can be set using the above command line interfaces via the following argument flags:
 - `--data-folder` or `-d`: the path to the data folder which contains the input, output and media folders for the experiments (by default, `./data`)
-- `--max-queries` or `-m`: the _default_ maximum number of queries to send within a minute (i.e. the query rate limit) (by default, `10`)
-- `--max-attempts` or `-a`: the maximum number of attempts to try querying the model before giving up (by default, `5`)
+- `--env-file` or `-e`: the path to the environment file which contains the API keys and other environment variables (by default, `./.env`)
+- `--max-queries` or `-mq`: the _default_ maximum number of queries to send within a minute (i.e. the query rate limit) (by default, `10`)
+- `--max-attempts` or `-ma`: the maximum number of attempts to try querying the model before giving up (by default, `5`)
 - `--parallel` or `-p`: when the experiment files has different APIs to query, this flag allows the pipeline to send the queries to the different APIs in parallel (by default, `False`)
 - `--max-queries-json` or `-mqj`: this can be a path to another json file which contains the maximum number of queries to send within a minute for each API or group (by default, `None`). In this json, the keys are API names (e.g. "openai", "gemini", etc.) or group names and the values can either be integers which represent the corresponding rate limit for the API or group, or they can be themselves another dictionary where keys are model names and values are integers representing the rate limit for that model. This is only used when the `--parallel` flag is set. If the json file is not provided, the `--max-queries` value is used for all APIs or groups.
 
