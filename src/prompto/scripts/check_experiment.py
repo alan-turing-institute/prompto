@@ -2,7 +2,9 @@ import argparse
 import json
 import logging
 import os
+
 from dotenv import load_dotenv
+
 from prompto.apis import ASYNC_APIS
 from prompto.utils import move_file, write_log_message
 
