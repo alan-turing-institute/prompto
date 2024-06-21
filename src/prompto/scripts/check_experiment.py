@@ -2,7 +2,7 @@ import argparse
 import json
 import logging
 import os
-
+from dotenv import load_dotenv
 from prompto.apis import ASYNC_APIS
 from prompto.utils import move_file, write_log_message
 
@@ -220,6 +220,13 @@ def main():
         required=True,
     )
     parser.add_argument(
+        "--env-file",
+        "-e",
+        help="Path to the environment file",
+        type=str,
+        default=".env",
+    )
+    parser.add_argument(
         "--log-file",
         "-l",
         help="Log file to be written to",
@@ -248,6 +255,13 @@ def main():
         format="%(asctime)s [%(levelname)8s] %(message)s",
         level=logging.INFO,
     )
+
+    # load environment variables
+    loaded = load_dotenv(args.env_file)
+    if loaded:
+        logging.info(f"Loaded environment variables from {args.env_file}")
+    else:
+        logging.warning(f"No environment file found at {args.env_file}")
 
     # check if file is valid
     valid = is_valid_jsonl(
