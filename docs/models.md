@@ -6,7 +6,18 @@ Note that the names of the APIs are to be used in the `api` key of the `prompt_d
 
 ## Environment variables
 
-Each API has a number of environment variables that are either required or optional to be set in order to query the model. We recommend setting these environment variables in a `.env` file in the root of the project directory which you can run `source .env` to load the environment variables. We list the environment variables for each API in the [Implemented APIs](#implemented-apis) section below.
+Each API has a number of environment variables that are either required or optional to be set in order to query the model. We recommend setting these environment variables in a `.env` file in the root of the project directory. When you run the `prompto_run_experiment` or `prompto_run_pipeline` commands, the library will look for an `.env` file in the current directory and we then use `python-dotenv` to load the environment variables into the Python environment. An `.env` file would look something like:
+```
+OPENAI_API_KEY=<YOUR-OPENAI-KEY>
+AZURE_OPENAI_API_KEY=<YOUR-AZURE-OPENAI-KEY>
+OLLAMA_API_ENDPOINT=<YOUR-OLLAMA_API-ENDPOINT>
+```
+
+This allows you to not necessarily need to load them into the global environment in your terminal each time you run an experiment.
+
+Alternatively, you can set the environment variables in your terminal using `export ENVIRONMENT_VARIABLE=value` or having another bash script to set these without a `.env` file - this file would look similar to the example `.env` file, but with `export` in front of each line so that it is loaded into the global environment.
+
+We list the environment variables for each API in the [Implemented APIs](#implemented-apis) section below.
 
 ### Model-specific environment variables
 
