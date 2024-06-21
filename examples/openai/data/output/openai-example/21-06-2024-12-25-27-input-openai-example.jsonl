@@ -1,0 +1,5 @@
+{"id": 0, "api": "openai", "prompt": "How does technology impact us?", "parameters": {"n": 1, "temperature": 1, "max_tokens": 1000}}
+{"id": 1, "api": "openai", "model_name": "gpt-3.5-turbo", "prompt": "How does technology impact us?", "parameters": {"n": 1, "temperature": 1, "max_tokens": 1000}}
+{"id": 2, "api": "openai", "prompt": ["How does international trade create jobs?", "I want a joke about that"], "parameters": {"n": 1, "temperature": 1, "max_tokens": 1000}}
+{"id": 3, "api": "openai", "prompt": [{"role": "system", "content": "You are a helpful assistant designed to answer questions briefly."}, {"role": "user", "content": "What efforts are being made to keep the hakka language alive?"}], "parameters": {"n": 1, "temperature": 1, "max_tokens": 1000}}
+{"id": 3, "api": "openai", "prompt": [{"role": "system", "content": "You are a helpful assistant designed to answer questions briefly."}, {"role": "user", "content": "Hello, I'm Bob and I'm 6 years old"}, {"role": "assistant", "content": "Hi Bob, how may I assist you?"}, {"role": "user", "content": "How old will I be next year?"}], "parameters": {"n": 1, "temperature": 1, "max_tokens": 1000}}
