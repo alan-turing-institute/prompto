@@ -1,13 +1,7 @@
-from enum import Enum
-
 from openai.types.chat import ChatCompletion
 from openai.types.completion import Completion
 
-
-class ChatRoles(Enum):
-    SYSTEM = "system"
-    USER = "user"
-    ASSISTANT = "assistant"
+chat_roles = set(["system", "user", "assistant"])
 
 
 def process_response(response: ChatCompletion | Completion) -> str | list[str]:

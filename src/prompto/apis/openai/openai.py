@@ -6,7 +6,7 @@ import openai
 from openai import AsyncOpenAI
 
 from prompto.apis.base import AsyncBaseAPI
-from prompto.apis.openai.openai_utils import ChatRoles, process_response
+from prompto.apis.openai.openai_utils import chat_roles, process_response
 from prompto.settings import Settings
 from prompto.utils import (
     FILE_WRITE_LOCK,
@@ -112,9 +112,9 @@ class AsyncOpenAIAPI(AsyncBaseAPI):
             case [str(_)]:
                 pass
             case [{"role": role, "content": _}, *rest]:
-                if role in ChatRoles and all(
+                if role in chat_roles and all(
                     [
-                        set(d.keys()) == {"role", "content"} and d["role"] in ChatRoles
+                        set(d.keys()) == {"role", "content"} and d["role"] in chat_roles
                         for d in rest
                     ]
                 ):
@@ -426,30 +426,27 @@ class AsyncOpenAIAPI(AsyncBaseAPI):
         Exception
             If an error occurs during the querying process
         """
-        match prompt_dict["prompt"]:
-            case str(_):
-                return await self._async_query_string(
-                    prompt_dict=prompt_dict,
-                    index=index,
-                )
-            case [str(_)]:
+        if isinstance(prompt_dict["prompt"], str):
+            return await self._async_query_string(
+                prompt_dict=prompt_dict,
+                index=index,
+            )
+        elif isinstance(prompt_dict["prompt"], list):
+            if all([isinstance(message, str) for message in prompt_dict["prompt"]]):
                 return await self._async_query_chat(
                     prompt_dict=prompt_dict,
                     index=index,
                 )
-            case [{"role": role, "content": _}, *rest]:
-                if role in ChatRoles and all(
-                    [
-                        set(d.keys()) == {"role", "content"} and d["role"] in ChatRoles
-                        for d in rest
-                    ]
-                ):
-                    return await self._async_query_history(
-                        prompt_dict=prompt_dict,
-                        index=index,
-                    )
-            case _:
-                pass
+            if all(
+                [
+                    set(d.keys()) == {"role", "content"} and d["role"] in chat_roles
+                    for d in prompt_dict["prompt"]
+                ]
+            ):
+                return await self._async_query_history(
+                    prompt_dict=prompt_dict,
+                    index=index,
+                )
 
         raise TypeError(
             "if api == 'openai', then the prompt must be a str, list[str], or "
