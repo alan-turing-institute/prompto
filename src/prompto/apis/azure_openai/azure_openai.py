@@ -6,7 +6,7 @@ import openai
 from openai import AsyncAzureOpenAI
 
 from prompto.apis.base import AsyncBaseAPI
-from prompto.apis.openai.openai_utils import chat_roles, process_response
+from prompto.apis.openai.openai_utils import openai_chat_roles, process_response
 from prompto.settings import Settings
 from prompto.utils import (
     FILE_WRITE_LOCK,
@@ -128,9 +128,10 @@ class AsyncAzureOpenAIAPI(AsyncBaseAPI):
             case [str(_)]:
                 pass
             case [{"role": role, "content": _}, *rest]:
-                if role in chat_roles and all(
+                if role in openai_chat_roles and all(
                     [
-                        set(d.keys()) == {"role", "content"} and d["role"] in chat_roles
+                        set(d.keys()) == {"role", "content"}
+                        and d["role"] in openai_chat_roles
                         for d in rest
                     ]
                 ):
@@ -493,7 +494,8 @@ class AsyncAzureOpenAIAPI(AsyncBaseAPI):
                 )
             if all(
                 [
-                    set(d.keys()) == {"role", "content"} and d["role"] in chat_roles
+                    set(d.keys()) == {"role", "content"}
+                    and d["role"] in openai_chat_roles
                     for d in prompt_dict["prompt"]
                 ]
             ):
