@@ -23,4 +23,4 @@ By default, the `prompto_run_experiment` command will look for an `.env` file in
 
 Also see the [openai.ipynb](./openai.ipynb) notebook for a more detailed walkthrough on the how to set the environment variables and run the experiment and the different types of prompts you can run.
 
-Do note that when you run the experiment, the input file ([./data/input/openai-example.jsonl](./data/input/openai-example.jsonl)) will be moved to the output directory (timestamped for when you run the experiment)
+Do note that when you run the experiment, the input file ([./data/input/openai-example.jsonl](./data/input/openai-example.jsonl)) will be moved to the output directory (timestamped for when you run the experiment).
