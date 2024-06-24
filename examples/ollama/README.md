@@ -2,7 +2,7 @@
 
 For prompts to Ollama API, you can simply add a line in your experiment (`.jsonl`) file where you specify the `api` to be `ollama`. See the [models doc](../../docs/models.md#ollama) for some details on the environment variables you need to set.
 
-In this example, we assume that you are running the Ollama server locally at `localhost:11434` (the default address and port that Ollama uses). If you are running the server at a different address or port, you can specify with the `OLLAMA_API_ENDPOINT` environment variable. See the [Setting up Ollama locally](./ollama.ipynb#setting-up-ollama-locally) section in the [ollama.ipynb](./ollama.ipynb) notebook for more details.
+By default, the address and port that Ollama uses when running is `localhost:11434` and so when running Ollama locally, we set the `OLLAMA_API_ENDPOINT` to `http://localhost:11434"`. If you are running the server at a different address or port, you can specify with the `OLLAMA_API_ENDPOINT` environment variable. See the [Setting up Ollama locally](./ollama.ipynb#setting-up-ollama-locally) section in the [ollama.ipynb](./ollama.ipynb) notebook for more details.
 
 We provide an example experiment file in [./data/input/ollama-example.jsonl](./data/input/ollama-example.jsonl). You can run it with the following command (assuming that your working directory is the current directory of this notebook, i.e. `examples/ollama`):
 ```bash
@@ -11,7 +11,7 @@ prompto_run_experiment --file data/input/ollama-example.jsonl --max_queries 30
 
 To run the experiment, you will need to set the following environment variables first:
 ```bash
-export OLLAMA_API_ENDPOINT=<YOUR-OLLAMA-ENDPOINT>
+export OLLAMA_API_ENDPOINT=<YOUR-OLLAMA-ENDPOINT> # if running locally, set to http://localhost:11434
 export OLLAMA_MODEL_NAME=<DEFAULT-OLLAMA-MODEL>
 ```
 
