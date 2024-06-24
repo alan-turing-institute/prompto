@@ -2,7 +2,7 @@
 
 When running the pipeline or an experiment, there are certain settings to define how to run the experiments which are described in the [pipeline documentation](./pipeline.md#pipeline-settings). These can be set using the command line interfaces.
 
-One of the key settings is the rate limit which is the maximum number of queries that can be sent to an API/model within a minute. This is important to prevent the API from being overloaded and to prevent the user from being blocked by the API. The (default) rate limit can be set using the `--max-queries` or `-m` flag. By default, the rate limit is set to `10` queries per minute.
+One of the key settings is the rate limit which is the maximum number of queries that can be sent to an API/model within a minute. This is important to prevent the API from being overloaded and to prevent the user from being blocked by the API. The (default) rate limit can be set using the `--max-queries` or `-mq` flag. By default, the rate limit is set to `10` queries per minute.
 
 Another key setting is whether or not to process the prompts in the experiments in parallel meaning that we send the queries to the different APIs (which typically have separate and independent rate limits) in parallel. This can be set using the `--parallel` or `-p` flag. In this document, we will describe how to set the rate limits for each API or group of APIs when the `--parallel` flag is set and how to use the `--max-queries-json` or `-mqj` flag to do this.
 

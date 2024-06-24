@@ -411,7 +411,6 @@ class Experiment:
             task = asyncio.create_task(
                 self.query_model_and_record_response(
                     prompt_dict=item,
-                    settings=self.settings,
                     index=index + 1,
                     attempt=attempt,
                 )

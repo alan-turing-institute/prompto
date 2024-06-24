@@ -1,3 +1,0 @@
-{"id": 9, "prompt": "Hello, my name is Bob and I'm 6 years old. How old am I next year?", "api": "quart", "model_name": "vicgalle/gpt2-open-instruct-v1", "parameters": {"temperature": 1}}
-{"id": 10, "prompt": "Can you give me a random number between 1-10?", "api": "quart", "model_name": "vicgalle/gpt2-open-instruct-v1", "parameters": {"temperature": 0.5}}
-{"id": 11, "prompt": "How many theaters are there in London's South End?", "api": "quart"}

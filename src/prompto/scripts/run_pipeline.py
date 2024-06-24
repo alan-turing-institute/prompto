@@ -3,6 +3,8 @@ import json
 import logging
 import os
 
+from dotenv import load_dotenv
+
 from prompto.experiment_pipeline import ExperimentPipeline
 from prompto.settings import Settings
 
@@ -22,15 +24,22 @@ def main():
         default="data",
     )
     parser.add_argument(
+        "--env-file",
+        "-e",
+        help="Path to the environment file",
+        type=str,
+        default=".env",
+    )
+    parser.add_argument(
         "--max-queries",
-        "-m",
+        "-mq",
         help="The default maximum number of queries to send per minute",
         type=int,
         default=10,
     )
     parser.add_argument(
         "--max-attempts",
-        "-a",
+        "-ma",
         help="Maximum number of attempts to process an experiment",
         type=int,
         default=5,
@@ -60,6 +69,13 @@ def main():
         format="%(asctime)s [%(levelname)8s] %(message)s",
         level=logging.INFO,
     )
+
+    # load environment variables
+    loaded = load_dotenv(args.env_file)
+    if loaded:
+        logging.info(f"Loaded environment variables from {args.env_file}")
+    else:
+        logging.warning(f"No environment file found at {args.env_file}")
 
     if args.max_queries_json is not None:
         # check if file exists
