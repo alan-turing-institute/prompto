@@ -136,6 +136,11 @@ def is_valid_jsonl(
                     # if "api" is not a key, add index to list
                     issues.append(KeyError('"api" key not found'))
 
+                # check if "model_name" is a key in the json
+                if "model_name" not in data:
+                    # if "model_name" is not a key, add index to list
+                    issues.append(KeyError('"model_name" key not found'))
+
                 # if parameters is passed, check its a dictionary
                 if "parameters" in data:
                     if type(data["parameters"]) is not dict:
