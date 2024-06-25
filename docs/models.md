@@ -92,14 +92,30 @@ For any given `prompt_dict`, the following environment variables are required:
 
 **Environment variables**:
 
-- `GEMINI_PROJECT_ID`: the project ID for the Gemini API
-- `GEMINI_LOCATION`: the location for the Gemini API
+- `GEMINI_API_KEY`: the project ID for the Gemini API
 
 **Model-specific environment variables**:
 
 As described in the [model-specific environment variables](#model-specific-environment-variables) section, you can set model-specific environment variables for different models in Gemini by appending the model name to the environment variable name. For example, if `"model_name": "prompto_model"` is specified in the `prompt_dict`, the following model-specific environment variables can be used:
-- `GEMINI_PROJECT_ID_prompto_model`
-- `GEMINI_LOCATION_prompto_model`
+- `GEMINI_API_KEY_prompto_model`
+
+**Required environment variables**:
+
+For any given `prompt_dict`, the following environment variables are required:
+- One of `GEMINI_API_KEY` or `GEMINI_API_KEY_model_name`
+
+## Vertex AI
+
+**Environment variables**:
+
+- `VERTEXAI_PROJECT_ID`: the project ID for the Gemini API
+- `VERTEXAI_LOCATION`: the location for the Gemini API
+
+**Model-specific environment variables**:
+
+As described in the [model-specific environment variables](#model-specific-environment-variables) section, you can set model-specific environment variables for different models in Gemini by appending the model name to the environment variable name. For example, if `"model_name": "prompto_model"` is specified in the `prompt_dict`, the following model-specific environment variables can be used:
+- `VERTEXAI_PROJECT_ID_prompto_model`
+- `VERTEXAI_LOCATION_prompto_model`
 
 **Required environment variables**:
 
