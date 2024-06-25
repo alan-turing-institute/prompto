@@ -200,7 +200,7 @@ class AsyncAzureOpenAIAPI(AsyncBaseAPI):
         prompt = prompt_dict["prompt"]
 
         # obtain model name
-        model_name = prompt_dict.get("model_name", None)
+        model_name = prompt_dict["model_name"]
         api_key = get_environment_variable(
             env_variable=API_KEY_VAR_NAME, model_name=model_name
         )

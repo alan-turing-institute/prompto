@@ -125,25 +125,20 @@ class AsyncOpenAIAPI(AsyncBaseAPI):
                 )
             )
 
-        if "model_name" not in prompt_dict:
-            # use the default environment variables
-            # check the required environment variables are set
-            issues.extend(check_required_env_variables_set([API_KEY_VAR_NAME]))
-        else:
-            # use the model specific environment variables if they exist
-            model_name = prompt_dict["model_name"]
-            # replace any invalid characters in the model name
-            identifier = get_model_name_identifier(model_name)
+        # use the model specific environment variables if they exist
+        model_name = prompt_dict["model_name"]
+        # replace any invalid characters in the model name
+        identifier = get_model_name_identifier(model_name)
 
-            # check the required environment variables are set
-            # must either have the model specific key or the default key set
-            issues.extend(
-                check_either_required_env_variables_set(
-                    [
-                        [f"{API_KEY_VAR_NAME}_{identifier}", API_KEY_VAR_NAME],
-                    ]
-                )
+        # check the required environment variables are set
+        # must either have the model specific key or the default key set
+        issues.extend(
+            check_either_required_env_variables_set(
+                [
+                    [f"{API_KEY_VAR_NAME}_{identifier}", API_KEY_VAR_NAME],
+                ]
             )
+        )
 
         # if mode is passed, check it is a valid value
         if "mode" in prompt_dict and prompt_dict["mode"] not in ["chat", "completion"]:
@@ -179,7 +174,7 @@ class AsyncOpenAIAPI(AsyncBaseAPI):
         prompt = prompt_dict["prompt"]
 
         # obtain model name
-        model_name = prompt_dict.get("model_name", None)
+        model_name = prompt_dict["model_name"]
         api_key = get_environment_variable(
             env_variable=API_KEY_VAR_NAME, model_name=model_name
         )
