@@ -46,7 +46,6 @@ class AsyncQuartAPI(AsyncBaseAPI):
         """
         For Quart, there are some optional environment variables:
         - QUART_API_ENDPOINT
-        - QUART_MODEL_NAME
 
         These are optional only if the model_name is passed
         in the prompt dictionary. If the model_name is not
@@ -85,15 +84,10 @@ class AsyncQuartAPI(AsyncBaseAPI):
         """
         For Quart, we make the following model-specific checks:
         - "prompt" must be a string
-        - if "model_name" is not passed in the prompt dictionary,
-          then the default environment variables (QUART_API_ENDPOINT,
-          QUART_MODEL_NAME) must be set
-        - if "model_name" is passed in the prompt dictionary, then
-          then for the API endpoint, either the model-specific endpoint
-          (QUART_API_ENDPOINT_{identifier}) (where identifier is the
-          model name with invalid characters replaced by underscores
-          obtained using get_model_name_identifier function) or the
-          default endpoint must be set
+        - odel-specific endpoint (QUART_API_ENDPOINT_{identifier})
+          (where identifier is the model name with invalid characters
+          replaced by underscores obtained using get_model_name_identifier
+          function) or the default endpoint must be set
 
         Parameters
         ----------
@@ -160,7 +154,7 @@ class AsyncQuartAPI(AsyncBaseAPI):
         prompt = prompt_dict["prompt"]
 
         # obtain model name
-        model_name = prompt_dict.get("model_name", None)
+        model_name = prompt_dict["model_name"]
         if model_name is None:
             # use the default environment variables
             QUART_ENDPOINT = API_ENDPOINT_VAR_NAME
