@@ -139,7 +139,9 @@ class AsyncVertexAIAPI(AsyncBaseAPI):
                 TypeError(
                     "if api == 'vertexai', then the prompt must be a str, list[str], or "
                     "list[dict[str,str]] where the dictionary contains the keys 'role' and "
-                    "'parts' only, and the values for 'role' must be one of 'user' or 'model'"
+                    "'parts' only, and the values for 'role' must be one of 'user' or 'model', "
+                    "except for the  first message in the list of dictionaries can be a "
+                    "system message with the key 'role' set to 'system'."
                 )
             )
 
@@ -590,5 +592,7 @@ class AsyncVertexAIAPI(AsyncBaseAPI):
         raise TypeError(
             "if api == 'vertexai', then the prompt must be a str, list[str], or "
             "list[dict[str,str]] where the dictionary contains the keys 'role' and "
-            "'parts' only, and the values for 'role' must be one of 'user' or 'model'"
+            "'parts' only, and the values for 'role' must be one of 'user' or 'model', "
+            "except for the  first message in the list of dictionaries can be a "
+            "system message with the key 'role' set to 'system'."
         )
