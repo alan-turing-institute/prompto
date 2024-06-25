@@ -111,16 +111,26 @@ class AsyncOllamaAPI(AsyncBaseAPI):
         issues = []
 
         # check prompt is of the right type
-        match prompt_dict["prompt"]:
-            case str(_):
+        if isinstance(prompt_dict["prompt"], str):
+            pass
+        elif isinstance(prompt_dict["prompt"], list):
+            if all([isinstance(message, str) for message in prompt_dict["prompt"]]):
                 pass
-            case _:
-                issues.append(
-                    TypeError(
-                        "if api == 'ollama', then prompt must be a string, "
-                        f"not {type(prompt_dict['prompt'])}"
-                    )
+            if all(
+                [
+                    set(d.keys()) == {"role", "content"}
+                    and d["role"] in ollama_chat_roles
+                    for d in prompt_dict["prompt"]
+                ]
+            ):
+                pass
+        else:
+            issues.append(
+                TypeError(
+                    "if api == 'ollama', then prompt must be a string, "
+                    f"not {type(prompt_dict['prompt'])}"
                 )
+            )
 
         # use the model specific environment variables
         model_name = prompt_dict["model_name"]
