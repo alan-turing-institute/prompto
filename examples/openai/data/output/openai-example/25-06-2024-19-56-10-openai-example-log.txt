@@ -1,0 +1,1 @@
+25-06-2024, 19:56: Completed experiment openai-example.jsonl! Experiment processing time: 11.126 seconds, Average time per query: 2.225 seconds
