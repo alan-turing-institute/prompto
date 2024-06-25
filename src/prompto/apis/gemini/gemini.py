@@ -110,11 +110,15 @@ class AsyncGeminiAPI(AsyncBaseAPI):
             if all([isinstance(message, str) for message in prompt_dict["prompt"]]):
                 pass
             if all(isinstance(message, dict) for message in prompt_dict["prompt"]):
-                if all(
+                if (
+                    set(prompt_dict["prompt"][0].keys()) == {"role", "parts"}
+                    and prompt_dict["prompt"][0]["role"]
+                    in gemini_chat_roles + ["system"]
+                ) and all(
                     [
                         set(d.keys()) == {"role", "parts"}
                         and d["role"] in gemini_chat_roles
-                        for d in prompt_dict["prompt"]
+                        for d in prompt_dict["prompt"][1:]
                     ]
                 ):
                     pass
@@ -443,8 +447,12 @@ class AsyncGeminiAPI(AsyncBaseAPI):
             await self._obtain_model_inputs(prompt_dict=prompt_dict)
         )
 
-        model = GenerativeModel(model_name)
-        chat = model.start_chat(history=prompt[:-1])
+        if prompt[0]["role"] == "system":
+            model = GenerativeModel(model_name, system_instruction=prompt[0]["parts"])
+            chat = model.start_chat(history=prompt[1:-1])
+        else:
+            model = GenerativeModel(model_name)
+            chat = model.start_chat(history=prompt[:-1])
 
         try:
             response = await chat.send_message_async(
@@ -547,11 +555,15 @@ class AsyncGeminiAPI(AsyncBaseAPI):
                     index=index,
                 )
             if all(isinstance(message, dict) for message in prompt_dict["prompt"]):
-                if all(
+                if (
+                    set(prompt_dict["prompt"][0].keys()) == {"role", "parts"}
+                    and prompt_dict["prompt"][0]["role"]
+                    in gemini_chat_roles + ["system"]
+                ) and all(
                     [
                         set(d.keys()) == {"role", "parts"}
                         and d["role"] in gemini_chat_roles
-                        for d in prompt_dict["prompt"]
+                        for d in prompt_dict["prompt"][1:]
                     ]
                 ):
                     return await self._async_query_history(
