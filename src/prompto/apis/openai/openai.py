@@ -13,6 +13,7 @@ from prompto.utils import (
     check_either_required_env_variables_set,
     check_optional_env_variables_set,
     check_required_env_variables_set,
+    get_environment_variable,
     get_model_name_identifier,
     log_error_response_chat,
     log_error_response_query,
@@ -23,7 +24,6 @@ from prompto.utils import (
 
 # set names of environment variables
 API_KEY_VAR_NAME = "OPENAI_API_KEY"
-MODEL_NAME_VAR_NAME = "OPENAI_MODEL_NAME"
 
 
 class AsyncOpenAIAPI(AsyncBaseAPI):
@@ -53,7 +53,6 @@ class AsyncOpenAIAPI(AsyncBaseAPI):
         """
         For OpenAI, there are some optional environment:
         - OPENAI_API_KEY
-        - OPENAI_MODEL_NAME
 
         These are optional only if the model_name is passed
         in the prompt dictionary. If the model_name is not
@@ -72,9 +71,7 @@ class AsyncOpenAIAPI(AsyncBaseAPI):
         issues = []
 
         # check the optional environment variables are set and warn if not
-        issues.extend(
-            check_optional_env_variables_set([API_KEY_VAR_NAME, MODEL_NAME_VAR_NAME])
-        )
+        issues.extend(check_optional_env_variables_set([API_KEY_VAR_NAME]))
 
         return issues
 
@@ -83,13 +80,10 @@ class AsyncOpenAIAPI(AsyncBaseAPI):
         """
         For OpenAI, we make the following model-specific checks:
         - "prompt" key must be of type str, list[str], or list[dict[str,str]]
-        - if "model_name" is not passed, then the default environment variables
-          (OPENAI_API_KEY, OPENAI_MODEL_NAME) are set
-        - if "model_name" is passed, then for the API key, either the
-          model-specific environment variable (OPENAI_API_KEY_{identifier})
+        - model-specific environment variable (OPENAI_API_KEY_{identifier})
           (where identifier is the model name with invalid characters replaced
           by underscores obtained using get_model_name_identifier function)
-          is set or the default environment variable must be set
+          can be set or the default environment variable must be set
         - if "mode" is passed, it must be one of 'chat' or 'completion'
 
         Parameters
@@ -106,38 +100,35 @@ class AsyncOpenAIAPI(AsyncBaseAPI):
         issues = []
 
         # check prompt is of the right type
-        match prompt_dict["prompt"]:
-            case str(_):
+        if isinstance(prompt_dict["prompt"], str):
+            pass
+        elif isinstance(prompt_dict["prompt"], list):
+            if all([isinstance(message, str) for message in prompt_dict["prompt"]]):
                 pass
-            case [str(_)]:
+            if all(
+                isinstance(message, dict) for message in prompt_dict["prompt"]
+            ) and all(
+                [
+                    set(d.keys()) == {"role", "content"}
+                    and d["role"] in openai_chat_roles
+                    for d in prompt_dict["prompt"]
+                ]
+            ):
                 pass
-            case [{"role": role, "content": _}, *rest]:
-                if role in openai_chat_roles and all(
-                    [
-                        set(d.keys()) == {"role", "content"}
-                        and d["role"] in openai_chat_roles
-                        for d in rest
-                    ]
-                ):
-                    pass
-            case _:
-                issues.append(
-                    TypeError(
-                        "if api == 'openai', then the prompt must be a str, list[str], or "
-                        "list[dict[str,str]] where the dictionary contains the keys 'role' and "
-                        "'content' only, and the values for 'role' must be one of 'system', 'user' or "
-                        "'assistant'"
-                    )
+        else:
+            issues.append(
+                TypeError(
+                    "if api == 'openai', then the prompt must be a str, list[str], or "
+                    "list[dict[str,str]] where the dictionary contains the keys 'role' and "
+                    "'content' only, and the values for 'role' must be one of 'system', 'user' or "
+                    "'assistant'"
                 )
+            )
 
         if "model_name" not in prompt_dict:
             # use the default environment variables
             # check the required environment variables are set
-            issues.extend(
-                check_required_env_variables_set(
-                    [API_KEY_VAR_NAME, MODEL_NAME_VAR_NAME]
-                )
-            )
+            issues.extend(check_required_env_variables_set([API_KEY_VAR_NAME]))
         else:
             # use the model specific environment variables if they exist
             model_name = prompt_dict["model_name"]
@@ -189,39 +180,13 @@ class AsyncOpenAIAPI(AsyncBaseAPI):
 
         # obtain model name
         model_name = prompt_dict.get("model_name", None)
-        if model_name is None:
-            # use the default environment variables
-            model_name = os.environ.get(MODEL_NAME_VAR_NAME)
-            if model_name is None:
-                log_message = (
-                    f"model_name is not set. Please set the {MODEL_NAME_VAR_NAME} "
-                    "environment variable or pass the model_name in the prompt dictionary"
-                )
-                async with FILE_WRITE_LOCK:
-                    write_log_message(
-                        log_file=self.log_file, log_message=log_message, log=True
-                    )
-                raise ValueError(log_message)
+        api_key = get_environment_variable(
+            env_variable=API_KEY_VAR_NAME, model_name=model_name
+        )
 
-            api_key_env_var = API_KEY_VAR_NAME
-        else:
-            # use the model specific environment variables if they exist
-            # replace any invalid characters in the model name
-            identifier = get_model_name_identifier(model_name)
-
-            api_key_env_var = f"{API_KEY_VAR_NAME}_{identifier}"
-            if api_key_env_var not in os.environ:
-                api_key_env_var = API_KEY_VAR_NAME
-
-        API_KEY = os.environ.get(api_key_env_var)
-
-        # raise error if the api key or endpoint is not found
-        if API_KEY is None:
-            raise ValueError(f"{api_key_env_var} environment variable not found")
-
-        openai.api_key = API_KEY
+        openai.api_key = api_key
         openai.api_type = self.api_type
-        client = AsyncOpenAI(api_key=API_KEY, max_retries=1)
+        client = AsyncOpenAI(api_key=api_key, max_retries=1)
 
         # get parameters dict (if any)
         generation_config = prompt_dict.get("parameters", None)
@@ -231,16 +196,6 @@ class AsyncOpenAIAPI(AsyncBaseAPI):
             raise TypeError(
                 f"parameters must be a dictionary, not {type(generation_config)}"
             )
-
-        # add in default parameters
-        default_generation_config = {
-            "max_tokens": 2048,
-            "temperature": 0.7,
-            "n": 1,
-        }
-        for key, value in default_generation_config.items():
-            if key not in generation_config:
-                generation_config[key] = value
 
         # obtain mode (default is chat)
         mode = prompt_dict.get("mode", "chat")
@@ -440,6 +395,8 @@ class AsyncOpenAIAPI(AsyncBaseAPI):
                     index=index,
                 )
             if all(
+                isinstance(message, dict) for message in prompt_dict["prompt"]
+            ) and all(
                 [
                     set(d.keys()) == {"role", "content"}
                     and d["role"] in openai_chat_roles
