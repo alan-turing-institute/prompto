@@ -56,7 +56,6 @@ To clarify, the order of precedence for the API key is as follows:
 - `AZURE_OPENAI_API_KEY`: the API key for the Azure OpenAI API
 - `AZURE_OPENAI_API_ENDPOINT`: the endpoint for the Azure OpenAI API
 - `AZURE_OPENAI_API_VERSION`: the version of the Azure OpenAI API
-- `AZURE_OPENAI_MODEL_NAME`: the default model name for the Azure OpenAI API
 
 **Model-specific environment variables**:
 
@@ -70,14 +69,12 @@ As described in the [model-specific environment variables](#model-specific-envir
 For any given `prompt_dict`, the following environment variables are required:
 - One of `AZURE_OPENAI_API_KEY` or `AZURE_OPENAI_API_KEY_model_name`
 - One of `AZURE_OPENAI_API_ENDPOINT` or `AZURE_OPENAI_API_ENDPOINT_model_name`
-- `AZURE_OPENAI_MODEL_NAME` if a model is not specified in the `prompt_dict`
 
 ## OpenAI
 
 **Environment variables**:
 
 - `OPENAI_API_KEY`: the API key for the OpenAI API
-- `OPENAI_MODEL_NAME`: the default model name for the OpenAI API
 
 **Model-specific environment variables**:
 
@@ -90,7 +87,6 @@ Note here we've replaced the `.` and `-` in the model name with underscores `_` 
 
 For any given `prompt_dict`, the following environment variables are required:
 - One of `OPENAI_API_KEY` or `OPENAI_API_KEY_model_name`
-- `OPENAI_MODEL_NAME` if a model is not specified in the `prompt_dict`
 
 ## Gemini
 
@@ -98,7 +94,6 @@ For any given `prompt_dict`, the following environment variables are required:
 
 - `GEMINI_PROJECT_ID`: the project ID for the Gemini API
 - `GEMINI_LOCATION`: the location for the Gemini API
-- `GEMINI_MODEL_NAME`: the default model name for the Gemini API
 
 **Model-specific environment variables**:
 
@@ -109,7 +104,6 @@ As described in the [model-specific environment variables](#model-specific-envir
 **Required environment variables**:
 
 For any given `prompt_dict`, the following environment variables are required:
-- `GEMINI_MODEL_NAME` if a model is not specified in the `prompt_dict`
 - If you have set up Google Cloud CLI and the project-id or location has not been set, the default project-id and location will be used
 
 ## Ollama
@@ -119,7 +113,6 @@ See the [Ollama documentation](https://github.com/ollama/ollama/tree/main/docs) 
 **Environment variables**:
 
 - `OLLAMA_API_ENDPOINT`: the endpoint for the Ollama API
-- `OLLAMA_MODEL_NAME`: the default model name for the Ollama API
 
 **Model-specific environment variables**:
 
@@ -130,7 +123,6 @@ As described in the [model-specific environment variables](#model-specific-envir
 
 For any given `prompt_dict`, the following environment variables are required:
 - One of `OLLAMA_API_ENDPOINT` or `OLLAMA_API_ENDPOINT_model_name`
-- `OLLAMA_MODEL_NAME` if a model is not specified in the `prompt_dict`
 
 ## Huggingface text-generation-inference
 
