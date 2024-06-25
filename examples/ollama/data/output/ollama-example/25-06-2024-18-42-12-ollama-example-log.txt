@@ -1,0 +1,2 @@
+25-06-2024, 18:44: Error (i=6) [id=2]. NotImplementedError - Model unknown-model is not downloaded: ResponseError - model 'unknown-model' not found, try pulling it first
+25-06-2024, 18:44: Completed experiment ollama-example.jsonl! Experiment processing time: 39.204 seconds, Average time per query: 6.534 seconds

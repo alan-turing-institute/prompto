@@ -11,7 +11,7 @@ from prompto.utils import (
     FILE_WRITE_LOCK,
     check_either_required_env_variables_set,
     check_optional_env_variables_set,
-    check_required_env_variables_set,
+    get_environment_variable,
     get_model_name_identifier,
     log_error_response_chat,
     log_error_response_query,
@@ -21,7 +21,6 @@ from prompto.utils import (
 )
 
 API_ENDPOINT_VAR_NAME = "OLLAMA_API_ENDPOINT"
-MODEL_NAME_VAR_NAME = "OLLAMA_MODEL_NAME"
 
 
 class AsyncOllamaAPI(AsyncBaseAPI):
@@ -50,7 +49,6 @@ class AsyncOllamaAPI(AsyncBaseAPI):
         """
         For Ollama, there are some optional environment variables:
         - OLLAMA_API_ENDPOINT
-        - OLLAMA_MODEL_NAME
 
         These are optional only if the model_name is passed
         in the prompt dictionary. If the model_name is not
@@ -72,11 +70,7 @@ class AsyncOllamaAPI(AsyncBaseAPI):
         issues = []
 
         # check the optional environment variables are set and warn if not
-        issues.extend(
-            check_optional_env_variables_set(
-                [API_ENDPOINT_VAR_NAME, MODEL_NAME_VAR_NAME]
-            )
-        )
+        issues.extend(check_optional_env_variables_set([API_ENDPOINT_VAR_NAME]))
 
         # check if the API endpoint is a valid endpoint
         if API_ENDPOINT_VAR_NAME in os.environ:
@@ -91,18 +85,6 @@ class AsyncOllamaAPI(AsyncBaseAPI):
                     )
                 )
 
-        # check the default model name is a valid model and is downloaded
-        if MODEL_NAME_VAR_NAME in os.environ:
-            client = Client(host=os.environ[API_ENDPOINT_VAR_NAME])
-            try:
-                client.show(model=os.environ[MODEL_NAME_VAR_NAME])
-            except Exception as err:
-                issues.append(
-                    ValueError(
-                        f"{MODEL_NAME_VAR_NAME} is not a valid model: {type(err).__name__} - {err}"
-                    )
-                )
-
         return issues
 
     @staticmethod
@@ -110,15 +92,10 @@ class AsyncOllamaAPI(AsyncBaseAPI):
         """
         For Ollama, we make the following model-specific checks:
         - "prompt" must be a string
-        - if "model_name" is not passed in the prompt dictionary,
-          then the default environment variables (OLLAMA_API_ENDPOINT,
-          OLLAMA_MODEL_NAME) must be set
-        - if "model_name" is passed in the prompt dictionary, then
-          then for the API endpoint, either the model-specific endpoint
-          (OLLAMA_API_ENDPOINT_{identifier}) (where identifier is
-          the model name with invalid characters replaced
+        - model-specific endpoint (OLLAMA_API_ENDPOINT_{identifier})
+          (where identifier is the model name with invalid characters replaced
           by underscores obtained using get_model_name_identifier function)
-          or the default endpoint must be set
+          can be set or the default endpoint must be set
 
         Parameters
         ----------
@@ -145,27 +122,18 @@ class AsyncOllamaAPI(AsyncBaseAPI):
                     )
                 )
 
-        if "model_name" not in prompt_dict:
-            # use the default environment variables
-            # check the required environment variables are set
-            issues.extend(
-                check_required_env_variables_set(
-                    [API_ENDPOINT_VAR_NAME, MODEL_NAME_VAR_NAME]
-                )
-            )
-        else:
-            # use the model specific environment variables
-            model_name = prompt_dict["model_name"]
-            # replace any invalid characters in the model name
-            identifier = get_model_name_identifier(model_name)
+        # use the model specific environment variables
+        model_name = prompt_dict["model_name"]
+        # replace any invalid characters in the model name
+        identifier = get_model_name_identifier(model_name)
 
-            # check the required environment variables are set
-            # must either have the model specific endpoint or the default endpoint set
-            issues.extend(
-                check_either_required_env_variables_set(
-                    [[f"{API_ENDPOINT_VAR_NAME}_{identifier}", API_ENDPOINT_VAR_NAME]]
-                )
+        # check the required environment variables are set
+        # must either have the model specific endpoint or the default endpoint set
+        issues.extend(
+            check_either_required_env_variables_set(
+                [[f"{API_ENDPOINT_VAR_NAME}_{identifier}", API_ENDPOINT_VAR_NAME]]
             )
+        )
 
         return issues
 
@@ -189,38 +157,12 @@ class AsyncOllamaAPI(AsyncBaseAPI):
         prompt = prompt_dict["prompt"]
 
         # obtain model name
-        model_name = prompt_dict.get("model_name", None)
-        if model_name is None:
-            # use the default environment variables
-            model_name = os.environ.get(MODEL_NAME_VAR_NAME)
-            if model_name is None:
-                log_message = (
-                    f"model_name is not set. Please set the {MODEL_NAME_VAR_NAME} "
-                    "environment variable or pass the model_name in the prompt dictionary"
-                )
-                async with FILE_WRITE_LOCK:
-                    write_log_message(
-                        log_file=self.log_file, log_message=log_message, log=True
-                    )
-                raise ValueError(log_message)
+        model_name = prompt_dict["model_name"]
+        api_endpoint = get_environment_variable(
+            env_variable=API_ENDPOINT_VAR_NAME, model_name=model_name
+        )
 
-            api_endpoint_env_var = API_ENDPOINT_VAR_NAME
-        else:
-            # use the model specific environment variables if they exist
-            # replace any invalid characters in the model name
-            identifier = get_model_name_identifier(model_name)
-
-            api_endpoint_env_var = f"{API_ENDPOINT_VAR_NAME}_{identifier}"
-            if api_endpoint_env_var not in os.environ:
-                api_endpoint_env_var = API_ENDPOINT_VAR_NAME
-
-        API_ENDPOINT = os.environ.get(api_endpoint_env_var)
-
-        # raise error if the api endpoint is not found
-        if API_ENDPOINT is None:
-            raise ValueError(f"{api_endpoint_env_var} environment variable not found")
-
-        client = AsyncClient(host=API_ENDPOINT)
+        client = AsyncClient(host=api_endpoint)
 
         # get parameters dict (if any)
         generation_config = prompt_dict.get("parameters", None)
