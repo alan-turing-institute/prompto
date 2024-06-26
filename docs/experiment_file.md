@@ -9,15 +9,13 @@ For all models/APIs, we require the following keys in the `prompt_dict`:
 - `api`: the name of the API to query
     - See the [available APIs/models](models.md) for the list of supported APIs and the corresponding names to use in the `api` key
     - They are defined in the `ASYNC_APIS` dictionary in the [`prompto.apis` module](../src/prompto/apis/__init__.py)
+- `model_name`: the name of the model to query
+    - For most API endpoints, it is possible to define the name of the model to query. For example, for the OpenAI API (`"api": "openai"`), the model name could be `"gpt-3.5-turbo"`, `"gpt-4"`, etc.
 
 In addition, there are other optional keys that can be included in the `prompt_dict`:
 - `parameters`: the parameter settings / generation config for the query (given as a dictionary)
     - This is a dictionary that contains the parameters for the query. The parameters are specific to the model and the API being used. For example, for the Gemini API (`"api": "gemini"`), some paramters to configure are {`temperature`, `max_output_tokens`, `top_p`, `top_k`} etc. which are used to control the generation of the response. For the OpenAI API (`"api": "openai"`), some of these parameters are named differently for instance the maximum output tokens is set using the `max_tokens` parameter and `top_k` is not available to set. For Ollama (`"api": "ollama"`), the parameters are different again, e.g. the maximum number of tokens to predict is set using `num_predict`
     - See the API documentation for the specific API for the list of parameters that can be set and their default values
-- `model_name`: the name of the model to query
-    - For most API endpoints, it is possible to define the name of the model to query. For example, for the OpenAI API (`"api": "openai"`), the model name could be `"gpt-3.5-turbo"`, `"gpt-4"`, etc.
-    - This is optional since you can also set the model name in the environment variable (e.g. `OPENAI_MODEL_NAME` for the OpenAI API) and avoid passing it in the `prompt_dict` each time if using the same one consistently
-    - It is still possible to have a default model name set in the environment variable and override it in the `prompt_dict` if you want to use a different model for a particular prompt
 - `group`: a user-specified grouping of the prompts
     - This is a string that can be used to group the prompts together. This is useful when you want to process groups of prompts in parallel (e.g. when using the `--parallel` flag in the pipeline)
     - Note that you can use parallel processing without using the "group" key, but using this key allows you to have full control in order group the prompts in a way that makes sense for your use case. See the [specifying rate limits documentation](rate_limits.md) for more details on parallel processing

@@ -1,0 +1,16 @@
+25-06-2024, 20:22: Error with model AzureOpenAI (unknown-model-name) (i=2)
+Prompt: How does technology impact us?...
+Error: NotFoundError - Error code: 404 - {'error': {'code': 'DeploymentNotFound', 'message': 'The API deployment for this resource does not exist. If you created the deployment within the last 5 minutes, please wait a moment and try again.'}}
+
+25-06-2024, 20:22: Error (i=2) [id=1] on attempt 1 of 3: NotFoundError - Error code: 404 - {'error': {'code': 'DeploymentNotFound', 'message': 'The API deployment for this resource does not exist. If you created the deployment within the last 5 minutes, please wait a moment and try again.'}} - adding to the queue to try again later
+25-06-2024, 20:23: Error with model AzureOpenAI (unknown-model-name) (i=1)
+Prompt: How does technology impact us?...
+Error: NotFoundError - Error code: 404 - {'error': {'code': 'DeploymentNotFound', 'message': 'The API deployment for this resource does not exist. If you created the deployment within the last 5 minutes, please wait a moment and try again.'}}
+
+25-06-2024, 20:23: Error (i=1) [id=1] on attempt 2 of 3: NotFoundError - Error code: 404 - {'error': {'code': 'DeploymentNotFound', 'message': 'The API deployment for this resource does not exist. If you created the deployment within the last 5 minutes, please wait a moment and try again.'}} - adding to the queue to try again later
+25-06-2024, 20:23: Error with model AzureOpenAI (unknown-model-name) (i=1)
+Prompt: How does technology impact us?...
+Error: NotFoundError - Error code: 404 - {'error': {'code': 'DeploymentNotFound', 'message': 'The API deployment for this resource does not exist. If you created the deployment within the last 5 minutes, please wait a moment and try again.'}}
+
+25-06-2024, 20:23: Error (i=1) [id=1] after maximum 3 attempts: NotFoundError - Error code: 404 - {'error': {'code': 'DeploymentNotFound', 'message': 'The API deployment for this resource does not exist. If you created the deployment within the last 5 minutes, please wait a moment and try again.'}}
+25-06-2024, 20:23: Completed experiment azure-openai-example.jsonl! Experiment processing time: 43.679 seconds, Average time per query: 8.736 seconds

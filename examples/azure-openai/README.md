@@ -12,7 +12,6 @@ To run the experiment, you will need to set the following environment variables 
 export AZURE_OPENAI_API_KEY=<YOUR-AZURE-OPENAI-KEY>
 export AZURE_OPENAI_API_ENDPOINT=<YOUR-AZURE-OPENAI-ENDPOINT>
 export AZURE_OPENAI_API_VERSION=<DEFAULT-AZURE-OPENAI-API-VERSION>
-export AZURE_OPENAI_MODEL_NAME=<DEFAULT-AZURE-OPENAI-MODEL>
 ```
 
 You can also use an `.env` file to save these environment variables without needing to export them globally in the terminal:
@@ -20,7 +19,6 @@ You can also use an `.env` file to save these environment variables without need
 AZURE_OPENAI_API_KEY=<YOUR-AZURE-OPENAI-KEY>
 AZURE_OPENAI_API_ENDPOINT=<YOUR-AZURE-OPENAI-ENDPOINT>
 AZURE_OPENAI_API_VERSION=<DEFAULT-AZURE-OPENAI-API-VERSION>
-AZURE_OPENAI_MODEL_NAME=<DEFAULT-AZURE-OPENAI-MODEL>
 ```
 
 By default, the `prompto_run_experiment` command will look for an `.env` file in the current directory. If you want to use a different `.env` file, you can specify it with the `--env` flag.
