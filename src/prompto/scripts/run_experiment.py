@@ -102,17 +102,17 @@ async def main():
     else:
         logging.warning(f"No environment file found at {args.env_file}")
 
-    if args.max_query_json is not None:
+    if args.max_queries_json is not None:
         # check if file exists
-        if not os.path.exists(args.max_query_json):
-            raise FileNotFoundError(f"File {args.max_query_json} not found")
+        if not os.path.exists(args.max_queries_json):
+            raise FileNotFoundError(f"File {args.max_queries_json} not found")
 
         # check if file is a json file
-        if not args.max_query_json.endswith(".json"):
-            raise ValueError("max_query_json must be a json file")
+        if not args.max_queries_json.endswith(".json"):
+            raise ValueError("max_queries_json must be a json file")
 
         # load the json file
-        with open(args.max_query_json, "r") as f:
+        with open(args.max_queries_json, "r") as f:
             max_queries_dict = json.load(f)
     else:
         max_queries_dict = {}
