@@ -13,6 +13,7 @@ from prompto.utils import (
     check_either_required_env_variables_set,
     check_optional_env_variables_set,
     check_required_env_variables_set,
+    get_environment_variable,
     get_model_name_identifier,
     log_error_response_chat,
     log_error_response_query,
@@ -82,11 +83,7 @@ class AsyncHuggingfaceTGIAPI(AsyncBaseAPI):
         """
         For Huggingface TGI, we make the following model-specific checks:
         - "prompt" must be a string or a list of strings
-        - if "model_name" is not in the prompt dictionary, then the default
-          environment variables (HUGGINGFACE_TGI_API_KEY, HUGGINGFACE_TGI_API_ENDPOINT)
-          must be set
-        - if "model_name" is in the prompt dictionary, then for API key and endpoint,
-          either the model-specific environment variables (HUUGINGFACE_TGI_API_KEY_{identifier},
+        - model-specific environment variables (HUUGINGFACE_TGI_API_KEY_{identifier},
           HUGGINGFACE_TGI_API_ENDPOINT_{identifier}) (where identifier is
           the model name with invalid characters replaced by underscores obtained
           using get_model_name_identifier function) can be set, or the default environment
@@ -108,46 +105,38 @@ class AsyncHuggingfaceTGIAPI(AsyncBaseAPI):
         issues = []
 
         # check prompt is of the right type
-        match prompt_dict["prompt"]:
-            case str(_):
+        if isinstance(prompt_dict["prompt"], str):
+            pass
+        elif isinstance(prompt_dict["prompt"], list):
+            if all([isinstance(message, str) for message in prompt_dict["prompt"]]):
                 pass
-            case [str(_)]:
-                pass
-            case _:
-                issues.append(
-                    TypeError(
-                        "if api == 'huggingface-tgi', then prompt must be a string or a list, "
-                        f"not {type(prompt_dict['prompt'])}"
-                    )
-                )
-
-        if "model_name" not in prompt_dict:
-            # use the default environment variables
-            # check the required environment variables are set
-            issues.extend(check_required_env_variables_set([API_ENDPOINT_VAR_NAME]))
-
-            # check the optional environment variables are set and warn if not
-            issues.extend(check_optional_env_variables_set([API_KEY_VAR_NAME]))
         else:
-            # use the model specific environment variables
-            model_name = prompt_dict["model_name"]
-            # replace any invalid characters in the model name
-            identifier = get_model_name_identifier(model_name)
-
-            # check the required environment variables are set
-            # must either have the model specific endpoint or the default endpoint set
-            issues.extend(
-                check_either_required_env_variables_set(
-                    [[f"{API_ENDPOINT_VAR_NAME}_{identifier}", API_ENDPOINT_VAR_NAME]]
+            issues.append(
+                TypeError(
+                    f"if api == 'huggingface-tgi', then prompt must be a str or a list[str], "
+                    f"not {type(prompt_dict['prompt'])}"
                 )
             )
 
-            # check the optional environment variables are set and warn if not
-            issues.extend(
-                check_optional_env_variables_set(
-                    [f"{API_KEY_VAR_NAME}_{identifier}", API_KEY_VAR_NAME]
-                )
+        # use the model specific environment variables
+        model_name = prompt_dict["model_name"]
+        # replace any invalid characters in the model name
+        identifier = get_model_name_identifier(model_name)
+
+        # check the required environment variables are set
+        # must either have the model specific endpoint or the default endpoint set
+        issues.extend(
+            check_either_required_env_variables_set(
+                [[f"{API_ENDPOINT_VAR_NAME}_{identifier}", API_ENDPOINT_VAR_NAME]]
             )
+        )
+
+        # check the optional environment variables are set and warn if not
+        issues.extend(
+            check_optional_env_variables_set(
+                [f"{API_KEY_VAR_NAME}_{identifier}", API_KEY_VAR_NAME]
+            )
+        )
 
         return issues
 
@@ -172,39 +161,19 @@ class AsyncHuggingfaceTGIAPI(AsyncBaseAPI):
         prompt = prompt_dict["prompt"]
 
         # obtain model name
-        model_name = prompt_dict.get("model_name", None)
-        if model_name is None:
-            # use the default environment variables
-            api_key_env_var = API_KEY_VAR_NAME
-            api_endpoint_env_var = API_ENDPOINT_VAR_NAME
-        else:
-            # use the model specific environment variables if they exist
-            # replace any invalid characters in the model name
-            identifier = get_model_name_identifier(model_name)
+        model_name = prompt_dict["model_name"]
+        api_key = get_environment_variable(
+            env_variable=API_KEY_VAR_NAME, model_name=model_name
+        )
+        api_endpoint = get_environment_variable(
+            env_variable=API_ENDPOINT_VAR_NAME, model_name=model_name
+        )
 
-            api_key_env_var = f"{API_KEY_VAR_NAME}_{identifier}"
-            if api_key_env_var not in os.environ:
-                api_key_env_var = API_KEY_VAR_NAME
-
-            api_endpoint_env_var = f"{API_ENDPOINT_VAR_NAME}_{identifier}"
-            if api_endpoint_env_var not in os.environ:
-                api_endpoint_env_var = API_ENDPOINT_VAR_NAME
-
-        API_KEY = os.environ.get(api_key_env_var)
-        API_ENDPOINT = os.environ.get(api_endpoint_env_var)
-
-        if API_KEY is None:
-            # need pass string to initialise OpenAI client
-            API_KEY = "-"
-
-        if API_ENDPOINT is None:
-            raise ValueError(f"{api_endpoint_env_var} environment variable not found")
-
-        openai.api_key = API_KEY
-        openai.api_type = API_ENDPOINT
+        openai.api_key = api_key
+        openai.api_type = api_endpoint
         client = AsyncOpenAI(
-            base_url=f"{API_ENDPOINT}/v1/",
-            api_key=API_KEY,
+            base_url=f"{api_endpoint}/v1/",
+            api_key=api_key,
             max_retries=1,
         )
 
@@ -216,16 +185,6 @@ class AsyncHuggingfaceTGIAPI(AsyncBaseAPI):
             raise TypeError(
                 f"parameters must be a dictionary, not {type(generation_config)}"
             )
-
-        # add in default parameters
-        default_generation_config = {
-            "max_tokens": 2048,
-            "temperature": 0.7,
-            "n": 1,
-        }
-        for key, value in default_generation_config.items():
-            if key not in generation_config:
-                generation_config[key] = value
 
         # obtain mode (default is chat)
         mode = prompt_dict.get("mode", "completion")
@@ -374,21 +333,19 @@ class AsyncHuggingfaceTGIAPI(AsyncBaseAPI):
         Exception
             If an error occurs during the querying process
         """
-        match prompt_dict["prompt"]:
-            case str(_):
-                return await self._async_query_string(
-                    prompt_dict=prompt_dict,
-                    index=index,
-                )
-            case [str(_)]:
+        if isinstance(prompt_dict["prompt"], str):
+            return await self._async_query_string(
+                prompt_dict=prompt_dict,
+                index=index,
+            )
+        elif isinstance(prompt_dict["prompt"], list):
+            if all([isinstance(message, str) for message in prompt_dict["prompt"]]):
                 return await self._async_query_chat(
                     prompt_dict=prompt_dict,
                     index=index,
                 )
-            case _:
-                pass
 
         raise TypeError(
-            f"if api == 'huggingface-tgi', then prompt must be a string or a list, "
+            f"if api == 'huggingface-tgi', then prompt must be a str or a list[str], "
             f"not {type(prompt_dict['prompt'])}"
         )
