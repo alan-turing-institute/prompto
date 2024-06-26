@@ -1,6 +1,6 @@
 import os
 
-from vertexai.generative_models import Image, Part
+from vertexai.generative_models import Content, Image, Part
 
 
 def parse_multimedia_dict(multimedia_dict: dict, media_folder: str) -> Part:
@@ -72,3 +72,28 @@ def parse_multimedia(multimedia: list[dict] | dict, media_folder: str) -> list[P
         return [parse_multimedia_dict(multimedia, media_folder=media_folder)]
     else:
         return [parse_multimedia_dict(m, media_folder=media_folder) for m in multimedia]
+
+
+def dict_to_content(content_dict: dict):
+    """
+    Convert content dictionary to Vertex AI Content object.
+
+    Parameters
+    ----------
+    content_dict : dict
+        Content dictionary with keys "role" and "parts" where
+        the values are strings.
+
+    Returns
+    -------
+    Content
+        Vertex AI Content object created from content dictionary
+    """
+    if "role" not in content_dict:
+        raise KeyError("Role key is missing in content dictionary")
+    if "parts" not in content_dict:
+        raise KeyError("Parts key is missing in content dictionary")
+
+    return Content(
+        role=content_dict["role"], parts=[Part.from_text(content_dict["parts"])]
+    )

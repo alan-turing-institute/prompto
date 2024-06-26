@@ -16,7 +16,7 @@ from prompto.apis.gemini.gemini_utils import (
     process_response,
     process_safety_attributes,
 )
-from prompto.apis.vertexai.vertexai_utils import parse_multimedia
+from prompto.apis.vertexai.vertexai_utils import dict_to_content, parse_multimedia
 from prompto.settings import Settings
 from prompto.utils import (
     FILE_WRITE_LOCK,
@@ -31,7 +31,7 @@ from prompto.utils import (
 )
 
 PROJECT_VAR_NAME = "VERTEXAI_PROJECT_ID"
-LOCATION_VAR_NAME = "VERTEXAI_LOCATION"
+LOCATION_VAR_NAME = "VERTEXAI_LOCATION_ID"
 
 
 class AsyncVertexAIAPI(AsyncBaseAPI):
@@ -140,7 +140,7 @@ class AsyncVertexAIAPI(AsyncBaseAPI):
                     "if api == 'vertexai', then the prompt must be a str, list[str], or "
                     "list[dict[str,str]] where the dictionary contains the keys 'role' and "
                     "'parts' only, and the values for 'role' must be one of 'user' or 'model', "
-                    "except for the  first message in the list of dictionaries can be a "
+                    "except for the first message in the list of dictionaries can be a "
                     "system message with the key 'role' set to 'system'."
                 )
             )
@@ -465,16 +465,17 @@ class AsyncVertexAIAPI(AsyncBaseAPI):
         prompt, model_name, safety_settings, generation_config, _ = (
             await self._obtain_model_inputs(prompt_dict=prompt_dict)
         )
+
         if prompt[0]["role"] == "system":
             model = GenerativeModel(model_name, system_instruction=prompt[0]["parts"])
-            chat = model.start_chat(history=prompt[1:-1])
+            chat = model.start_chat(history=[dict_to_content(x) for x in prompt[1:-1]])
         else:
             model = GenerativeModel(model_name)
-            chat = model.start_chat(history=prompt[:-1])
+            chat = model.start_chat(history=[dict_to_content(x) for x in prompt[:-1]])
 
         try:
             response = await chat.send_message_async(
-                content=prompt[-1],
+                content=dict_to_content(prompt[-1]),
                 generation_config=generation_config,
                 safety_settings=safety_settings,
                 stream=False,
@@ -593,6 +594,6 @@ class AsyncVertexAIAPI(AsyncBaseAPI):
             "if api == 'vertexai', then the prompt must be a str, list[str], or "
             "list[dict[str,str]] where the dictionary contains the keys 'role' and "
             "'parts' only, and the values for 'role' must be one of 'user' or 'model', "
-            "except for the  first message in the list of dictionaries can be a "
+            "except for the first message in the list of dictionaries can be a "
             "system message with the key 'role' set to 'system'."
         )
