@@ -12,13 +12,11 @@ prompto_run_experiment --file data/input/ollama-example.jsonl --max_queries 30
 To run the experiment, you will need to set the following environment variables first:
 ```bash
 export OLLAMA_API_ENDPOINT=<YOUR-OLLAMA-ENDPOINT> # if running locally, set to http://localhost:11434
-export OLLAMA_MODEL_NAME=<DEFAULT-OLLAMA-MODEL>
 ```
 
 You can also use an `.env` file to save these environment variables without needing to export them globally in the terminal:
 ```
 OLLAMA_API_ENDPOINT=<YOUR-OLLAMA-ENDPOINT> # if running locally, set to http://localhost:11434
-OLLAMA_MODEL_NAME=<DEFAULT-OLLAMA-MODEL>
 ```
 
 By default, the `prompto_run_experiment` command will look for an `.env` file in the current directory. If you want to use a different `.env` file, you can specify it with the `--env` flag.

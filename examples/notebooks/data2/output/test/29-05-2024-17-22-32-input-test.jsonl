@@ -1,3 +1,0 @@
-{"id": 9, "prompt": ["Hello", "My name is Bob and I'm 6 years old", "How old am I next year?"], "api": "unknown-model-name", "parameters": {"candidate_count": 1, "max_output_tokens": 64, "temperature": 1, "top_k": 40}}
-{"id": 10, "prompt": ["Can you give me a random number between 1-10?", "What is +5 of that number?", "What is half of that number?"], "api": "unknown-model-name", "parameters": {"candidate_count": 1, "max_output_tokens": 128, "temperature": 0.5, "top_k": 40}}
-{"id": 11, "prompt": "How many theaters are there in London's South End?", "api": "unknown-model-name"}

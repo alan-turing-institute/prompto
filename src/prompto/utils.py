@@ -429,3 +429,41 @@ def sort_prompts_by_model_for_api(prompt_dicts: list[dict], api: str) -> list[di
         )
         for i in range(len(prompt_dicts))
     ]
+
+
+def get_environment_variable(env_variable: str, model_name: str) -> str:
+    """
+    Get the value of an environment variable for a specific model.
+    We first check if the environment variable with the model name identifier
+    exists. If it does, we return the value of that environment variable.
+    If it does not exist, we return the value of the environment variable
+    without the model name identifier.
+    If neither environment variables exist, we raise a ValueError.
+
+    Parameters
+    ----------
+    env_variable : str
+        The name of the environment variable to get
+    model_name : str
+        The name of the model to get the environment variable for
+
+    Returns
+    -------
+    str
+        The value of the environment variable for the specific model.
+        If no model-specific environment variable exists, the value of the
+        environment variable without the model name identifier is returned.
+    """
+    # use the model specific environment variables if they exist
+    # replace any invalid characters in the model name
+    identifier = get_model_name_identifier(model_name)
+    env_variable_with_idenfier = f"{env_variable}_{identifier}"
+
+    if env_variable_with_idenfier in os.environ:
+        return os.environ[env_variable_with_idenfier]
+    elif env_variable in os.environ:
+        return os.environ[env_variable]
+    else:
+        raise ValueError(
+            f"Neither '{env_variable}' or '{env_variable_with_idenfier}' is not set"
+        )
