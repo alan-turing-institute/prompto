@@ -20,6 +20,7 @@ pre-commit = { version = "^3.7.0", optional = true }
 ipykernel = { version = "^6.29.4", optional = true }
 pytest = { version = "^8.1.1", optional = true }
 pytest-asyncio = { version = "^0.23.6", optional = true }
+pytest-cov = { version = "^5.0.0", optional = true }
 vertexai = { version = "^1.49.0", optional = true }
 google-cloud-aiplatform = { version = "^1.49.0", optional = true }
 google-generativeai = { version = "^0.7.0", optional = true }
@@ -41,6 +42,7 @@ all = [
     "ipykernel",
     "pytest",
     "pytest-asyncio",
+    "pytest-cov",
     "vertexai",
     "google-cloud-aiplatform",
     "google-generativeai",
@@ -60,6 +62,7 @@ dev = [
     "pre-commit",
     "ipykernel",
     "pytest",
+    "pytest-cov",
     "pytest-asyncio",
 ]
 gemini = ["vertexai", "google-cloud-aiplatform", "google-generativeai", "pillow"]

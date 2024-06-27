@@ -1,5 +1,11 @@
 # prompto
 
+[![Actions Status][actions-badge]][actions-link]
+[![Codecov Status][codecov-badge]][codecov-link]
+[![Documentation Status][rtd-badge]][rtd-link]
+[![PyPI version][pypi-version]][pypi-link]
+[![PyPI platforms][pypi-platforms]][pypi-link]
+
 `prompto` derives from the Italian word "_pronto_" which means "_ready_" and could also mean "_I prompt_" in Italian (if "_promptare_" was a verb meaning "_to prompt_").
 
 `prompto` is a Python library facilitates of LLM experiments stored as jsonl files. It automates querying API endpoints and logs progress asynchronously. The library is designed to be extensible and can be used to query different models.
@@ -27,6 +33,11 @@ pip install prompto
 **Note**: This only installs the base dependencies required for `prompto`. There are also extra group dependencies depending on the models that you'd like to query. For example, if you'd like to query models from the OpenAI and Gemini API, you can install the extra dependencies by running:
 ```bash
 pip install prompto"[openai,gemini]"
+```
+
+To install all the dependencies for all the models, you can run:
+```bash
+pip install prompto[all]
 ```
 
 You might also want to set up a development environment for the library. To do this, please refer to the [development environment setup guide](docs/contribution.md#setting-up-a-development-environment) in our [contribution guide](docs/contribution.md).
