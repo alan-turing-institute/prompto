@@ -2,7 +2,6 @@
 
 [![Actions Status][actions-badge]][actions-link]
 [![Codecov Status][codecov-badge]][codecov-link]
-[![Documentation Status][rtd-badge]][rtd-link]
 [![PyPI version][pypi-version]][pypi-link]
 [![PyPI platforms][pypi-platforms]][pypi-link]
 

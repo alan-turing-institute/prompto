@@ -53,7 +53,10 @@ jobs:
               run: python -m pip install .[all]
 
             - name: Test package
-              run: python -m pytest -ra
+              run: python -m pytest -ra --cov=prompto
+
+            - name: Upload coverage report
+              uses: codecov/codecov-action@v4.5.0
 
     # dist:
     #     name: Distribution build
