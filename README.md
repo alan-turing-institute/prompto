@@ -4,6 +4,33 @@
 
 `prompto` is a Python library facilitates of LLM experiments stored as jsonl files. It automates querying API endpoints and logs progress asynchronously. The library is designed to be extensible and can be used to query different models.
 
+## Available APIs and Models
+
+The library supports querying several APIs and models. The following APIs are currently supported are:
+- [OpenAI](docs/models.md#openai) (`"openai"`)
+- [Azure OpenAI](docs/models.md#azure-openai) (`"azure-openai"`)
+- [Gemini](docs/models.md#gemini) (`"gemini"`)
+- [Vertex AI](docs/models.md#vertex-ai) (`"vertexai"`)
+- [Huggingface text-generation-inference](docs/models.md#huggingface-text-generation-inference) (`"huggingface-tgi"`)
+- [Ollama](docs/models.md#ollama) (`"ollama"`)
+- [A simple Quart API](docs/models.md#quart-api) for running models from [`transformers`](https://github.com/huggingface/transformers) locally (`"quart"`)
+
+Our aim for `prompto` is to support more APIs and models in the future and to make it easy to add new APIs and models to the library. We welcome contributions to add new APIs and models to the library. We have a [contribution guide](docs/contribution.md) and a [guide on how to add new APIs and models](docs/add_new_api.md) to the library in the [docs](docs/).
+
+## Installation
+
+To install the library, you can use `pip`:
+```bash
+pip install prompto
+```
+
+**Note**: This only installs the base dependencies required for `prompto`. There are also extra group dependencies depending on the models that you'd like to query. For example, if you'd like to query models from the OpenAI and Gemini API, you can install the extra dependencies by running:
+```bash
+pip install prompto[openai,gemini]
+```
+
+You might also want to set up a development environment for the library. To do this, please refer to the [development environment setup guide](docs/contribution.md#setting-up-a-development-environment) in our [contribution guide](docs/contribution.md).
+
 ## Getting Started
 
 The library has functionality to process experiments and to run a pipeline which continually looks for new experiment jsonl files in the input folder. Everything starts with defining a **pipeline data folder** which contains:
@@ -115,42 +142,3 @@ The library has a few key classes:
 - [`AsyncBaseAPI`](src/prompto/base.py): this is the base class for querying all APIs. Each API/model should inherit from this class and implement the `async_query` method which will (asynchronously) query the model's API and return the response. When running an experiment, the `Experiment` class will call this method for each experiment to send requests asynchronously.
 
 When a new model is added, you must add it to the [`API`](src/prompto/apis/__init__.py) dictionary which is in the `apis` module. This dictionary should map the model name to the class of the model.
-
-### Prerequisites
-
-Before running the script, ensure you have the following:
-
-- Python >= 3.11
-- Poetry (for dependency management)
-
-### Installation
-
-1. **Clone the Repository**
-    ```bash
-    git clone git@github.com:alan-turing-institute/prompto.git
-    ```
-
-2. **Navigate to Project Directory**
-    ```bash
-    cd prompto
-    ```
-
-3. **Install Poetry**
-    If you haven't installed Poetry yet, you can install it by following the instructions [here](https://python-poetry.org/docs/#installation).
-
-4. **Create and activate a Poetry Environment**
-    ```bash
-    poetry shell
-    ```
-
-    **Note**: You can also use another virtual environment manager, such as `venv` or `conda` for this step if you prefer.
-
-5. **Install Dependencies**
-    ```bash
-    poetry install
-    ```
-
-**Note**: This only installs the base dependencies. There are also extra group dependencies depending on the models that you'd like to query. For example, if you'd like to query models from the Gemini API, you can install the extra dependencies by running:
-```bash
-poetry install -E gemini
-```
