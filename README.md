@@ -26,7 +26,7 @@ pip install prompto
 
 **Note**: This only installs the base dependencies required for `prompto`. There are also extra group dependencies depending on the models that you'd like to query. For example, if you'd like to query models from the OpenAI and Gemini API, you can install the extra dependencies by running:
 ```bash
-pip install prompto[openai,gemini]
+pip install prompto"[openai,gemini]"
 ```
 
 You might also want to set up a development environment for the library. To do this, please refer to the [development environment setup guide](docs/contribution.md#setting-up-a-development-environment) in our [contribution guide](docs/contribution.md).
