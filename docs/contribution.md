@@ -19,8 +19,8 @@ Note that this guide was inspired by the [transformers guide to contributing](ht
 
 There are many ways to contribute to `prompto`:
 
-* Adding new APIs and models * see the [guide on how to add new APIs and models](add_new_api.md)
-* Improving the documentation
+* Adding new APIs and models - see the [guide on how to add new APIs and models](add_new_api.md)
+* Improving the documentation - see the [building docs](#building-docs) section for more details on how to build the documentation locally
 * Contribute to the examples and creating tutorials
 * Submitting bug reports or feature requests
 * Fixing bugs or implementing new features
@@ -154,3 +154,14 @@ If you'd like to set up a development environment for `prompto`, you can follow 
     ```
 
     Refer to the [Poetry documentation](https://python-poetry.org/docs/cli/#install) for more information on installing dependencies.
+
+## Building docs
+
+We're always looking for improvements to the documentation that make it more clear and accurate. Please let us know how the documentation can be improved such as typos and any content that is missing, unclear or inaccurate. We'll be happy to make the changes or help you make a contribution if you're interested!
+
+We currently use [MkDocs](https://www.mkdocs.org/) to build the documentation. To build the documentation, you can run:
+```bash
+mkdocs serve
+```
+
+This will start a local server that you can access at `http://127.0.0.1:8088` to view the documentation. You can make changes to the documentation in the `docs` directory and the changes will be reflected in the local server.
