@@ -9,8 +9,8 @@
 ## Using `prompto`
 
 * [Setting up an experiment file](./experiment_file.md)
-* [Configuring environment variables](./environment_variables.md)
 * [prompto Pipeline and running experiments](./pipeline.md)
+* [Configuring environment variables](./environment_variables.md)
 * [prompto commands](./commands.md)
 * [Specifying rate limits](./rate_limits.md)
 

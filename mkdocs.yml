@@ -45,6 +45,7 @@ nav:
   - API Reference: reference/
   - Issues: https://github.com/alan-turing-institute/prompto/issues
   - About: docs/about.md
+  - License: LICENSE.md
 
 repo_url: https://github.com/alan-turing-institute/prompto/
 

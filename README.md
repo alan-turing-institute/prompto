@@ -1,8 +1,20 @@
 # prompto
 
-`prompto` derives from the Italian word "_pronto_" which means "_ready_" and could also mean "_I prompt_" in Italian (if "_promptare_" was a verb meaning "_to prompt_").
+`prompto` derives from the Italian word "_pronto_" which means "_ready_". It could also mean "_I prompt_" in Italian (if "_promptare_" was a verb meaning "_to prompt_").
 
-`prompto` is a Python library facilitates of LLM experiments stored as jsonl files. It automates querying API endpoints and logs progress asynchronously. The library is designed to be extensible and can be used to query different models.
+`prompto` is a Python library which facilitates processing of experiments of Large Language Models (LLMs) stored as jsonl files. It automates _asynchronous querying of LLM API endpoints_ and logs progress.
+
+## Why `prompto`?
+
+The benefit of  _asynchronous querying_ is that it allows for multiple requests to be sent to an API _without_ having to wait for the LLM's response, which is particularly useful to fully utilise the rate limits of an API. This is especially useful when an experiment file contains a large number of prompts and/or has several models to query. [_Asynchronous programming_](https://docs.python.org/3/library/asyncio.html) is simply a way for programs to avoid getting stuck on long tasks (like waiting for an LLM response from an API) and instead keep running other things at the same time (to send other queries).
+
+With `prompto`, you are able to define your experiments of LLMs in a jsonl file where each line contains the prompt and any parameters to be used for a query of a model from a specific API. The library will process the experiment file and query models and store results. You are also  able to query _multiple_ models from _different_ APIs in a single experiment file and `prompto` will take care of querying the models _asynchronously_ and in _parallel_.
+
+The library is designed to be extensible and can be used to query different models.
+
+For more details on the library, see the [documentation](./docs/README.md) where you can find information on [how to set up an experiment file](./docs/experiment_file.md), [how to run experiments](./docs/pipeline.md), [how to configure environment variables](./docs/environment_variables.md), [how to specify rate limits for APIs and to use parallel processing](./docs/rate_limits.md) and much more.
+
+See below for [installation instructions](#installation) and [quickstarts for getting started](#getting-started) with `prompto`.
 
 ## Available APIs and Models
 
