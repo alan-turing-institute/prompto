@@ -9,7 +9,7 @@ For all models/APIs, we require the following keys in the `prompt_dict`:
     * See the [documentation](models.md) for the specific APIs/models for more details on the different accepted formats of the prompt.
 * `api`: the name of the API to query
     * See the [available APIs/models](models.md) for the list of supported APIs and the corresponding names to use in the `api` key
-    * They are defined in the `ASYNC_APIS` dictionary in the [`prompto.apis` module](./../src/prompto/apis/__init__.py)
+    * They are defined in the `ASYNC_APIS` dictionary in the [`prompto.apis` module](https://github.com/alan-turing-institute/prompto/blob/main/src/prompto/apis/__init__.py)
 * `model_name`: the name of the model to query
     * For most API endpoints, it is possible to define the name of the model to query. For example, for the OpenAI API (`"api": "openai"`), the model name could be `"gpt-3.5-turbo"`, `"gpt-4"`, etc.
 

@@ -104,7 +104,7 @@ prompto_convert_images --folder images
 
 ## Start up Quart server
 
-As described in the [Quart API model documentation](./quart.md), we have implemented a simple [Quart API](./../src/prompto/apis/quart/quart_api.py) that can be used to quary a text-generation model from the [Huggingface model hub](https://huggingface.co/models) using the Huggingface `transformers` library. To start up the Quart server, you can use the `prompto_start_quart_server` command along with the Huggingface model name. To see all arguments of this command, run `prompto_start_quart_server --help`.
+As described in the [Quart API model documentation](./quart.md), we have implemented a simple [script to start up a Quart API](https://github.com/alan-turing-institute/prompto/blob/main/src/prompto/apis/quart/quart_api.py) that can be used to query a text-generation model from the [Huggingface model hub](https://huggingface.co/models) using the Huggingface `transformers` library. To start up the Quart server, you can use the `prompto_start_quart_server` command along with the Huggingface model name. To see all arguments of this command, run `prompto_start_quart_server --help`.
 
 To start up the Quart server with [`vicgalle/gpt2-open-instruct-v1`](https://huggingface.co/vicgalle/gpt2-open-instruct-v1), at `"http://localhost:8000"`, you can use the following command:
 ```
