@@ -59,7 +59,7 @@ jobs:
               uses: codecov/codecov-action@v4.5.0
 
     docs:
-        needs: [pre-commit, pytest]
+        needs: [pre-commit, checks]
         runs-on: ubuntu-latest
         steps:
           - uses: actions/checkout@v3
