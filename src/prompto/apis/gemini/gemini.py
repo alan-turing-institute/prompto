@@ -1,19 +1,13 @@
-import asyncio
 import logging
-import os
 from typing import Any
 
-import vertexai
-from vertexai.generative_models import (
-    GenerationConfig,
-    GenerativeModel,
-    HarmBlockThreshold,
-    HarmCategory,
-    Part,
-)
+import google.generativeai as genai
+from google.generativeai import GenerativeModel
+from google.generativeai.types import GenerationConfig, HarmBlockThreshold, HarmCategory
 
 from prompto.apis.base import AsyncBaseAPI
 from prompto.apis.gemini.gemini_utils import (
+    gemini_chat_roles,
     parse_multimedia,
     process_response,
     process_safety_attributes,
@@ -21,8 +15,9 @@ from prompto.apis.gemini.gemini_utils import (
 from prompto.settings import Settings
 from prompto.utils import (
     FILE_WRITE_LOCK,
+    check_either_required_env_variables_set,
     check_optional_env_variables_set,
-    check_required_env_variables_set,
+    get_environment_variable,
     get_model_name_identifier,
     log_error_response_chat,
     log_error_response_query,
@@ -31,9 +26,7 @@ from prompto.utils import (
     write_log_message,
 )
 
-PROJECT_VAR_NAME = "GEMINI_PROJECT_ID"
-LOCATION_VAR_NAME = "GEMINI_LOCATION"
-MODEL_NAME_VAR_NAME = "GEMINI_MODEL_NAME"
+API_KEY_VAR_NAME = "GEMINI_API_KEY"
 
 
 class AsyncGeminiAPI(AsyncBaseAPI):
@@ -61,9 +54,7 @@ class AsyncGeminiAPI(AsyncBaseAPI):
     def check_environment_variables() -> list[Exception]:
         """
         For Gemini, there are some optional variables:
-        - GEMINI_PROJECT_ID
-        - GEMINI_LOCATION
-        - GEMINI_MODEL_NAME
+        - GEMINI_API_KEY
 
         These are optional only if the model_name is passed
         in the prompt dictionary. If the model_name is not
@@ -82,11 +73,7 @@ class AsyncGeminiAPI(AsyncBaseAPI):
         issues = []
 
         # check the optional environment variables are set and warn if not
-        issues.extend(
-            check_optional_env_variables_set(
-                [PROJECT_VAR_NAME, LOCATION_VAR_NAME, MODEL_NAME_VAR_NAME]
-            )
-        )
+        issues.extend(check_optional_env_variables_set([API_KEY_VAR_NAME]))
 
         return issues
 
@@ -95,21 +82,13 @@ class AsyncGeminiAPI(AsyncBaseAPI):
         """
         For Gemini, we make the following model-specific checks:
         - "prompt" must be a string or a list of strings
-        - if "model_name" is not in the prompt dictionary, then the default
-          environment variables (GEMINI_PROJECT_ID, GEMINI_LOCATION, GEMINI_MODEL_NAME)
-          must be set
-        - if "model_name" is in the prompt dictionary, then the model-specific
-          project and location environment variables (GEMINI_PROJECT_ID_{identifier},
-          GEMINI_LOCATION_{identifier}) (where identifier is the model name with
-          invalid characters replaced by underscores obtained using
-          get_model_name_identifier function) can be optionally set.
-          If neither the model-specific environment variable is set or the default
-          environment variable is set, it is possible to run if you are signed in
-          with gcloud CLI
+        - model-specific environment variables (GEMINI_API_KEY_{identifier})
+          (where identifier is the model name with invalid characters replaced by
+          underscores obtained using get_model_name_identifier function) can be optionally set.
         - if "safety_filter" is provided, check that it's one of the valid options
           ("none", "few", "some", "default", "most")
         - if "generation_config" is provided, check that it can create a valid
-          vertexai.generative_models.GenerationConfig object
+          google.generativeai.types.GenerationConfig object
 
         Parameters
         ----------
@@ -125,45 +104,49 @@ class AsyncGeminiAPI(AsyncBaseAPI):
         issues = []
 
         # check prompt is of the right type (string or list of strings)
-        match prompt_dict["prompt"]:
-            case str(_):
+        if isinstance(prompt_dict["prompt"], str):
+            pass
+        elif isinstance(prompt_dict["prompt"], list):
+            if all([isinstance(message, str) for message in prompt_dict["prompt"]]):
                 pass
-            case [str(_)]:
-                pass
-            case _:
-                issues.append(
-                    TypeError(
-                        f"if api == 'gemini', then prompt must be a string or a list, "
-                        f"not {type(prompt_dict['prompt'])}"
-                    )
-                )
-
-        if "model_name" not in prompt_dict:
-            # use the default environment variables
-            # check the required environment variables are set
-            issues.extend(check_required_env_variables_set([MODEL_NAME_VAR_NAME]))
-
-            # check the optional environment variables are set and warn if not
-            issues.extend(
-                check_optional_env_variables_set([PROJECT_VAR_NAME, LOCATION_VAR_NAME])
-            )
-        else:
-            # use the model specific environment variables
-            model_name = prompt_dict["model_name"]
-            # replace any invalid characters in the model name
-            identifier = get_model_name_identifier(model_name)
-
-            # check the optional environment variables are set and warn if not
-            issues.extend(
-                check_optional_env_variables_set(
+            if all(isinstance(message, dict) for message in prompt_dict["prompt"]):
+                if (
+                    set(prompt_dict["prompt"][0].keys()) == {"role", "parts"}
+                    and prompt_dict["prompt"][0]["role"]
+                    in gemini_chat_roles + ["system"]
+                ) and all(
                     [
-                        f"{PROJECT_VAR_NAME}_{identifier}",
-                        PROJECT_VAR_NAME,
-                        f"{LOCATION_VAR_NAME}_{identifier}",
-                        LOCATION_VAR_NAME,
+                        set(d.keys()) == {"role", "parts"}
+                        and d["role"] in gemini_chat_roles
+                        for d in prompt_dict["prompt"][1:]
                     ]
+                ):
+                    pass
+        else:
+            issues.append(
+                TypeError(
+                    "if api == 'gemini', then the prompt must be a str, list[str], or "
+                    "list[dict[str,str]] where the dictionary contains the keys 'role' and "
+                    "'parts' only, and the values for 'role' must be one of 'user' or 'model', "
+                    "except for the first message in the list of dictionaries can be a "
+                    "system message with the key 'role' set to 'system'."
                 )
             )
+
+        # use the model specific environment variables
+        model_name = prompt_dict["model_name"]
+        # replace any invalid characters in the model name
+        identifier = get_model_name_identifier(model_name)
+
+        # check the required environment variables are set
+        issues.extend(
+            check_either_required_env_variables_set(
+                [
+                    f"{API_KEY_VAR_NAME}_{identifier}",
+                    API_KEY_VAR_NAME,
+                ]
+            )
+        )
 
         # check the parameter settings are valid
         # if safety_filter is provided, check that it's one of the valid options
@@ -189,7 +172,7 @@ class AsyncGeminiAPI(AsyncBaseAPI):
 
     async def _obtain_model_inputs(
         self, prompt_dict: dict
-    ) -> tuple[str, str, dict, dict, list[Part] | None]:
+    ) -> tuple[str, str, dict, dict, list | None]:
         """
         Async method to obtain the model inputs from the prompt dictionary.
 
@@ -200,7 +183,7 @@ class AsyncGeminiAPI(AsyncBaseAPI):
 
         Returns
         -------
-        tuple[str, str, dict, dict, list[Part] | None]
+        tuple[str, str, dict, dict, list | None]
             A tuple containing the prompt, model name, safety settings,
             the generation config, and list of multimedia parts (if passed)
             to use for querying the model
@@ -208,41 +191,13 @@ class AsyncGeminiAPI(AsyncBaseAPI):
         prompt = prompt_dict["prompt"]
 
         # obtain model name
-        model_name = prompt_dict.get("model_name", None)
-        if model_name is None:
-            # use the default environment variables
-            model_name = os.environ.get(MODEL_NAME_VAR_NAME)
-            if model_name is None:
-                log_message = (
-                    f"model_name is not set. Please set the {MODEL_NAME_VAR_NAME} "
-                    "environment variable or pass the model_name in the prompt dictionary"
-                )
-                async with FILE_WRITE_LOCK:
-                    write_log_message(
-                        log_file=self.log_file, log_message=log_message, log=True
-                    )
-                raise ValueError(log_message)
+        model_name = prompt_dict["model_name"]
+        api_key = get_environment_variable(
+            env_variable=API_KEY_VAR_NAME, model_name=model_name
+        )
 
-            project_id = PROJECT_VAR_NAME
-            location_id = LOCATION_VAR_NAME
-        else:
-            # use the model specific environment variables if they exist
-            # replace any invalid characters in the model name
-            identifier = get_model_name_identifier(model_name)
-
-            project_id = f"{PROJECT_VAR_NAME}_{identifier}"
-            if project_id not in os.environ:
-                project_id = PROJECT_VAR_NAME
-
-            location_id = f"{LOCATION_VAR_NAME}_{identifier}"
-            if location_id not in os.environ:
-                location_id = LOCATION_VAR_NAME
-
-        PROJECT_ID = os.environ.get(PROJECT_VAR_NAME, None)
-        LOCATION_ID = os.environ.get(LOCATION_VAR_NAME, None)
-
-        # initialise the vertexai project
-        vertexai.init(project=PROJECT_ID, location=LOCATION_ID)
+        # configure the API key
+        genai.configure(api_key=api_key)
 
         # define safety settings
         safety_filter = prompt_dict.get("safety_filter", None)
@@ -293,17 +248,6 @@ class AsyncGeminiAPI(AsyncBaseAPI):
                 f"parameters must be a dictionary, not {type(generation_config)}"
             )
 
-        # add in default parameters
-        default_generation_config = {
-            "max_output_tokens": 2048,
-            "temperature": 0.9,
-            "top_p": 1,
-            "top_k": 24,
-        }
-        for key, value in default_generation_config.items():
-            if key not in generation_config:
-                generation_config[key] = value
-
         # parse multimedia data (if any)
         multimedia_dict = prompt_dict.get("multimedia", None)
         if multimedia_dict is not None:
@@ -328,22 +272,17 @@ class AsyncGeminiAPI(AsyncBaseAPI):
         # prepare the contents to send to the model
         if multimedia is not None:
             # prepend the multimedia to the prompt
-            contents = multimedia + [Part.from_text(prompt)]
+            contents = multimedia + [prompt]
         else:
-            contents = [Part.from_text(prompt)]
+            contents = [prompt]
 
         try:
-
-            def run_predict():
-                return GenerativeModel(model_name).generate_content(
-                    contents=contents,
-                    generation_config=generation_config,
-                    safety_settings=safety_settings,
-                    stream=False,
-                )
-
-            # run the predict method in a separate thread using run_in_executor
-            response = await asyncio.get_event_loop().run_in_executor(None, run_predict)
+            response = await GenerativeModel(model_name).generate_content_async(
+                contents=contents,
+                generation_config=generation_config,
+                safety_settings=safety_settings,
+                stream=False,
+            )
             response_text = process_response(response)
             safety_attributes = process_safety_attributes(response)
 
@@ -416,28 +355,18 @@ class AsyncGeminiAPI(AsyncBaseAPI):
         model = GenerativeModel(model_name)
         chat = model.start_chat(history=[])
 
-        def run_predict(message):
-            return chat.send_message(
-                content=message,
-                generation_config=generation_config,
-                safety_settings=safety_settings,
-                stream=False,
-            )
-
-        async def send_message(message):
-            return await asyncio.get_event_loop().run_in_executor(
-                None,
-                run_predict,
-                message,
-            )
-
         response_list = []
         safety_attributes_list = []
         try:
             for message_index, message in enumerate(prompt):
                 # send the messages sequentially
                 # run the predict method in a separate thread using run_in_executor
-                response = await send_message(message=message)
+                response = await chat.send_message_async(
+                    content=message,
+                    generation_config=generation_config,
+                    safety_settings=safety_settings,
+                    stream=False,
+                )
                 response_text = process_response(response)
                 safety_attributes = process_safety_attributes(response)
 
@@ -509,6 +438,91 @@ class AsyncGeminiAPI(AsyncBaseAPI):
                 )
             raise err
 
+    async def _async_query_history(self, prompt_dict: dict, index: int | str) -> dict:
+        """
+        Async method for querying the model with a chat prompt with history
+        (prompt_dict["prompt"] is a list of dictionaries with keys "role" and "parts",
+        where "role" is one of "user", "model" and "parts" is the message),
+        i.e. multi-turn chat with history.
+        """
+        prompt, model_name, safety_settings, generation_config, _ = (
+            await self._obtain_model_inputs(prompt_dict=prompt_dict)
+        )
+
+        if prompt[0]["role"] == "system":
+            model = GenerativeModel(model_name, system_instruction=prompt[0]["parts"])
+            chat = model.start_chat(history=prompt[1:-1])
+        else:
+            model = GenerativeModel(model_name)
+            chat = model.start_chat(history=prompt[:-1])
+
+        try:
+            response = await chat.send_message_async(
+                content=prompt[-1],
+                generation_config=generation_config,
+                safety_settings=safety_settings,
+                stream=False,
+            )
+
+            response_text = process_response(response)
+            safety_attributes = process_safety_attributes(response)
+
+            log_success_response_query(
+                index=index,
+                model=f"gemini ({model_name})",
+                prompt=prompt,
+                response_text=response_text,
+            )
+
+            prompt_dict["response"] = response_text
+            prompt_dict["safety_attributes"] = safety_attributes
+            return prompt_dict
+        except IndexError as err:
+            error_as_string = (
+                f"Response is empty and blocked ({type(err).__name__} - {err})"
+            )
+            log_message = log_error_response_query(
+                index=index,
+                model=f"gemini ({model_name})",
+                prompt=prompt,
+                error_as_string=error_as_string,
+            )
+            logging.info(
+                f"Response is empty and blocked (i={index}) \nPrompt: {prompt[:50]}..."
+            )
+            if isinstance(err, IndexError):
+                async with FILE_WRITE_LOCK:
+                    write_log_message(
+                        log_file=self.log_file, log_message=log_message, log=True
+                    )
+                response_text = ""
+                if len(response.candidates) == 0:
+                    safety_attributes = {
+                        "blocked": "True",
+                        "finish_reason": "block_reason: OTHER",
+                    }
+                else:
+                    safety_attributes = process_safety_attributes(response)
+
+                prompt_dict["response"] = response_text
+                prompt_dict["safety_attributes"] = safety_attributes
+                return prompt_dict
+        except Exception as err:
+            error_as_string = f"{type(err).__name__} - {err}"
+            log_message = log_error_response_query(
+                index=index,
+                model=f"gemini ({model_name})",
+                prompt=prompt,
+                error_as_string=error_as_string,
+            )
+            async with FILE_WRITE_LOCK:
+                write_log_message(
+                    log_file=self.log_file,
+                    log_message=log_message,
+                    log=True,
+                )
+            raise err
+
     async def async_query(self, prompt_dict: dict, index: int | str = "NA") -> dict:
         """
         Async Method for querying the API/model asynchronously.
@@ -531,21 +545,38 @@ class AsyncGeminiAPI(AsyncBaseAPI):
         Exception
             If an error occurs during the querying process
         """
-        match prompt_dict["prompt"]:
-            case str(_):
-                return await self._async_query_string(
-                    prompt_dict=prompt_dict,
-                    index=index,
-                )
-            case [str(_)]:
+        if isinstance(prompt_dict["prompt"], str):
+            return await self._async_query_string(
+                prompt_dict=prompt_dict,
+                index=index,
+            )
+        elif isinstance(prompt_dict["prompt"], list):
+            if all([isinstance(message, str) for message in prompt_dict["prompt"]]):
                 return await self._async_query_chat(
                     prompt_dict=prompt_dict,
                     index=index,
                 )
-            case _:
-                pass
+            if all(isinstance(message, dict) for message in prompt_dict["prompt"]):
+                if (
+                    set(prompt_dict["prompt"][0].keys()) == {"role", "parts"}
+                    and prompt_dict["prompt"][0]["role"]
+                    in gemini_chat_roles + ["system"]
+                ) and all(
+                    [
+                        set(d.keys()) == {"role", "parts"}
+                        and d["role"] in gemini_chat_roles
+                        for d in prompt_dict["prompt"][1:]
+                    ]
+                ):
+                    return await self._async_query_history(
+                        prompt_dict=prompt_dict,
+                        index=index,
+                    )
 
         raise TypeError(
-            f"if api == 'gemini', then prompt must be a string or a list, "
-            f"not {type(prompt_dict['prompt'])}"
+            "if api == 'gemini', then the prompt must be a str, list[str], or "
+            "list[dict[str,str]] where the dictionary contains the keys 'role' and "
+            "'parts' only, and the values for 'role' must be one of 'user' or 'model', "
+            "except for the first message in the list of dictionaries can be a "
+            "system message with the key 'role' set to 'system'."
         )

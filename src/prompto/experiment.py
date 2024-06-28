@@ -442,8 +442,6 @@ class Experiment:
 
         Parameters
         ----------
-        experiment : Experiment
-            The experiment that is being processed
         prompt_dicts : list[dict]
             List of dictionaries containing the prompt and other parameters
             to be sent to the API. Each dictionary must have keys "prompt" and "api".
@@ -512,8 +510,6 @@ class Experiment:
             used for text generation. Required keys are "prompt" and "api".
             Optionally can have a "parameters" key. Some APIs may have
             other specific required keys
-        experiment : Experiment
-            The experiment that is being processed
         index : int | None, optional
             The index of the prompt in the experiment,
             by default None. If None, then index is set to "NA".
@@ -615,8 +611,6 @@ class Experiment:
             Dictionary containing the prompt and other parameters to be
             used for text generation. Required keys are "prompt" and "api".
             Some models may have other required keys.
-        experiment : Experiment
-            The experiment that is being processed
         index : int | None, optional
             The index of the prompt in the experiment,
             by default None. If None, then index is set to "NA".

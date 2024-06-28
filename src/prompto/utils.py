@@ -429,3 +429,90 @@ def sort_prompts_by_model_for_api(prompt_dicts: list[dict], api: str) -> list[di
         )
         for i in range(len(prompt_dicts))
     ]
+
+
+def get_environment_variable(env_variable: str, model_name: str) -> str:
+    """
+    Get the value of an environment variable for a specific model.
+    We first check if the environment variable with the model name identifier
+    exists. If it does, we return the value of that environment variable.
+    If it does not exist, we return the value of the environment variable
+    without the model name identifier.
+    If neither environment variables exist, we raise a ValueError.
+
+    Parameters
+    ----------
+    env_variable : str
+        The name of the environment variable to get
+    model_name : str
+        The name of the model to get the environment variable for
+
+    Returns
+    -------
+    str
+        The value of the environment variable for the specific model.
+        If no model-specific environment variable exists, the value of the
+        environment variable without the model name identifier is returned.
+    """
+    # use the model specific environment variables if they exist
+    # replace any invalid characters in the model name
+    identifier = get_model_name_identifier(model_name)
+    env_variable_with_idenfier = f"{env_variable}_{identifier}"
+
+    if env_variable_with_idenfier in os.environ:
+        return os.environ[env_variable_with_idenfier]
+    elif env_variable in os.environ:
+        return os.environ[env_variable]
+    else:
+        raise ValueError(
+            f"Neither '{env_variable}' or '{env_variable_with_idenfier}' is not set"
+        )
+
+
+def check_max_queries_dict(max_queries_dict: dict[str, int | dict[str, int]]) -> None:
+    """
+    Check the format of the max_queries_dict dictionary.
+
+    Raises a TypeError if the dictionary is not in the correct format.
+
+    Parameters
+    ----------
+    max_queries_dict : dict[str, int | dict[str, int]], optional
+        A dictionary of maximum queries per minute for each API or group, by default {}.
+        The dictionary keys should be either a group name (which is then used in the
+        "group" key of the prompt_dict) or an API name. The values should be integers
+        (the maximum queries per minute or rate limit) or itself a dictionary with
+        keys as the model-names and values as the maximum queries per minute for that model.
+    """
+    # check max_queries_dict is a dictionary
+    if not isinstance(max_queries_dict, dict):
+        raise TypeError(
+            f"max_queries_dict must be a dictionary, not {type(max_queries_dict)}"
+        )
+
+    for key, value in max_queries_dict.items():
+        # check each key is a string
+        if not isinstance(key, str):
+            raise TypeError(f"max_queries_dict keys must be strings, not {type(key)}")
+
+        # check each value is an integer or dictionary
+        if not isinstance(value, int) and not isinstance(value, dict):
+            raise TypeError(
+                f"max_queries_dict values must be integers or dictionaries, not {type(value)}"
+            )
+
+        if isinstance(value, dict):
+            for sub_key, sub_value in value.items():
+                # check each sub_key is a string
+                if not isinstance(sub_key, str):
+                    raise TypeError(
+                        "if a value of max_queries_dict is a dictionary, "
+                        f"the sub-keys must be strings, not {type(sub_key)}"
+                    )
+
+                # check each sub_value is an integer
+                if not isinstance(sub_value, int):
+                    raise TypeError(
+                        "if a value of max_queries_dict is a dictionary, "
+                        f"the sub-values must be integers, not {type(sub_value)}"
+                    )

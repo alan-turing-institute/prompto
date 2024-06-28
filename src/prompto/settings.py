@@ -1,60 +1,11 @@
 import logging
 import os
 
-from prompto.utils import create_folder
+from prompto.utils import check_max_queries_dict, create_folder
 
 
 class WriteFolderError(Exception):
     pass
-
-
-def check_max_queries_dict(max_queries_dict: dict[str, int | dict[str, int]]) -> None:
-    """
-    Check the format of the max_queries_dict dictionary.
-
-    Raises a TypeError if the dictionary is not in the correct format.
-
-    Parameters
-    ----------
-    max_queries_dict : dict[str, int | dict[str, int]], optional
-        A dictionary of maximum queries per minute for each API or group, by default {}.
-        The dictionary keys should be either a group name (which is then used in the
-        "group" key of the prompt_dict) or an API name. The values should be integers
-        (the maximum queries per minute or rate limit) or itself a dictionary with
-        keys as the model-names and values as the maximum queries per minute for that model.
-    """
-    # check max_queries_dict is a dictionary
-    if not isinstance(max_queries_dict, dict):
-        raise TypeError(
-            f"max_queries_dict must be a dictionary, not {type(max_queries_dict)}"
-        )
-
-    for key, value in max_queries_dict.items():
-        # check each key is a string
-        if not isinstance(key, str):
-            raise TypeError(f"max_queries_dict keys must be strings, not {type(key)}")
-
-        # check each value is an integer or dictionary
-        if not isinstance(value, int) and not isinstance(value, dict):
-            raise TypeError(
-                f"max_queries_dict values must be integers or dictionaries, not {type(value)}"
-            )
-
-        if isinstance(value, dict):
-            for sub_key, sub_value in value.items():
-                # check each sub_key is a string
-                if not isinstance(sub_key, str):
-                    raise TypeError(
-                        "if a value of max_queries_dict is a dictionary, "
-                        f"the sub-keys must be strings, not {type(sub_key)}"
-                    )
-
-                # check each sub_value is an integer
-                if not isinstance(sub_value, int):
-                    raise TypeError(
-                        "if a value of max_queries_dict is a dictionary, "
-                        f"the sub-values must be integers, not {type(sub_value)}"
-                    )
 
 
 class Settings:

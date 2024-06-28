@@ -58,6 +58,19 @@ except ImportError as exc:
     )
 
 try:
+    from prompto.apis.vertexai import AsyncVertexAIAPI
+
+    ASYNC_APIS["vertexai"] = AsyncVertexAIAPI
+except ImportError as exc:
+    warnings.warn(
+        message=(
+            f"Vertex AI API ('vertexai') not available. Perhaps you need to install the Vertex AI dependencies: {exc}. "
+            "Try `pip install prompto[vertexai]`"
+        ),
+        category=DependencyWarning,
+    )
+
+try:
     from prompto.apis.ollama import AsyncOllamaAPI
 
     ASYNC_APIS["ollama"] = AsyncOllamaAPI

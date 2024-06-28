@@ -1,0 +1,137 @@
+site_name: 'prompto: An open source library for asynchronous querying of LLM endpoints'
+dev_addr: '127.0.0.1:8088'
+docs_dir: .
+
+nav:
+  - Home: README.md
+  - Documentation Guide: docs/README.md
+  - Examples:
+    - Examples: examples/README.md
+    - Running experiments with prompto: examples/notebooks/running_experiments.ipynb
+    - Specifying rate limits: examples/notebooks/grouping_prompts_and_specifying_rate_limits.ipynb
+    - Azure OpenAI:
+      - Example: examples/azure-openai/README.md
+      - Notebook: examples/azure-openai/azure-openai.ipynb
+    - OpenAI:
+      - Example: examples/openai/README.md
+      - Notebook: examples/openai/openai.ipynb
+    - Gemini:
+      - Example: examples/gemini/README.md
+      - Notebook: examples/gemini/gemini.ipynb
+    - Vertex AI:
+      - Example: examples/vertexai/README.md
+      - Notebook: examples/vertexai/vertexai.ipynb
+    - Ollama:
+      - Example: examples/ollama/README.md
+      - Notebook: examples/ollama/ollama.ipynb
+  - Using prompto:
+    - Setting up an experiment file: docs/experiment_file.md
+    - Configuring environment variables: docs/environment_variables.md
+    - Running experiments and the pipeline: docs/pipeline.md
+    - prompto commands: docs/commands.md
+    - Specifying rate limits: docs/rate_limits.md
+  - Implemented APIs:
+    - APIs overview: docs/models.md
+    - Azure OpenAI: docs/azure_openai.md
+    - OpenAI: docs/openai.md
+    - Gemini: docs/gemini.md
+    - Vertex AI: docs/vertexai.md
+    - Ollama: docs/ollama.md
+    - Huggingface text-generation-inference: docs/huggingface_tgi.md
+    - Simple quart API: docs/quart.md
+  - Contributing to prompto:
+    - Adding new API/model: docs/add_new_api.md
+    - Contribution guide: docs/contribution.md
+  - API Reference: reference/
+  - Issues: https://github.com/alan-turing-institute/prompto/issues
+  - About: docs/about.md
+  - License: LICENSE.md
+
+repo_url: https://github.com/alan-turing-institute/prompto/
+
+watch:
+  - docs
+
+theme:
+  name: material
+  features:
+    - content.code.copy
+    - content.tabs.link
+  palette:
+    # Palette toggle for automatic mode
+    - media: '(prefers-color-scheme)'
+      toggle:
+        icon: material/brightness-auto
+        name: Switch to light mode
+
+    # Palette toggle for light mode
+    - media: '(prefers-color-scheme: light)'
+      scheme: default
+      toggle:
+        icon: material/brightness-7
+        name: Switch to dark mode
+
+    # Palette toggle for dark mode
+    - media: '(prefers-color-scheme: dark)'
+      scheme: slate
+      toggle:
+        icon: material/brightness-4
+        name: Switch to system preference
+
+plugins:
+  - search:
+      lang: en
+  - same-dir
+  # optional
+  # - include-markdown
+  # - markdown-exec
+  - gen-files:
+      scripts:
+        - docs/gen_ref_pages.py
+  - literate-nav:
+      nav_file: DOC_STRINGS.md
+  - section-index
+  - autorefs
+  - mkdocs-jupyter:
+      include: ["*.ipynb"]
+
+  - mkdocstrings:
+      handlers:
+        python:
+          paths: [.]
+          options:
+            docstring_style: numpy
+            separate_signature: true
+            show_signature_annotations: true
+            annotations_path: brief
+            line_length: 80
+            signature_crossrefs: true
+            merge_init_into_classes: true
+
+markdown_extensions:
+  - smarty
+  - admonition
+  - pymdownx.details
+  - abbr
+  - attr_list
+  - def_list
+  - tables
+  - footnotes
+  - pymdownx.tasklist:
+      custom_checkbox: true
+  - pymdownx.arithmatex:
+      generic: true
+  - pymdownx.tabbed:
+      alternate_style: true
+  - pymdownx.highlight:
+      anchor_linenums: true
+      use_pygments: true
+      line_spans: __span
+      pygments_lang_class: true
+  - pymdownx.inlinehilite
+  - pymdownx.snippets
+  - pymdownx.superfences
+  - pymdownx.magiclink
+
+# extra_css:
+#   - css/code_select.css
