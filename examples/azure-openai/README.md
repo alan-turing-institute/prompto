@@ -1,6 +1,6 @@
 # Using `prompto` with AzureOpenAI
 
-For prompts to Azure OpenAI API, you can simply add a line in your experiment (`.jsonl`) file where you specify the `api` to be `azure-openai`. See the [models doc](../../docs/models.md#azure-openai) for some details on the environment variables you need to set.
+For prompts to Azure OpenAI API, you can simply add a line in your experiment (`.jsonl`) file where you specify the `api` to be `azure-openai`. See the [models doc](./../../docs/azure_openai.md) for some details on the environment variables you need to set.
 
 We provide an example experiment file in [data/input/azure-openai-example.jsonl](./data/input/azure-openai-example.jsonl). You can run it with the following command (assuming that your working directory is the current directory of this notebook, i.e. `examples/azure-openai`):
 ```bash

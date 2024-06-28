@@ -1,10 +1,5 @@
 # prompto
 
-[![Actions Status][actions-badge]][actions-link]
-[![Codecov Status][codecov-badge]][codecov-link]
-[![PyPI version][pypi-version]][pypi-link]
-[![PyPI platforms][pypi-platforms]][pypi-link]
-
 `prompto` derives from the Italian word "_pronto_" which means "_ready_" and could also mean "_I prompt_" in Italian (if "_promptare_" was a verb meaning "_to prompt_").
 
 `prompto` is a Python library facilitates of LLM experiments stored as jsonl files. It automates querying API endpoints and logs progress asynchronously. The library is designed to be extensible and can be used to query different models.
@@ -12,15 +7,16 @@
 ## Available APIs and Models
 
 The library supports querying several APIs and models. The following APIs are currently supported are:
-- [OpenAI](docs/models.md#openai) (`"openai"`)
-- [Azure OpenAI](docs/models.md#azure-openai) (`"azure-openai"`)
-- [Gemini](docs/models.md#gemini) (`"gemini"`)
-- [Vertex AI](docs/models.md#vertex-ai) (`"vertexai"`)
-- [Huggingface text-generation-inference](docs/models.md#huggingface-text-generation-inference) (`"huggingface-tgi"`)
-- [Ollama](docs/models.md#ollama) (`"ollama"`)
-- [A simple Quart API](docs/models.md#quart-api) for running models from [`transformers`](https://github.com/huggingface/transformers) locally (`"quart"`)
 
-Our aim for `prompto` is to support more APIs and models in the future and to make it easy to add new APIs and models to the library. We welcome contributions to add new APIs and models to the library. We have a [contribution guide](docs/contribution.md) and a [guide on how to add new APIs and models](docs/add_new_api.md) to the library in the [docs](docs/).
+* [OpenAI](./docs/openai.md) (`"openai"`)
+* [Azure OpenAI](./docs/azure_openai.md) (`"azure-openai"`)
+* [Gemini](./docs/gemini.md) (`"gemini"`)
+* [Vertex AI](./docs/vertexai.md) (`"vertexai"`)
+* [Huggingface text-generation-inference](./docs/huggingface_tgi.md) (`"huggingface-tgi"`)
+* [Ollama](./docs/ollama.md) (`"ollama"`)
+* [A simple Quart API](./docs/quart.md) for running models from [`transformers`](https://github.com/huggingface/transformers) locally (`"quart"`)
+
+Our aim for `prompto` is to support more APIs and models in the future and to make it easy to add new APIs and models to the library. We welcome contributions to add new APIs and models to the library. We have a [contribution guide](docs/contribution.md) and a [guide on how to add new APIs and models](./docs/add_new_api.md) to the library in the [docs](./docs/README.md).
 
 ## Installation
 
@@ -44,9 +40,10 @@ You might also want to set up a development environment for the library. To do t
 ## Getting Started
 
 The library has functionality to process experiments and to run a pipeline which continually looks for new experiment jsonl files in the input folder. Everything starts with defining a **pipeline data folder** which contains:
-- `input` folder: contains the jsonl files with the experiments
-- `output` folder: where the results of the experiments will be stored. When an experiment is ran, a folder is created within the output folder of the experiment name (as defined in the jsonl file but removing the `.jsonl` extension) and the results and logs for the experiment are stored there
-- `media` folder: which contains the media files for the experiments. These files must be within folders of the same experiment name (as defined in the jsonl file but removing the `.jsonl` extension)
+
+* `input` folder: contains the jsonl files with the experiments
+* `output` folder: where the results of the experiments will be stored. When an experiment is ran, a folder is created within the output folder of the experiment name (as defined in the jsonl file but removing the `.jsonl` extension) and the results and logs for the experiment are stored there
+* `media` folder: which contains the media files for the experiments. These files must be within folders of the same experiment name (as defined in the jsonl file but removing the `.jsonl` extension)
 
 When using the library, you simply pass in the folder you would like to use as the pipeline data folder and the library will take care of the rest.
 
@@ -82,10 +79,11 @@ prompto_run_experiment --file data/input/openai.jsonl --max-queries 30
 ```
 
 This will:
+
 1. Create subfolders in the `data` folder (in particular, it will create `media` (`data/media`) and `output` (`data/media`) folders)
-2. Create a folder in the the `output` folder with the name of the experiment (the file name without the `.jsonl` extention - in this case, `openai`)
+2. Create a folder in the the `output` folder with the name of the experiment (the file name without the `.jsonl` extention * in this case, `openai`)
 3. Move the `openai.jsonl` file to the `output/openai` folder (and add a timestamp of when the input file was created to that file)
-4. Start running the experiment and sending requests to the OpenAI API asynchronously which we specified in this command to be 30 queries a minute (so requests are sent every 2 seconds) - the default is 10 queries per minute
+4. Start running the experiment and sending requests to the OpenAI API asynchronously which we specified in this command to be 30 queries a minute (so requests are sent every 2 seconds) * the default is 10 queries per minute
 5. Results will be stored in a "completed" jsonl file in the output folder (which is also timestamped)
 6. Logs will be printed out to the console and also stored in a log file (which is also timestamped)
 
@@ -146,9 +144,10 @@ The completed experiment file will contain the responses from the Gemini API for
 ## Using the Library in Python
 
 The library has a few key classes:
-- [`Settings`](src/prompto/settings.py): this defines the settings of the the experiment pipeline which stores the paths to the relevant data folders and the parameters for the pipeline.
-- [`Experiment`](src/prompto/experiment.py): this defines all the variables related to a _single_ experiment. An 'experiment' here is defined by a particular JSONL file which contains the data/prompts for each experiment. Each line in this folder is a particular input to the LLM which we will obtain a response for. An experiment can be processed by calling the `Experiment.process()` method which will query the model and store the results in the output folder.
-- [`ExperimentPipeline`](src/prompto/experiment_pipeline.py): this is the main class for running the full pipeline. The pipeline can be ran using the `ExperimentPipeline.run()` method which will continually check the input folder for new experiments to process.
-- [`AsyncBaseAPI`](src/prompto/base.py): this is the base class for querying all APIs. Each API/model should inherit from this class and implement the `async_query` method which will (asynchronously) query the model's API and return the response. When running an experiment, the `Experiment` class will call this method for each experiment to send requests asynchronously.
 
-When a new model is added, you must add it to the [`API`](src/prompto/apis/__init__.py) dictionary which is in the `apis` module. This dictionary should map the model name to the class of the model.
+* [`Settings`](./src/prompto/settings.py): this defines the settings of the the experiment pipeline which stores the paths to the relevant data folders and the parameters for the pipeline.
+* [`Experiment`](./src/prompto/experiment.py): this defines all the variables related to a _single_ experiment. An 'experiment' here is defined by a particular JSONL file which contains the data/prompts for each experiment. Each line in this folder is a particular input to the LLM which we will obtain a response for. An experiment can be processed by calling the `Experiment.process()` method which will query the model and store the results in the output folder.
+* [`ExperimentPipeline`](./src/prompto/experiment_pipeline.py): this is the main class for running the full pipeline. The pipeline can be ran using the `ExperimentPipeline.run()` method which will continually check the input folder for new experiments to process.
+* [`AsyncBaseAPI`](./src/prompto/apis/base.py): this is the base class for querying all APIs. Each API/model should inherit from this class and implement the `async_query` method which will (asynchronously) query the model's API and return the response. When running an experiment, the `Experiment` class will call this method for each experiment to send requests asynchronously.
+
+When a new model is added, you must add it to the [`API`](./src/prompto/apis/__init__.py) dictionary which is in the `apis` module. This dictionary should map the model name to the class of the model.

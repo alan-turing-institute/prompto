@@ -2,13 +2,14 @@
 
 ## Getting Started
 
-* [Quickstart](../README.md#getting-started)
-* [Installation](../README.md#installation)
-* [Examples](../examples)
+* [Quickstart](./../README.md#getting-started)
+* [Installation](./../README.md#installation)
+* [Examples](./../examples/README.md)
 
 ## Using `prompto`
 
 * [Setting up an experiment file](./experiment_file.md)
+* [Configuring environment variables](./environment_variables.md)
 * [prompto Pipeline and running experiments](./pipeline.md)
 * [prompto commands](./commands.md)
 * [Specifying rate limits](./rate_limits.md)

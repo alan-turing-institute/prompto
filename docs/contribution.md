@@ -1,28 +1,29 @@
 # Contribute to `prompto`
 
-Everyone is welcome to contribute to `prompto` and we value a wide range of contributions from code contributions or bug reports to documentation improvements. We are also open to new ideas and suggestions for the library.
+Everyone is welcome to contribute to `prompto` and we value a wide range of contributions from code contributions or bug reports to documentation improvements. In particular, while `prompto` is a tool to support querying API endpoints asynchronously, there are several APIs that we have not implemented. We don't have access to every APIs and so we need your help to implement them! We are also open to new ideas and suggestions for the library.
 
 This note aims to capture some of the practices adopted during the development of `prompto` with a view of making development easier and process of contributing to the library as smooth as possible.
 
-It is not intended as a set of hard-and-fast rules - there will always be exceptions, and we definitely don't want to deter anyone from contributing, rather we hope that this will develop into a set of helpful guidelines, and additions/corrections to this document are always welcome!
+It is not intended as a set of hard-and-fast rules * there will always be exceptions, and we definitely don't want to deter anyone from contributing, rather we hope that this will develop into a set of helpful guidelines, and additions/corrections to this document are always welcome!
 
 Note that this guide was inspired by the [transformers guide to contributing](https://github.com/huggingface/transformers/blob/main/CONTRIBUTING.md).
 
 ### Sections
 
-- [Ways to contribute](#ways-to-contribute)
-- [Branching and making a pull request](#branching-and-making-a-pull-request)
-- [Formatting and `pre-commit` hooks](#formatting-and-pre-commit-hooks)
-- [Setting up a development environment](#setting-up-a-development-environment)
+* [Ways to contribute](#ways-to-contribute)
+* [Branching and making a pull request](#branching-and-making-a-pull-request)
+* [Formatting and `pre-commit` hooks](#formatting-and-pre-commit-hooks)
+* [Setting up a development environment](#setting-up-a-development-environment)
 
 ## Ways to contribute
 
 There are many ways to contribute to `prompto`:
-- Adding new APIs and models - see the [guide on how to add new APIs and models](add_new_api.md)
-- Improving the documentation
-- Contribute to the examples and creating tutorials
-- Submitting bug reports or feature requests
-- Fixing bugs or implementing new features
+
+* Adding new APIs and models * see the [guide on how to add new APIs and models](add_new_api.md)
+* Improving the documentation
+* Contribute to the examples and creating tutorials
+* Submitting bug reports or feature requests
+* Fixing bugs or implementing new features
 
 To see any open issues or to submit a new issue, you can visit the [issues page](https://github.com/alan-turing-institute/prompto/issues).
 
@@ -42,7 +43,7 @@ To start contributing, you can follow these steps:
     git remote add upstream https://github.com/alan-turing-institute/prompto.git
     ```
 
-3. **Create a development environment in a new virtual environment** - see [setting up a development environment](#setting-up-a-development-environment) section for more details.
+3. **Create a development environment in a new virtual environment** * see [setting up a development environment](#setting-up-a-development-environment) section for more details.
 
 3. **Create a new branch for your changes**
     ```bash
@@ -62,7 +63,7 @@ To start contributing, you can follow these steps:
     python -m pytest
     ```
 
-6. **Install pre-commit hooks** - see [formatting and `pre-commit` hooks](#formatting-and-pre-commit-hooks) section for more details.
+6. **Install pre-commit hooks** * see [formatting and `pre-commit` hooks](#formatting-and-pre-commit-hooks) section for more details.
     You can install the pre-commit hooks by running:
     ```bash
     pre-commit install
@@ -104,7 +105,7 @@ After doing this, each time you commit, some linters will be applied to format t
 
 If you'd like to set up a development environment for `prompto`, you can follow the steps below:
 
-1. **Clone the repository** (or a fork of the repository if you are planning to contribute to the library - see the [branching and making a pull request](#branching-and-making-a-pull-request) section for more details)
+1. **Clone the repository** (or a fork of the repository if you are planning to contribute to the library * see the [branching and making a pull request](#branching-and-making-a-pull-request) section for more details)
     ```bash
     git clone git@github.com:alan-turing-institute/prompto.git
     ```
