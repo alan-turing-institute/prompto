@@ -640,6 +640,6 @@ class Experiment:
             )
 
         # query the model
-        response = await api.async_query(prompt_dict=prompt_dict, index=index)
+        response = await api.query(prompt_dict=prompt_dict, index=index)
 
         return response

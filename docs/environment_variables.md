@@ -1,6 +1,8 @@
 # Environment variables
 
-Each API has a number of environment variables that are either required or optional to be set in order to query the model. We recommend setting these environment variables in a `.env` file in the root of the project directory. When you run the `prompto_run_experiment` or `prompto_run_pipeline` commands, the library will look for an `.env` file in the current directory and we then use `python-dotenv` to load the environment variables into the Python environment. An `.env` file would look something like:
+Each API has a number of environment variables that are either required or optional to be set in order to query the model. We recommend setting these environment variables in a `.env` file in the root of the project directory. When you run the `prompto_run_experiment` or `prompto_run_pipeline` commands, the library will look for an `.env` file in the current directory and we then use `python-dotenv` to load the environment variables into the Python environment.
+
+An `.env` file would look something like:
 ```
 OPENAI_API_KEY=<YOUR-OPENAI-KEY>
 AZURE_OPENAI_API_KEY=<YOUR-AZURE-OPENAI-KEY>

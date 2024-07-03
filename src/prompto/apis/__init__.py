@@ -1,6 +1,6 @@
 import warnings
 
-from prompto.apis.base import AsyncBaseAPI
+from prompto.apis.base import AsyncAPI
 from prompto.apis.testing import AsyncTestAPI
 
 
@@ -9,7 +9,7 @@ class DependencyWarning(Warning):
 
 
 # define the API names that are available in the pipeline and the corresponding model classes
-ASYNC_APIS: dict[str, AsyncBaseAPI] = {}
+ASYNC_APIS: dict[str, AsyncAPI] = {}
 
 # import the model classes - if the import fails (i.e. optional dependencies were not installed),
 # the model will not be available

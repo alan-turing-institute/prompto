@@ -3,12 +3,12 @@ import random
 import time
 from typing import Any
 
-from prompto.apis.base import AsyncBaseAPI
+from prompto.apis.base import AsyncAPI
 from prompto.settings import Settings
 from prompto.utils import log_error_response_query, log_success_response_query
 
 
-class AsyncTestAPI(AsyncBaseAPI):
+class AsyncTestAPI(AsyncAPI):
     def __init__(
         self,
         settings: Settings,
@@ -26,7 +26,7 @@ class AsyncTestAPI(AsyncBaseAPI):
     def check_prompt_dict(prompt_dict: dict) -> list[Exception]:
         return []
 
-    async def async_query(self, prompt_dict: dict, index: int | str) -> dict:
+    async def query(self, prompt_dict: dict, index: int | str) -> dict:
         # get the raise_error parameter from the prompt_dict
         # if not either "True" or "False", we error 1/5 times
         generation_config = prompt_dict.get("parameters", {})
