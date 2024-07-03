@@ -1,5 +1,7 @@
 # Documentation
 
+To view this documentation in a more readable format, visit the [prompto documentation website](https://alan-turing-institute.github.io/prompto/).
+
 ## Getting Started
 
 * [Quickstart](./../README.md#getting-started)
