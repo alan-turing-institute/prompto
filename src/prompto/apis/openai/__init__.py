@@ -1,3 +1,3 @@
-from prompto.apis.openai.openai import AsyncOpenAIAPI
+from prompto.apis.openai.openai import OpenAIAPI
 
-__all__ = ["AsyncOpenAIAPI"]
+__all__ = ["OpenAIAPI"]

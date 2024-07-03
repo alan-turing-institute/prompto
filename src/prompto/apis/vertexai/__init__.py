@@ -1,3 +1,3 @@
-from prompto.apis.vertexai.vertexai import AsyncVertexAIAPI
+from prompto.apis.vertexai.vertexai import VertexAIAPI
 
-__all__ = ["AsyncVertexAIAPI"]
+__all__ = ["VertexAIAPI"]

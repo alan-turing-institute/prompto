@@ -1,3 +1,3 @@
-from prompto.apis.quart.quart import AsyncQuartAPI
+from prompto.apis.quart.quart import QuartAPI
 
-__all__ = ["AsyncQuartAPI"]
+__all__ = ["QuartAPI"]

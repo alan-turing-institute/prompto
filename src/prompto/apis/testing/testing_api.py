@@ -8,7 +8,7 @@ from prompto.settings import Settings
 from prompto.utils import log_error_response_query, log_success_response_query
 
 
-class AsyncTestAPI(AsyncAPI):
+class TestAPI(AsyncAPI):
     def __init__(
         self,
         settings: Settings,

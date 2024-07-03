@@ -29,7 +29,7 @@ from prompto.utils import (
 API_KEY_VAR_NAME = "GEMINI_API_KEY"
 
 
-class AsyncGeminiAPI(AsyncAPI):
+class GeminiAPI(AsyncAPI):
     """
     Class for asynchronous querying of the Gemini API.
 

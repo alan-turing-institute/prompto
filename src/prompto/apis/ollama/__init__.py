@@ -1,3 +1,3 @@
-from prompto.apis.ollama.ollama import AsyncOllamaAPI
+from prompto.apis.ollama.ollama import OllamaAPI
 
-__all__ = ["AsyncOllamaAPI"]
+__all__ = ["OllamaAPI"]

@@ -1,3 +1,3 @@
-from prompto.apis.huggingface_tgi.huggingface_tgi import AsyncHuggingfaceTGIAPI
+from prompto.apis.huggingface_tgi.huggingface_tgi import HuggingfaceTGIAPI
 
-__all__ = ["AsyncHuggingfaceTGIAPI"]
+__all__ = ["HuggingfaceTGIAPI"]

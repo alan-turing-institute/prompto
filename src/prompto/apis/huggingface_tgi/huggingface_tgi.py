@@ -26,7 +26,7 @@ API_ENDPOINT_VAR_NAME = "HUGGINGFACE_TGI_API_ENDPOINT"
 API_KEY_VAR_NAME = "HUGGINGFACE_TGI_API_KEY"
 
 
-class AsyncHuggingfaceTGIAPI(AsyncAPI):
+class HuggingfaceTGIAPI(AsyncAPI):
     """
     Class for asynchrnous querying of the Huggingface TGI API endpoint.
 

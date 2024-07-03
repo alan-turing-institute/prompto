@@ -34,7 +34,7 @@ PROJECT_VAR_NAME = "VERTEXAI_PROJECT_ID"
 LOCATION_VAR_NAME = "VERTEXAI_LOCATION_ID"
 
 
-class AsyncVertexAIAPI(AsyncAPI):
+class VertexAIAPI(AsyncAPI):
     """
     Class for asynchronous querying of the VertexAI API.
 

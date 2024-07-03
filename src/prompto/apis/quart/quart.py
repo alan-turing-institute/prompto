@@ -20,7 +20,7 @@ from prompto.utils import (
 API_ENDPOINT_VAR_NAME = "QUART_API_ENDPOINT"
 
 
-class AsyncQuartAPI(AsyncAPI):
+class QuartAPI(AsyncAPI):
     """
     Class for querying the Quart API asynchronously.
 

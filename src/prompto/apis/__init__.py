@@ -1,7 +1,7 @@
 import warnings
 
 from prompto.apis.base import AsyncAPI
-from prompto.apis.testing import AsyncTestAPI
+from prompto.apis.testing import TestAPI
 
 
 class DependencyWarning(Warning):
@@ -15,13 +15,13 @@ ASYNC_APIS: dict[str, AsyncAPI] = {}
 # the model will not be available
 
 # test model is always available
-ASYNC_APIS["test"] = AsyncTestAPI
+ASYNC_APIS["test"] = TestAPI
 
 # import the other APIs if the dependencies are available
 try:
-    from prompto.apis.azure_openai import AsyncAzureOpenAIAPI
+    from prompto.apis.azure_openai import AzureOpenAIAPI
 
-    ASYNC_APIS["azure-openai"] = AsyncAzureOpenAIAPI
+    ASYNC_APIS["azure-openai"] = AzureOpenAIAPI
 except ImportError as exc:
     warnings.warn(
         message=(
@@ -32,9 +32,9 @@ except ImportError as exc:
     )
 
 try:
-    from prompto.apis.openai import AsyncOpenAIAPI
+    from prompto.apis.openai import OpenAIAPI
 
-    ASYNC_APIS["openai"] = AsyncOpenAIAPI
+    ASYNC_APIS["openai"] = OpenAIAPI
 except ImportError as exc:
     warnings.warn(
         message=(
@@ -45,9 +45,9 @@ except ImportError as exc:
     )
 
 try:
-    from prompto.apis.gemini import AsyncGeminiAPI
+    from prompto.apis.gemini import GeminiAPI
 
-    ASYNC_APIS["gemini"] = AsyncGeminiAPI
+    ASYNC_APIS["gemini"] = GeminiAPI
 except ImportError as exc:
     warnings.warn(
         message=(
@@ -58,9 +58,9 @@ except ImportError as exc:
     )
 
 try:
-    from prompto.apis.vertexai import AsyncVertexAIAPI
+    from prompto.apis.vertexai import VertexAIAPI
 
-    ASYNC_APIS["vertexai"] = AsyncVertexAIAPI
+    ASYNC_APIS["vertexai"] = VertexAIAPI
 except ImportError as exc:
     warnings.warn(
         message=(
@@ -71,9 +71,9 @@ except ImportError as exc:
     )
 
 try:
-    from prompto.apis.ollama import AsyncOllamaAPI
+    from prompto.apis.ollama import OllamaAPI
 
-    ASYNC_APIS["ollama"] = AsyncOllamaAPI
+    ASYNC_APIS["ollama"] = OllamaAPI
 except ImportError as exc:
     warnings.warn(
         message=(
@@ -84,9 +84,9 @@ except ImportError as exc:
     )
 
 try:
-    from prompto.apis.huggingface_tgi import AsyncHuggingfaceTGIAPI
+    from prompto.apis.huggingface_tgi import HuggingfaceTGIAPI
 
-    ASYNC_APIS["huggingface-tgi"] = AsyncHuggingfaceTGIAPI
+    ASYNC_APIS["huggingface-tgi"] = HuggingfaceTGIAPI
 except ImportError as exc:
     warnings.warn(
         message=(
@@ -97,9 +97,9 @@ except ImportError as exc:
     )
 
 try:
-    from prompto.apis.quart import AsyncQuartAPI
+    from prompto.apis.quart import QuartAPI
 
-    ASYNC_APIS["quart"] = AsyncQuartAPI
+    ASYNC_APIS["quart"] = QuartAPI
 except ImportError as exc:
     warnings.warn(
         message=(

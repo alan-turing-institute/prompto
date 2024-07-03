@@ -1,3 +1,3 @@
-from prompto.apis.testing.testing_api import AsyncTestAPI
+from prompto.apis.testing.testing_api import TestAPI
 
-__all__ = ["AsyncTestAPI"]
+__all__ = ["TestAPI"]

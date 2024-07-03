@@ -30,7 +30,7 @@ API_ENDPOINT_VAR_NAME = "AZURE_OPENAI_API_ENDPOINT"
 API_VERSION_VAR_NAME = "AZURE_OPENAI_API_VERSION"
 
 
-class AsyncAzureOpenAIAPI(AsyncAPI):
+class AzureOpenAIAPI(AsyncAPI):
     """
     Class for asynchronous querying of the Azure OpenAI API.
 

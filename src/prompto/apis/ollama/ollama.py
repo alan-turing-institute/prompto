@@ -23,7 +23,7 @@ from prompto.utils import (
 API_ENDPOINT_VAR_NAME = "OLLAMA_API_ENDPOINT"
 
 
-class AsyncOllamaAPI(AsyncAPI):
+class OllamaAPI(AsyncAPI):
     """
     Class for querying the Ollama API asynchronously.
 

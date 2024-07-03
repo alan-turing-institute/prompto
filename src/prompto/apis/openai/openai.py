@@ -1,5 +1,4 @@
 import logging
-import os
 from typing import Any
 
 import openai
@@ -26,7 +25,7 @@ from prompto.utils import (
 API_KEY_VAR_NAME = "OPENAI_API_KEY"
 
 
-class AsyncOpenAIAPI(AsyncAPI):
+class OpenAIAPI(AsyncAPI):
     """
     Class for querying the OpenAI API asynchronously.
 
