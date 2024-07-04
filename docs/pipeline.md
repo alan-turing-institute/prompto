@@ -4,7 +4,7 @@ The library has functionality to process experiments and to run a pipeline which
 ```
 └── data
     └── input: contains the jsonl files with the experiments
-    └── output: contains the results of the experiments will be stored.
+    └── output: contains the results of the experiments runs.
         When an experiment is ran, a folder is created within the output folder with the experiment name
         as defined in the jsonl file but removing the `.jsonl` extension.
         The results and logs for the experiment are stored there
@@ -18,6 +18,7 @@ For specifying API keys and other variables for the different APIs, you can use 
 ## Running the pipeline
 
 Once you have added the jsonl files to the `input/` folder of the data folder, you can run the pipeline process using the `prompto_run_pipeline` command in the terminal as follows:
+
 ```bash
 prompto_run_pipeline --data-folder data
 ```
@@ -29,6 +30,7 @@ If there are several experiments in the input folder, the pipeline will process 
 ## Run a single experiment
 
 If you want to run a single experiment, you can use the `prompto_run_experiment` command in the terminal as follows:
+
 ```bash
 prompto_run_experiment --file path/to/experiment.jsonl --data-folder data
 ```
@@ -49,10 +51,13 @@ When running the pipeline or an experiment, there are certain settings to define
 More detailed information on parallel processing and examples can be found in the [specifying rate limits documentation](./rate_limits.md).
 
 For example, to run the pipeline in `pipline-data/`, with a maximum of 5 queries per minute, have a maximum of 3 attempts for each query, and to send calls to separate API endpoints in parallel, you can run:
+
 ```bash
 prompto_run_pipeline --data-folder pipeline-data --max-queries 5 --max-attempts 3 --parallel
 ```
+
 and similarly for running a single experiment:
+
 ```bash
 prompto_run_experiment --file path/to/experiment.jsonl --data-folder pipeline-data --max-queries 5 --max-attempts 3 --parallel
 ```

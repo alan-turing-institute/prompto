@@ -94,7 +94,7 @@ This will:
 
 1. Create subfolders in the `data` folder (in particular, it will create `media` (`data/media`) and `output` (`data/media`) folders)
 2. Create a folder in the the `output` folder with the name of the experiment (the file name without the `.jsonl` extention * in this case, `openai`)
-3. Move the `openai.jsonl` file to the `output/openai` folder (and add a timestamp of when the input file was created to that file)
+3. Move the `openai.jsonl` file to the `output/openai` folder (and add a timestamp of when the run of the experiment started)
 4. Start running the experiment and sending requests to the OpenAI API asynchronously which we specified in this command to be 30 queries a minute (so requests are sent every 2 seconds) * the default is 10 queries per minute
 5. Results will be stored in a "completed" jsonl file in the output folder (which is also timestamped)
 6. Logs will be printed out to the console and also stored in a log file (which is also timestamped)

@@ -49,13 +49,15 @@ def test_experiment_init(temporary_data_folders):
     assert experiment.settings == settings
     assert experiment.output_folder == "data/output/test_in_input"
     assert experiment.input_file_path == "data/input/test_in_input.jsonl"
+    assert isinstance(experiment.creation_time, str)
+    assert isinstance(experiment.start_time, str)
     assert (
         experiment.output_completed_file_path
-        == f"data/output/test_in_input/{experiment.creation_time}-completed-test_in_input.jsonl"
+        == f"data/output/test_in_input/{experiment.start_time}-completed-test_in_input.jsonl"
     )
     assert (
         experiment.output_input_file_out_path
-        == f"data/output/test_in_input/{experiment.creation_time}-input-test_in_input.jsonl"
+        == f"data/output/test_in_input/{experiment.start_time}-input-test_in_input.jsonl"
     )
     assert experiment._experiment_prompts == [
         {"id": 0, "prompt": "test prompt 0", "api": "test"},
@@ -67,10 +69,9 @@ def test_experiment_init(temporary_data_folders):
         {"id": 1, "prompt": "test prompt 1", "api": "test"},
     ]
     assert experiment.number_queries == 2
-    assert isinstance(experiment.creation_time, str)
     assert (
         experiment.log_file
-        == f"data/output/test_in_input/{experiment.creation_time}-test_in_input-log.txt"
+        == f"data/output/test_in_input/{experiment.start_time}-test_in_input-log.txt"
     )
 
     # test str method
