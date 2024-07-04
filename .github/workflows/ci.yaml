@@ -79,7 +79,7 @@ jobs:
           - name: Install doc dependencies via poetry
             run: |
               pip install poetry
-              poetry install --with dev
+              poetry install --extras dev
 
           - name: Build docs with gh-deploy --force
             run: |
