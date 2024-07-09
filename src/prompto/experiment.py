@@ -406,7 +406,7 @@ class Experiment:
         for index, item in enumerate(
             tqdm(
                 prompt_dicts,
-                desc=f"Sending {len(prompt_dicts)} queries {for_group_string} (attempt {attempt_frac})",
+                desc=f"Sending {len(prompt_dicts)} queries at {rate_limit} QPM with RI of {request_interval}s {for_group_string} (attempt {attempt_frac})",
                 unit="query",
             )
         ):
