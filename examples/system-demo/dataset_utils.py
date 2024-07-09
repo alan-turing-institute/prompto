@@ -7,11 +7,13 @@ def generate_experiment_1_file(
 ) -> None:
     # function to generate an experiment file with prompts for a
     # single API, model_name, and parameters configuration
+    index = 0
     with open(path, "w") as f:
         for prompt in prompts:
             f.write(
                 json.dumps(
                     {
+                        "id": index,
                         "api": api,
                         "model_name": model_name,
                         "prompt": prompt,
@@ -20,6 +22,7 @@ def generate_experiment_1_file(
                 )
             )
             f.write("\n")
+            index += 1
 
 
 def generate_experiment_2_file(
@@ -34,12 +37,14 @@ def generate_experiment_2_file(
     if len(api) != len(model_name) or len(model_name) != len(params):
         raise ValueError("Length mismatch between api, model_name, and params lists")
 
+    index = 0
     with open(path, "w") as f:
         for i in range(len(api)):
             for prompt in prompts:
                 f.write(
                     json.dumps(
                         {
+                            "id": index,
                             "api": api[i],
                             "model_name": model_name[i],
                             "prompt": prompt,
@@ -48,6 +53,7 @@ def generate_experiment_2_file(
                     )
                 )
                 f.write("\n")
+                index += 1
 
 
 def generate_experiment_3_file(
@@ -59,12 +65,15 @@ def generate_experiment_3_file(
 ) -> None:
     # function to generate an experiment file with prompts for a
     # single API and parameters configuration but for multiple model_names
+
+    index = 0
     with open(path, "w") as f:
         for i in range(len(model_name)):
             for prompt in prompts:
                 f.write(
                     json.dumps(
                         {
+                            "id": index,
                             "api": api,
                             "model_name": model_name[i],
                             "prompt": prompt,
@@ -73,6 +82,7 @@ def generate_experiment_3_file(
                     )
                 )
                 f.write("\n")
+                index += 1
 
 
 def load_prompts(path: str) -> list[str]:

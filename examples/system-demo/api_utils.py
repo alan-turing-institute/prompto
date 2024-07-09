@@ -25,6 +25,7 @@ def send_prompt(prompt_dict: dict) -> str:
         match prompt_dict:
             # with params
             case {
+                "id": _,
                 "api": api,
                 "model_name": model_name,
                 "prompt": prompt,
