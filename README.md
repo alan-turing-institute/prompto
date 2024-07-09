@@ -1,8 +1,8 @@
 # prompto
 
-`prompto` derives from the Italian word "_pronto_" which means "_ready_". It could also mean "_I prompt_" in Italian (if "_promptare_" was a verb meaning "_to prompt_").
-
 `prompto` is a Python library which facilitates processing of experiments of Large Language Models (LLMs) stored as jsonl files. It automates _asynchronous querying of LLM API endpoints_ and logs progress.
+
+`prompto` derives from the Italian word "_pronto_" which means "_ready_". It could also mean "_I prompt_" in Italian (if "_promptare_" was a verb meaning "_to prompt_").
 
 ## Why `prompto`?
 
@@ -49,13 +49,22 @@ pip install prompto[all]
 
 You might also want to set up a development environment for the library. To do this, please refer to the [development environment setup guide](docs/contribution.md#setting-up-a-development-environment) in our [contribution guide](docs/contribution.md).
 
+`prompto` derives from the Italian word "_pronto_" which means "_ready_" and could also mean "_I prompt_" in Italian (if "_promptare_" was a verb meaning "_to prompt_").
+
 ## Getting Started
 
 The library has functionality to process experiments and to run a pipeline which continually looks for new experiment jsonl files in the input folder. Everything starts with defining a **pipeline data folder** which contains:
-
-* `input` folder: contains the jsonl files with the experiments
-* `output` folder: where the results of the experiments will be stored. When an experiment is ran, a folder is created within the output folder of the experiment name (as defined in the jsonl file but removing the `.jsonl` extension) and the results and logs for the experiment are stored there
-* `media` folder: which contains the media files for the experiments. These files must be within folders of the same experiment name (as defined in the jsonl file but removing the `.jsonl` extension)
+```
+├── data
+│   └── input: contains the jsonl files with the experiments
+│   └── output: contains the results of the experiments will be stored.
+│       When an experiment is ran, a folder is created within the output folder with the experiment name
+│       as defined in the jsonl file but removing the `.jsonl` extension.
+│       The results and logs for the experiment are stored there
+│   └── media: contains the media files for the experiments.
+│       These files must be within folders of the same experiment name
+│       as defined in the jsonl file but removing the `.jsonl` extension
+```
 
 When using the library, you simply pass in the folder you would like to use as the pipeline data folder and the library will take care of the rest.
 
@@ -63,6 +72,8 @@ The main command line interface for running an experiment is the `prompto_run_ex
 ```bash
 prompto_run_experiment --help
 ```
+
+See the [examples](examples) folder for examples of how to use the library with different APIs/models. Each example contains an experiment file which contains prompts for the model(s) and a walkthrough on how to run the experiment.
 
 ### OpenAI example
 
@@ -114,6 +125,8 @@ The resulting folder structure will look like this:
 
 The completed experiment file will contain the responses from the OpenAI API for the specific model in each prompt in the input file in `data/output/openai/DD-MM-YYYY-hh-mm-ss-completed-openai.jsonl` where `DD-MM-YYYY-hh-mm-ss` is the timestamp of when the input file was created.
 
+For a more detailed walkthrough on using `prompto` with the OpenAI API, see the [`openai` example](examples/openai).
+
 ### Gemini example
 
 ```json
@@ -152,6 +165,8 @@ As with the above example, the resulting folder structure will look like this:
 ```
 
 The completed experiment file will contain the responses from the Gemini API for the specified model in each prompt in the input file in `data/output/gemini/DD-MM-YYYY-hh-mm-ss-completed-gemini.jsonl` where `DD-MM-YYYY-hh-mm-ss` is the timestamp of when the input file was created.
+
+For a more detailed walkthrough on using `prompto` with the Gemini API, see the [`gemini` example](examples/gemini).
 
 ## Using the Library in Python
 
