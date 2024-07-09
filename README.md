@@ -1,15 +1,23 @@
 # prompto
 
-`prompto` derives from the Italian word "_pronto_" which means "_ready_" and could also mean "_I prompt_" in Italian (if "_promptare_" was a verb meaning "_to prompt_").
-
 `prompto` is a Python library facilitates of LLM experiments stored as jsonl files. It automates querying API endpoints and logs progress asynchronously. The library is designed to be extensible and can be used to query different models.
+
+`prompto` derives from the Italian word "_pronto_" which means "_ready_" and could also mean "_I prompt_" in Italian (if "_promptare_" was a verb meaning "_to prompt_").
 
 ## Getting Started
 
 The library has functionality to process experiments and to run a pipeline which continually looks for new experiment jsonl files in the input folder. Everything starts with defining a **pipeline data folder** which contains:
-- `input` folder: contains the jsonl files with the experiments
-- `output` folder: where the results of the experiments will be stored. When an experiment is ran, a folder is created within the output folder of the experiment name (as defined in the jsonl file but removing the `.jsonl` extension) and the results and logs for the experiment are stored there
-- `media` folder: which contains the media files for the experiments. These files must be within folders of the same experiment name (as defined in the jsonl file but removing the `.jsonl` extension)
+```
+├── data
+│   └── input: contains the jsonl files with the experiments
+│   └── output: contains the results of the experiments will be stored.
+│       When an experiment is ran, a folder is created within the output folder with the experiment name
+│       as defined in the jsonl file but removing the `.jsonl` extension.
+│       The results and logs for the experiment are stored there
+│   └── media: contains the media files for the experiments.
+│       These files must be within folders of the same experiment name
+│       as defined in the jsonl file but removing the `.jsonl` extension
+```
 
 When using the library, you simply pass in the folder you would like to use as the pipeline data folder and the library will take care of the rest.
 
@@ -17,6 +25,8 @@ The main command line interface for running an experiment is the `prompto_run_ex
 ```bash
 prompto_run_experiment --help
 ```
+
+See the [examples](examples) folder for examples of how to use the library with different APIs/models. Each example contains an experiment file which contains prompts for the model(s) and a walkthrough on how to run the experiment.
 
 ### OpenAI example
 
@@ -45,7 +55,7 @@ prompto_run_experiment --file data/input/openai.jsonl --max-queries 30
 ```
 
 This will:
-1. Create subfolders in the `data` folder (in particular, it will create `media` (`data/media`) and `output` (`data/media`) folders)
+1. Create subfolders in the `data` folder - in particular, it will create `media` (`data/media`) and `output` (`data/media`) folders
 2. Create a folder in the the `output` folder with the name of the experiment (the file name without the `.jsonl` extention - in this case, `openai`)
 3. Move the `openai.jsonl` file to the `output/openai` folder (and add a timestamp of when the input file was created to that file)
 4. Start running the experiment and sending requests to the OpenAI API asynchronously which we specified in this command to be 30 queries a minute (so requests are sent every 2 seconds) - the default is 10 queries per minute
@@ -66,6 +76,8 @@ The resulting folder structure will look like this:
 ```
 
 The completed experiment file will contain the responses from the OpenAI API for the specific model in each prompt in the input file in `data/output/openai/DD-MM-YYYY-hh-mm-ss-completed-openai.jsonl` where `DD-MM-YYYY-hh-mm-ss` is the timestamp of when the input file was created.
+
+For a more detailed walkthrough on using `prompto` with the OpenAI API, see the [`openai` example](examples/openai).
 
 ### Gemini example
 
@@ -105,6 +117,8 @@ As with the above example, the resulting folder structure will look like this:
 ```
 
 The completed experiment file will contain the responses from the Gemini API for the specified model in each prompt in the input file in `data/output/gemini/DD-MM-YYYY-hh-mm-ss-completed-gemini.jsonl` where `DD-MM-YYYY-hh-mm-ss` is the timestamp of when the input file was created.
+
+For a more detailed walkthrough on using `prompto` with the Gemini API, see the [`gemini` example](examples/gemini).
 
 ## Using the Library in Python
 
