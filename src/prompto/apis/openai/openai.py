@@ -11,7 +11,6 @@ from prompto.utils import (
     FILE_WRITE_LOCK,
     check_either_required_env_variables_set,
     check_optional_env_variables_set,
-    check_required_env_variables_set,
     get_environment_variable,
     get_model_name_identifier,
     log_error_response_chat,
