@@ -18,6 +18,8 @@ from prompto.utils import (
     write_log_message,
 )
 
+TIMESTAMP_FORMAT = "%d-%m-%Y-%H-%M-%S"
+
 
 class Experiment:
     """
@@ -84,18 +86,22 @@ class Experiment:
         # get the time which the experiment file is created
         self.creation_time: str = datetime.fromtimestamp(
             os.path.getctime(self.input_file_path)
-        ).strftime("%d-%m-%Y-%H-%M-%S")
+        ).strftime(TIMESTAMP_FORMAT)
+
+        # get the current time of when the experiment has started to run including time zone
+        self.start_time = datetime.now().strftime(TIMESTAMP_FORMAT)
+
         # log file is a file in the experiment output folder
         self.log_file: str = os.path.join(
-            self.output_folder, f"{self.creation_time}-{self.experiment_name}-log.txt"
+            self.output_folder, f"{self.start_time}-{self.experiment_name}-log.txt"
         )
         # file path of the completed experiment file in the output experiment folder
         self.output_completed_file_path: str = os.path.join(
-            self.output_folder, f"{self.creation_time}-completed-" + self.file_name
+            self.output_folder, f"{self.start_time}-completed-" + self.file_name
         )
         # file path of the input file in the output experiment folder (for logging purposes)
         self.output_input_file_out_path: str = os.path.join(
-            self.output_folder, f"{self.creation_time}-input-" + self.file_name
+            self.output_folder, f"{self.start_time}-input-" + self.file_name
         )
 
         # grouped experiment prompts by
@@ -266,8 +272,8 @@ class Experiment:
         record the responses in an output jsonl file in the output experiment folder.
         Logs will be printed and saved in the log file for the experiment.
 
-        All output files are timestamped with the creation/change time of the
-        experiment file.
+        All output files are timestamped with the time for when the experiment
+        started to run.
 
         Returns
         -------
@@ -442,8 +448,6 @@ class Experiment:
 
         Parameters
         ----------
-        experiment : Experiment
-            The experiment that is being processed
         prompt_dicts : list[dict]
             List of dictionaries containing the prompt and other parameters
             to be sent to the API. Each dictionary must have keys "prompt" and "api".
@@ -512,8 +516,6 @@ class Experiment:
             used for text generation. Required keys are "prompt" and "api".
             Optionally can have a "parameters" key. Some APIs may have
             other specific required keys
-        experiment : Experiment
-            The experiment that is being processed
         index : int | None, optional
             The index of the prompt in the experiment,
             by default None. If None, then index is set to "NA".
@@ -615,8 +617,6 @@ class Experiment:
             Dictionary containing the prompt and other parameters to be
             used for text generation. Required keys are "prompt" and "api".
             Some models may have other required keys.
-        experiment : Experiment
-            The experiment that is being processed
         index : int | None, optional
             The index of the prompt in the experiment,
             by default None. If None, then index is set to "NA".
@@ -645,7 +645,10 @@ class Experiment:
                 f"API {prompt_dict['api']} not recognised or implemented"
             )
 
+        # add a timestamp to the prompt_dict
+        prompt_dict["timestamp_sent"] = datetime.now().strftime(TIMESTAMP_FORMAT)
+
         # query the model
-        response = await api.async_query(prompt_dict=prompt_dict, index=index)
+        response = await api.query(prompt_dict=prompt_dict, index=index)
 
         return response

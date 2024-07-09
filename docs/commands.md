@@ -1,12 +1,12 @@
 # Commands
 
-- [Running an experiment file](#running-an-experiment-file)
-- [Running the pipeline](#running-the-pipeline)
-- [Run checks on an experiment file](#run-checks-on-an-experiment-file)
-- [Create judge file](#create-judge-file)
-- [Obtain missing results jsonl file](#obtain-missing-results-jsonl-file)
-- [Convert images to correct form](#convert-images-to-correct-form)
-- [Start up Quart server](#start-up-quart-server)
+* [Running an experiment file](#running-an-experiment-file)
+* [Running the pipeline](#running-the-pipeline)
+* [Run checks on an experiment file](#run-checks-on-an-experiment-file)
+* [Create judge file](#create-judge-file)
+* [Obtain missing results jsonl file](#obtain-missing-results-jsonl-file)
+* [Convert images to correct form](#convert-images-to-correct-form)
+* [Start up Quart server](#start-up-quart-server)
 
 ## Running an experiment file
 
@@ -73,10 +73,11 @@ prompto_create_judge \
 ```
 
 In `judge`, you must have two files:
-- `template.txt`: this is the template file which contains the prompts and the responses to be scored. The responses should be replaced with the placeholders `{INPUT_PROMPT}` and `{OUTPUT_RESPONSE}`.
-- `settings.json`: this is the settings json file which contains the settings for the judge(s). The keys are judge identifiers and the values are the "api", "model_name", "parameters" to specify the LLM to use as a judge (see the [experiment file documentation](experiment_file.md) for more details on these keys).
 
-See for example [this judge example](../examples/data/data/judge) which contains example template and settings files.
+* `template.txt`: this is the template file which contains the prompts and the responses to be scored. The responses should be replaced with the placeholders `{INPUT_PROMPT}` and `{OUTPUT_RESPONSE}`.
+* `settings.json`: this is the settings json file which contains the settings for the judge(s). The keys are judge identifiers and the values are the "api", "model_name", "parameters" to specify the LLM to use as a judge (see the [experiment file documentation](experiment_file.md) for more details on these keys).
+
+See for example [this judge example](./../examples/data/data/judge) which contains example template and settings files.
 
 The judge specified with the `--judge` flag should be a key in the `settings.json` file in the judge location. You can create different judge files using different LLMs as judge by specifying a different judge identifier from the keys in the `settings.json` file.
 
@@ -103,7 +104,7 @@ prompto_convert_images --folder images
 
 ## Start up Quart server
 
-As described in the [Quart API model documentation](models.md#quart-api), we have implemented a simple [Quart API](../src/prompto/apis/quart/quart_api.py) that can be used to quary a text-generation model from the [Huggingface model hub](https://huggingface.co/models) using the Huggingface `transformers` library. To start up the Quart server, you can use the `prompto_start_quart_server` command along with the Huggingface model name. To see all arguments of this command, run `prompto_start_quart_server --help`.
+As described in the [Quart API model documentation](./quart.md), we have implemented a simple [script to start up a Quart API](https://github.com/alan-turing-institute/prompto/blob/main/src/prompto/apis/quart/quart_api.py) that can be used to query a text-generation model from the [Huggingface model hub](https://huggingface.co/models) using the Huggingface `transformers` library. To start up the Quart server, you can use the `prompto_start_quart_server` command along with the Huggingface model name. To see all arguments of this command, run `prompto_start_quart_server --help`.
 
 To start up the Quart server with [`vicgalle/gpt2-open-instruct-v1`](https://huggingface.co/vicgalle/gpt2-open-instruct-v1), at `"http://localhost:8000"`, you can use the following command:
 ```

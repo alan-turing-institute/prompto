@@ -5,7 +5,7 @@ from typing import Any
 import openai
 from openai import AsyncOpenAI
 
-from prompto.apis.base import AsyncBaseAPI
+from prompto.apis.base import AsyncAPI
 from prompto.apis.openai.openai_utils import process_response
 from prompto.settings import Settings
 from prompto.utils import (
@@ -26,7 +26,7 @@ API_ENDPOINT_VAR_NAME = "HUGGINGFACE_TGI_API_ENDPOINT"
 API_KEY_VAR_NAME = "HUGGINGFACE_TGI_API_KEY"
 
 
-class AsyncHuggingfaceTGIAPI(AsyncBaseAPI):
+class HuggingfaceTGIAPI(AsyncAPI):
     """
     Class for asynchrnous querying of the Huggingface TGI API endpoint.
 
@@ -193,7 +193,7 @@ class AsyncHuggingfaceTGIAPI(AsyncBaseAPI):
 
         return prompt, model_name, client, generation_config, mode
 
-    async def _async_query_string(self, prompt_dict: dict, index: int | str) -> dict:
+    async def _query_string(self, prompt_dict: dict, index: int | str) -> dict:
         """
         Async method for querying the model with a string prompt
         (prompt_dict["prompt"] is a string),
@@ -247,7 +247,7 @@ class AsyncHuggingfaceTGIAPI(AsyncBaseAPI):
                 )
             raise err
 
-    async def _async_query_chat(self, prompt_dict: dict, index: int | str) -> dict:
+    async def _query_chat(self, prompt_dict: dict, index: int | str) -> dict:
         """
         Async method for querying the model with a chat prompt
         (prompt_dict["prompt"] is a list of strings to sequentially send to the model),
@@ -311,7 +311,7 @@ class AsyncHuggingfaceTGIAPI(AsyncBaseAPI):
                 )
             raise err
 
-    async def async_query(self, prompt_dict: dict, index: int | str = "NA") -> dict:
+    async def query(self, prompt_dict: dict, index: int | str = "NA") -> dict:
         """
         Async Method for querying the API/model asynchronously.
 
@@ -334,13 +334,13 @@ class AsyncHuggingfaceTGIAPI(AsyncBaseAPI):
             If an error occurs during the querying process
         """
         if isinstance(prompt_dict["prompt"], str):
-            return await self._async_query_string(
+            return await self._query_string(
                 prompt_dict=prompt_dict,
                 index=index,
             )
         elif isinstance(prompt_dict["prompt"], list):
             if all([isinstance(message, str) for message in prompt_dict["prompt"]]):
-                return await self._async_query_chat(
+                return await self._query_chat(
                     prompt_dict=prompt_dict,
                     index=index,
                 )

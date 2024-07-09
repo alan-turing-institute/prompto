@@ -1,8 +1,8 @@
 # Using `prompto` with Gemini
 
-For prompts to Gemini API, you can simply add a line in your experiment (`.jsonl`) file where you specify the `api` to be `gemini`. See the [models doc](../../docs/models.md#gemini) for some details on the environment variables you need to set.
+For prompts to Gemini API, you can simply add a line in your experiment (`.jsonl`) file where you specify the `api` to be `gemini`. See the [models doc](./../../docs/gemini.md) for some details on the environment variables you need to set.
 
-Note that the Gemini API is different to the Vertex AI API. For Vertex AI API, see the [vertexai](../vertexai) example.
+Note that the Gemini API is different to the Vertex AI API. For Vertex AI API, see the [vertexai](./../vertexai/README.md) example.
 
 We provide an example experiment file in [data/input/gemini-example.jsonl](./data/input/gemini-example.jsonl). You can run it with the following command (assuming that your working directory is the current directory of this notebook, i.e. `examples/gemini`):
 ```bash

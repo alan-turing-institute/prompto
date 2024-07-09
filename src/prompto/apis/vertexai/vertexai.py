@@ -10,7 +10,7 @@ from vertexai.generative_models import (
     Part,
 )
 
-from prompto.apis.base import AsyncBaseAPI
+from prompto.apis.base import AsyncAPI
 from prompto.apis.gemini.gemini_utils import (
     gemini_chat_roles,
     process_response,
@@ -34,7 +34,7 @@ PROJECT_VAR_NAME = "VERTEXAI_PROJECT_ID"
 LOCATION_VAR_NAME = "VERTEXAI_LOCATION_ID"
 
 
-class AsyncVertexAIAPI(AsyncBaseAPI):
+class VertexAIAPI(AsyncAPI):
     """
     Class for asynchronous querying of the VertexAI API.
 
@@ -276,7 +276,7 @@ class AsyncVertexAIAPI(AsyncBaseAPI):
 
         return prompt, model_name, safety_settings, generation_config, multimedia
 
-    async def _async_query_string(self, prompt_dict: dict, index: int | str):
+    async def _query_string(self, prompt_dict: dict, index: int | str):
         """
         Async method for querying the model with a string prompt
         (prompt_dict["prompt"] is a string),
@@ -359,7 +359,7 @@ class AsyncVertexAIAPI(AsyncBaseAPI):
                 )
             raise err
 
-    async def _async_query_chat(self, prompt_dict: dict, index: int | str):
+    async def _query_chat(self, prompt_dict: dict, index: int | str):
         """
         Async method for querying the model with a chat prompt
         (prompt_dict["prompt"] is a list of strings to sequentially send to the model),
@@ -455,7 +455,7 @@ class AsyncVertexAIAPI(AsyncBaseAPI):
                 )
             raise err
 
-    async def _async_query_history(self, prompt_dict: dict, index: int | str) -> dict:
+    async def _query_history(self, prompt_dict: dict, index: int | str) -> dict:
         """
         Async method for querying the model with a chat prompt with history
         (prompt_dict["prompt"] is a list of dictionaries with keys "role" and "parts",
@@ -540,7 +540,7 @@ class AsyncVertexAIAPI(AsyncBaseAPI):
                 )
             raise err
 
-    async def async_query(self, prompt_dict: dict, index: int | str = "NA") -> dict:
+    async def query(self, prompt_dict: dict, index: int | str = "NA") -> dict:
         """
         Async Method for querying the API/model asynchronously.
 
@@ -563,13 +563,13 @@ class AsyncVertexAIAPI(AsyncBaseAPI):
             If an error occurs during the querying process
         """
         if isinstance(prompt_dict["prompt"], str):
-            return await self._async_query_string(
+            return await self._query_string(
                 prompt_dict=prompt_dict,
                 index=index,
             )
         elif isinstance(prompt_dict["prompt"], list):
             if all([isinstance(message, str) for message in prompt_dict["prompt"]]):
-                return await self._async_query_chat(
+                return await self._query_chat(
                     prompt_dict=prompt_dict,
                     index=index,
                 )
@@ -585,7 +585,7 @@ class AsyncVertexAIAPI(AsyncBaseAPI):
                         for d in prompt_dict["prompt"][1:]
                     ]
                 ):
-                    return await self._async_query_history(
+                    return await self._query_history(
                         prompt_dict=prompt_dict,
                         index=index,
                     )

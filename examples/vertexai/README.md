@@ -1,8 +1,8 @@
 # Using `prompto` with Vertex AI
 
-For prompts to Vertex AI API, you can simply add a line in your experiment (`.jsonl`) file where you specify the `api` to be `vertexai`. See the [models doc](../../docs/models.md#vertex-ai) for some details on the environment variables you need to set.
+For prompts to Vertex AI API, you can simply add a line in your experiment (`.jsonl`) file where you specify the `api` to be `vertexai`. See the [models doc](./../../docs/vertexai.md) for some details on the environment variables you need to set.
 
-Note that the Vertex AI API is different to the Gemini API. For Gemini API, see the [gemini](../gemini) example.
+Note that the Vertex AI API is different to the Gemini API. For Gemini API, see the [gemini](./../gemini/README.md) example.
 
 We provide an example experiment file in [data/input/vertexai-example.jsonl](./data/input/vertexai-example.jsonl). You can run it with the following command (assuming that your working directory is the current directory of this notebook, i.e. `examples/vertexai`):
 ```bash

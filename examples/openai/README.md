@@ -1,6 +1,6 @@
 # Using `prompto` with OpenAI
 
-For prompts to OpenAI API, you can simply add a line in your experiment (`.jsonl`) file where you specify the `api` to be `openai`. See the [models doc](../../docs/models.md#openai) for some details on the environment variables you need to set.
+For prompts to OpenAI API, you can simply add a line in your experiment (`.jsonl`) file where you specify the `api` to be `openai`. See the [models doc](./../../docs/openai.md) for some details on the environment variables you need to set.
 
 We provide an example experiment file in [data/input/openai-example.jsonl](./data/input/openai-example.jsonl). You can run it with the following command (assuming that your working directory is the current directory of this notebook, i.e. `examples/openai`):
 ```bash

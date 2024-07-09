@@ -3,7 +3,7 @@ from typing import Any
 
 import requests
 
-from prompto.apis.base import AsyncBaseAPI
+from prompto.apis.base import AsyncAPI
 from prompto.apis.quart.quart_utils import async_client_generate
 from prompto.settings import Settings
 from prompto.utils import (
@@ -20,7 +20,7 @@ from prompto.utils import (
 API_ENDPOINT_VAR_NAME = "QUART_API_ENDPOINT"
 
 
-class AsyncQuartAPI(AsyncBaseAPI):
+class QuartAPI(AsyncAPI):
     """
     Class for querying the Quart API asynchronously.
 
@@ -178,7 +178,7 @@ class AsyncQuartAPI(AsyncBaseAPI):
 
         return prompt, model_name, quart_endpoint, generation_config
 
-    async def _async_query_string(self, prompt_dict: dict, index: int | str) -> dict:
+    async def _query_string(self, prompt_dict: dict, index: int | str) -> dict:
         """
         Async method for querying the model with a string prompt
         (prompt_dict["prompt"] is a string),
@@ -230,7 +230,7 @@ class AsyncQuartAPI(AsyncBaseAPI):
                 )
             raise err
 
-    async def async_query(self, prompt_dict: dict, index: int | str = "NA") -> dict:
+    async def query(self, prompt_dict: dict, index: int | str = "NA") -> dict:
         """
         Async Method for querying the API/model asynchronously.
 
@@ -253,7 +253,7 @@ class AsyncQuartAPI(AsyncBaseAPI):
             If an error occurs during the querying process
         """
         if isinstance(prompt_dict["prompt"], str):
-            return await self._async_query_string(
+            return await self._query_string(
                 prompt_dict=prompt_dict,
                 index=index,
             )

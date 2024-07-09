@@ -4,7 +4,7 @@ from typing import Any
 from prompto.settings import Settings
 
 
-class AsyncBaseAPI(ABC):
+class AsyncAPI(ABC):
     def __init__(self, settings: Settings, log_file: str, *args: Any, **kwargs: Any):
         """
         Base class for asynchronous API models.
@@ -14,7 +14,7 @@ class AsyncBaseAPI(ABC):
           if the required or optional environment variables are set
         - check_prompt_dict: a static method that checks if an input
           dictionary (prompt_dict) is valid
-        - async_query: an async method that queries the API/model and
+        - query: an async method that queries the API/model and
           returns the response as a completed dictionary (prompt_dict)
 
         Parameters
@@ -46,7 +46,7 @@ class AsyncBaseAPI(ABC):
             If the method is not implemented by a subclass
         """
         raise NotImplementedError(
-            "'check_environment_variables' method needs to be implemented by a subclass of AsyncBaseAPI"
+            "'check_environment_variables' method needs to be implemented by a subclass of AsyncAPI"
         )
 
     @staticmethod
@@ -73,10 +73,10 @@ class AsyncBaseAPI(ABC):
             If the method is not implemented by a subclass
         """
         raise NotImplementedError(
-            "'check_prompt_dict' method needs to be implemented by a subclass of AsyncBaseAPI"
+            "'check_prompt_dict' method needs to be implemented by a subclass of AsyncAPI"
         )
 
-    async def async_query(
+    async def query(
         self, prompt_dict: dict, index: int | str = "NA", *args: Any, **kwargs: Any
     ) -> dict:
         """
@@ -103,7 +103,7 @@ class AsyncBaseAPI(ABC):
         # async method for querying the model using the prompt and other arguments
         # returns a dictionary/json object which is saved into the output jsonl
         raise NotImplementedError(
-            "'async_query' method needs to be implemented by a subclass of AsyncBaseAPI"
+            "'query' method needs to be implemented by a subclass of AsyncAPI"
         )
 
     # TODO (maybe): async_batch_query (for multiple prompts asynchronously)

@@ -1,3 +1,3 @@
-from prompto.apis.gemini.gemini import AsyncGeminiAPI
+from prompto.apis.gemini.gemini import GeminiAPI
 
-__all__ = ["AsyncGeminiAPI"]
+__all__ = ["GeminiAPI"]
