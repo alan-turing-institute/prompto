@@ -46,7 +46,6 @@ class AsyncQuartAPI(AsyncBaseAPI):
         """
         For Quart, there are some optional environment variables:
         - QUART_API_ENDPOINT
-        - QUART_MODEL_NAME
 
         These are optional only if the model_name is passed
         in the prompt dictionary. If the model_name is not
@@ -85,15 +84,10 @@ class AsyncQuartAPI(AsyncBaseAPI):
         """
         For Quart, we make the following model-specific checks:
         - "prompt" must be a string
-        - if "model_name" is not passed in the prompt dictionary,
-          then the default environment variables (QUART_API_ENDPOINT,
-          QUART_MODEL_NAME) must be set
-        - if "model_name" is passed in the prompt dictionary, then
-          then for the API endpoint, either the model-specific endpoint
-          (QUART_API_ENDPOINT_{identifier}) (where identifier is the
-          model name with invalid characters replaced by underscores
-          obtained using get_model_name_identifier function) or the
-          default endpoint must be set
+        - odel-specific endpoint (QUART_API_ENDPOINT_{identifier})
+          (where identifier is the model name with invalid characters
+          replaced by underscores obtained using get_model_name_identifier
+          function) or the default endpoint must be set
 
         Parameters
         ----------
@@ -109,16 +103,15 @@ class AsyncQuartAPI(AsyncBaseAPI):
         issues = []
 
         # check prompt is of the right type
-        match prompt_dict["prompt"]:
-            case str(_):
-                pass
-            case _:
-                issues.append(
-                    TypeError(
-                        "if api == 'quart', then prompt must be a string, "
-                        f"not {type(prompt_dict['prompt'])}"
-                    )
+        if isinstance(prompt_dict["prompt"], str):
+            pass
+        else:
+            issues.append(
+                TypeError(
+                    "if api == 'quart', then prompt must be a string, "
+                    f"not {type(prompt_dict['prompt'])}"
                 )
+            )
 
         if "model_name" not in prompt_dict:
             # use the default environment variables
@@ -160,18 +153,14 @@ class AsyncQuartAPI(AsyncBaseAPI):
         prompt = prompt_dict["prompt"]
 
         # obtain model name
-        model_name = prompt_dict.get("model_name", None)
-        if model_name is None:
-            # use the default environment variables
-            QUART_ENDPOINT = API_ENDPOINT_VAR_NAME
-        else:
-            # use the model specific environment variables if they exist
-            # replace any invalid characters in the model name
-            identifier = get_model_name_identifier(model_name)
+        model_name = prompt_dict["model_name"]
+        # use the model specific environment variables if they exist
+        # replace any invalid characters in the model name
+        identifier = get_model_name_identifier(model_name)
 
-            QUART_ENDPOINT = f"{API_ENDPOINT_VAR_NAME}_{identifier}"
-            if QUART_ENDPOINT not in os.environ:
-                QUART_ENDPOINT = API_ENDPOINT_VAR_NAME
+        QUART_ENDPOINT = f"{API_ENDPOINT_VAR_NAME}_{identifier}"
+        if QUART_ENDPOINT not in os.environ:
+            QUART_ENDPOINT = API_ENDPOINT_VAR_NAME
 
         quart_endpoint = os.environ.get(QUART_ENDPOINT)
 
@@ -263,14 +252,11 @@ class AsyncQuartAPI(AsyncBaseAPI):
         Exception
             If an error occurs during the querying process
         """
-        match prompt_dict["prompt"]:
-            case str(_):
-                return await self._async_query_string(
-                    prompt_dict=prompt_dict,
-                    index=index,
-                )
-            case _:
-                pass
+        if isinstance(prompt_dict["prompt"], str):
+            return await self._async_query_string(
+                prompt_dict=prompt_dict,
+                index=index,
+            )
 
         raise TypeError(
             f"if api == 'quart', then prompt must be a string, "

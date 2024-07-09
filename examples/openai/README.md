@@ -10,13 +10,11 @@ prompto_run_experiment --file data/input/openai-example.jsonl --max_queries 30
 To run the experiment, you will need to set the following environment variables first:
 ```bash
 export OPENAI_API_KEY=<YOUR-OPENAI-KEY>
-export OPENAI_MODEL_NAME=<DEFAULT-OPENAI-MODEL>
 ```
 
 You can also use an `.env` file to save these environment variables without needing to export them globally in the terminal:
 ```
 OPENAI_API_KEY=<YOUR-OPENAI-KEY>
-OPENAI_MODEL_NAME=<DEFAULT-OPENAI-MODEL>
 ```
 
 By default, the `prompto_run_experiment` command will look for an `.env` file in the current directory. If you want to use a different `.env` file, you can specify it with the `--env` flag.
