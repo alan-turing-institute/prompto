@@ -307,7 +307,7 @@ class GeminiAPI(AsyncAPI):
                 error_as_string=error_as_string,
             )
             logging.info(
-                f"Response is empty and blocked (i={index}) \nPrompt: {prompt[:50]}..."
+                f"Response is empty and blocked (i={index}) [id={prompt_dict.get('id', 'NA')}] \nPrompt: {prompt[:50]}..."
             )
             if isinstance(err, IndexError):
                 async with FILE_WRITE_LOCK:
@@ -382,7 +382,9 @@ class GeminiAPI(AsyncAPI):
                     response_text=response_text,
                 )
 
-            logging.info(f"Chat completed (i={index})")
+            logging.info(
+                f"Chat completed (i={index}) [id={prompt_dict.get('id', 'NA')}]"
+            )
 
             prompt_dict["response"] = response_list
             prompt_dict["safety_attributes"] = safety_attributes_list
@@ -401,7 +403,7 @@ class GeminiAPI(AsyncAPI):
                 error_as_string=error_as_string,
             )
             logging.info(
-                f"Response is empty and blocked (i={index}) \nPrompt: {message[:50]}..."
+                f"Response is empty and blocked (i={index}) [id={prompt_dict.get('id', 'NA')}] \nPrompt: {message[:50]}..."
             )
             async with FILE_WRITE_LOCK:
                 write_log_message(

@@ -288,7 +288,9 @@ class HuggingfaceTGIAPI(AsyncAPI):
                     response_text=response_text,
                 )
 
-            logging.info(f"Chat completed (i={index})")
+            logging.info(
+                f"Chat completed (i={index}) [id={prompt_dict.get('id', 'NA')}]"
+            )
 
             prompt_dict["response"] = response_list
             return prompt_dict
