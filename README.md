@@ -55,15 +55,15 @@ You might also want to set up a development environment for the library. To do t
 
 The library has functionality to process experiments and to run a pipeline which continually looks for new experiment jsonl files in the input folder. Everything starts with defining a **pipeline data folder** which contains:
 ```
-├── data
-│   └── input: contains the jsonl files with the experiments
-│   └── output: contains the results of the experiments will be stored.
-│       When an experiment is ran, a folder is created within the output folder with the experiment name
-│       as defined in the jsonl file but removing the `.jsonl` extension.
-│       The results and logs for the experiment are stored there
-│   └── media: contains the media files for the experiments.
-│       These files must be within folders of the same experiment name
-│       as defined in the jsonl file but removing the `.jsonl` extension
+└── data
+    └── input: contains the jsonl files with the experiments
+    └── output: contains the results of the experiments runs.
+        When an experiment is ran, a folder is created within the output folder with the experiment name
+        as defined in the jsonl file but removing the `.jsonl` extension.
+        The results and logs for the experiment are stored there
+    └── media: contains the media files for the experiments.
+        These files must be within folders of the same experiment name
+        as defined in the jsonl file but removing the `.jsonl` extension
 ```
 
 When using the library, you simply pass in the folder you would like to use as the pipeline data folder and the library will take care of the rest.
