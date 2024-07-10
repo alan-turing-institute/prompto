@@ -46,6 +46,7 @@ class TestAPI(AsyncAPI):
                 model="test",
                 prompt=prompt_dict["prompt"],
                 error_as_string=error_msg,
+                id=prompt_dict.get("id", "NA"),
             )
             raise ValueError(error_msg)
         else:
@@ -57,6 +58,7 @@ class TestAPI(AsyncAPI):
             model="test",
             prompt=prompt_dict["prompt"],
             response_text=response_text,
+            id=prompt_dict.get("id", "NA"),
         )
 
         prompt_dict["response"] = response_text

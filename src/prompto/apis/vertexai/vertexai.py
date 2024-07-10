@@ -308,6 +308,7 @@ class VertexAIAPI(AsyncAPI):
                 model=f"vertexai ({model_name})",
                 prompt=prompt,
                 response_text=response_text,
+                id=prompt_dict.get("id", "NA"),
             )
 
             prompt_dict["response"] = response_text
@@ -322,9 +323,10 @@ class VertexAIAPI(AsyncAPI):
                 model=f"vertexai ({model_name})",
                 prompt=prompt,
                 error_as_string=error_as_string,
+                id=prompt_dict.get("id", "NA"),
             )
             logging.info(
-                f"Response is empty and blocked (i={index}) [id={prompt_dict.get('id', 'NA')}] \nPrompt: {prompt[:50]}..."
+                f"Response is empty and blocked (i={index}, id={prompt_dict.get('id', 'NA')}) \nPrompt: {prompt[:50]}..."
             )
             if isinstance(err, IndexError):
                 async with FILE_WRITE_LOCK:
@@ -350,6 +352,7 @@ class VertexAIAPI(AsyncAPI):
                 model=f"vertexai ({model_name})",
                 prompt=prompt,
                 error_as_string=error_as_string,
+                id=prompt_dict.get("id", "NA"),
             )
             async with FILE_WRITE_LOCK:
                 write_log_message(
@@ -397,10 +400,11 @@ class VertexAIAPI(AsyncAPI):
                     n_messages=len(prompt),
                     message=message,
                     response_text=response_text,
+                    id=prompt_dict.get("id", "NA"),
                 )
 
             logging.info(
-                f"Chat completed (i={index}) [id={prompt_dict.get('id', 'NA')}]"
+                f"Chat completed (i={index}, id={prompt_dict.get('id', 'NA')})"
             )
 
             prompt_dict["response"] = response_list
@@ -418,9 +422,10 @@ class VertexAIAPI(AsyncAPI):
                 message=message,
                 responses_so_far=response_list,
                 error_as_string=error_as_string,
+                id=prompt_dict.get("id", "NA"),
             )
             logging.info(
-                f"Response is empty and blocked (i={index}) [id={prompt_dict.get('id', 'NA')}] \nPrompt: {message[:50]}..."
+                f"Response is empty and blocked (i={index}, id={prompt_dict.get('id', 'NA')}) \nPrompt: {message[:50]}..."
             )
             async with FILE_WRITE_LOCK:
                 write_log_message(
@@ -448,6 +453,7 @@ class VertexAIAPI(AsyncAPI):
                 message=message,
                 responses_so_far=response_list,
                 error_as_string=error_as_string,
+                id=prompt_dict.get("id", "NA"),
             )
             async with FILE_WRITE_LOCK:
                 write_log_message(
@@ -491,6 +497,7 @@ class VertexAIAPI(AsyncAPI):
                 model=f"gemini ({model_name})",
                 prompt=prompt,
                 response_text=response_text,
+                id=prompt_dict.get("id", "NA"),
             )
 
             prompt_dict["response"] = response_text
@@ -505,9 +512,10 @@ class VertexAIAPI(AsyncAPI):
                 model=f"gemini ({model_name})",
                 prompt=prompt,
                 error_as_string=error_as_string,
+                id=prompt_dict.get("id", "NA"),
             )
             logging.info(
-                f"Response is empty and blocked (i={index}) [id={prompt_dict.get('id', 'NA')}] \nPrompt: {prompt[:50]}..."
+                f"Response is empty and blocked (i={index}, id={prompt_dict.get('id', 'NA')}) \nPrompt: {prompt[:50]}..."
             )
             if isinstance(err, IndexError):
                 async with FILE_WRITE_LOCK:
@@ -533,6 +541,7 @@ class VertexAIAPI(AsyncAPI):
                 model=f"gemini ({model_name})",
                 prompt=prompt,
                 error_as_string=error_as_string,
+                id=prompt_dict.get("id", "NA"),
             )
             async with FILE_WRITE_LOCK:
                 write_log_message(

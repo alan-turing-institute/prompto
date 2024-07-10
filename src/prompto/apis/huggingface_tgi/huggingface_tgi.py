@@ -227,6 +227,7 @@ class HuggingfaceTGIAPI(AsyncAPI):
                 model=f"Huggingface TGI ({model_name})",
                 prompt=prompt,
                 response_text=response_text,
+                id=prompt_dict.get("id", "NA"),
             )
 
             prompt_dict["response"] = response_text
@@ -238,6 +239,7 @@ class HuggingfaceTGIAPI(AsyncAPI):
                 model=f"Huggingface TGI ({model_name})",
                 prompt=prompt,
                 error_as_string=error_as_string,
+                id=prompt_dict.get("id", "NA"),
             )
             async with FILE_WRITE_LOCK:
                 write_log_message(
@@ -286,10 +288,11 @@ class HuggingfaceTGIAPI(AsyncAPI):
                     n_messages=len(prompt),
                     message=message,
                     response_text=response_text,
+                    id=prompt_dict.get("id", "NA"),
                 )
 
             logging.info(
-                f"Chat completed (i={index}) [id={prompt_dict.get('id', 'NA')}]"
+                f"Chat completed (i={index}, id={prompt_dict.get('id', 'NA')})"
             )
 
             prompt_dict["response"] = response_list
@@ -304,6 +307,7 @@ class HuggingfaceTGIAPI(AsyncAPI):
                 message=message,
                 responses_so_far=response_list,
                 error_as_string=error_as_string,
+                id=prompt_dict.get("id", "NA"),
             )
             async with FILE_WRITE_LOCK:
                 write_log_message(

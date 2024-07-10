@@ -209,6 +209,7 @@ class QuartAPI(AsyncAPI):
                 model=f"Quart ({model_name})",
                 prompt=prompt,
                 response_text=response_text,
+                id=prompt_dict.get("id", "NA"),
             )
 
             prompt_dict["response"] = response_text
@@ -221,6 +222,7 @@ class QuartAPI(AsyncAPI):
                 model=f"Quart ({model_name})",
                 prompt=prompt,
                 error_as_string=error_as_string,
+                id=prompt_dict.get("id", "NA"),
             )
             async with FILE_WRITE_LOCK:
                 write_log_message(

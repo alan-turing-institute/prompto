@@ -555,7 +555,7 @@ class Experiment:
         except (NotImplementedError, KeyError, ValueError, TypeError) as err:
             # don't retry for selected errors, log the error and save an error response
             log_message = (
-                f"Error (i={index}) [id={prompt_dict.get('id', 'NA')}]. "
+                f"Error (i={index}, id={prompt_dict.get('id', 'NA')}). "
                 f"{type(err).__name__} - {err}"
             )
             async with FILE_WRITE_LOCK:
@@ -569,7 +569,7 @@ class Experiment:
             if attempt == self.settings.max_attempts:
                 # we've already tried max_attempts times, so log the error and save an error response
                 log_message = (
-                    f"Error (i={index}) [id={prompt_dict.get('id', 'NA')}] after maximum {self.settings.max_attempts} attempts: "
+                    f"Error (i={index}, id={prompt_dict.get('id', 'NA')}) after maximum {self.settings.max_attempts} attempts: "
                     f"{type(err).__name__} - {err}"
                 )
                 async with FILE_WRITE_LOCK:
@@ -585,7 +585,7 @@ class Experiment:
             else:
                 # we haven't tried max_attempts times yet, so log the error and return an Exception
                 log_message = (
-                    f"Error (i={index}) [id={prompt_dict.get('id', 'NA')}] on attempt {attempt} of {self.settings.max_attempts}: "
+                    f"Error (i={index}, id={prompt_dict.get('id', 'NA')}) on attempt {attempt} of {self.settings.max_attempts}: "
                     f"{type(err).__name__} - {err} - adding to the queue to try again later"
                 )
                 async with FILE_WRITE_LOCK:
