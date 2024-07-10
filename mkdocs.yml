@@ -13,6 +13,7 @@ nav:
       - Introduction: examples/system-demo/README.md
       - Obtaining sample prompts for system demonstration examples: examples/system-demo/alpaca_sample_generation.ipynb
       - Querying LLM endpoints asynchronously vs synchronously: examples/system-demo/experiment_1.ipynb
+      - Querying LLM endpoints asynchronously and in parallel vs synchronously: examples/system-demo/experiment_2.ipynb
     - Azure OpenAI:
       - Example: examples/azure-openai/README.md
       - Notebook: examples/azure-openai/azure-openai.ipynb
