@@ -113,26 +113,3 @@ def send_ollama(prompt: str, model_name: str, params: dict[int]) -> str:
     )
 
     return response["response"]
-
-
-# class API(Enum):
-#     OPENAI = auto()
-#     GEMINI = auto()
-#     OLLAMA = auto()
-
-#     def send_prompt(self, prompt_dict):
-#         match prompt_dict:
-#             # with params
-#             case {"api": api, "model_name": model_name, "prompt": prompt, "parameters": params}:
-#                 match self:
-#                     case API.OPENAI:
-#                         assert api == "openai"
-#                         send_openai(prompt, model_name, params)
-
-#                     case API.GEMINI:
-#                         assert api == "gemini"
-#                         pass
-
-#                     case API.OLLAMA:
-#                         assert api == "ollama"
-#                         pass
