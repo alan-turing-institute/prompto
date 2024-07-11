@@ -19,6 +19,7 @@ DOC_NAV_FILE_PATH: Path = Path(str(GEN_DOC_PATH)) / str(DOC_NAV_FILE_NAME)
 EXCLUDE_PATHS: tuple[str, ...] = (
     "docs",
     "tests",
+    "examples",
 )
 
 nav: mkdocs_gen_files.Nav = mkdocs_gen_files.Nav()
