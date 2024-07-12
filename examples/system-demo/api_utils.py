@@ -15,7 +15,7 @@ from tqdm import tqdm
 
 
 def send_prompts_sync(prompt_dicts: list[dict]) -> list[str]:
-    # maive for loop to synchronously dispatch prompts
+    # naive for loop to synchronously dispatch prompts
     return [send_prompt(prompt_dict) for prompt_dict in tqdm(prompt_dicts)]
 
 
