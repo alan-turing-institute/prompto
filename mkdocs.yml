@@ -9,6 +9,12 @@ nav:
     - Examples: examples/README.md
     - Running experiments with prompto: examples/notebooks/running_experiments.ipynb
     - Specifying rate limits: examples/notebooks/grouping_prompts_and_specifying_rate_limits.ipynb
+    - System Demonstration:
+      - Introduction: examples/system-demo/README.md
+      - Obtaining sample prompts for system demonstration examples: examples/system-demo/alpaca_sample_generation.ipynb
+      - Experiment 1: examples/system-demo/experiment_1.ipynb
+      - Experiment 2: examples/system-demo/experiment_2.ipynb
+      - Experiment 3: examples/system-demo/experiment_3.ipynb
     - Azure OpenAI:
       - Example: examples/azure-openai/README.md
       - Notebook: examples/azure-openai/azure-openai.ipynb

@@ -106,7 +106,11 @@ def write_log_message(log_file: str, log_message: str, log: bool = True) -> None
 
 
 def log_success_response_query(
-    index: int | str, model: str, prompt: str, response_text: str
+    index: int | str,
+    model: str,
+    prompt: str,
+    response_text: str,
+    id: int | str = "NA",
 ) -> str:
     """
     Log a successful response from a model to a query.
@@ -128,7 +132,7 @@ def log_success_response_query(
         The log message that was written.
     """
     log_message = (
-        f"Response received for model {model} (i={index})\n"
+        f"Response received for model {model} (i={index}, id={id})\n"
         f"Prompt: {prompt[:50]}...\n"
         f"Response: {response_text[:50]}...\n"
     )
@@ -143,6 +147,7 @@ def log_success_response_chat(
     n_messages: int,
     message: str,
     response_text: str,
+    id: int | str = "NA",
 ) -> str:
     """
     Log a successful chat interaction with a model.
@@ -168,7 +173,7 @@ def log_success_response_chat(
         The log message that was written.
     """
     log_message = (
-        f"Response received for model {model} (i={index}, message={message_index+1}/{n_messages})\n"
+        f"Response received for model {model} (i={index}, id={id}, message={message_index+1}/{n_messages})\n"
         f"Prompt: {message[:50]}...\n"
         f"Response: {response_text[:50]}...\n"
     )
@@ -177,7 +182,11 @@ def log_success_response_chat(
 
 
 def log_error_response_query(
-    index: int | str, model: str, prompt: str, error_as_string: str
+    index: int | str,
+    model: str,
+    prompt: str,
+    error_as_string: str,
+    id: int | str = "NA",
 ) -> str:
     """
     Log an error response from a model to a query.
@@ -199,7 +208,7 @@ def log_error_response_query(
         The log message that was written.
     """
     log_message = (
-        f"Error with model {model} (i={index})\n"
+        f"Error with model {model} (i={index}, id={id})\n"
         f"Prompt: {prompt[:50]}...\n"
         f"Error: {error_as_string}\n"
     )
@@ -215,6 +224,7 @@ def log_error_response_chat(
     message: str,
     responses_so_far: list[str],
     error_as_string: str,
+    id: int | str = "NA",
 ) -> str:
     """
     Log an error response from a model in a chat interaction.
@@ -242,7 +252,7 @@ def log_error_response_chat(
         The log message that was written.
     """
     log_message = (
-        f"Error with model {model} (i={index}, message={message_index+1}/{n_messages})\n"
+        f"Error with model {model} (i={index}, id={id}, message={message_index+1}/{n_messages})\n"
         f"Prompt: {message[:50]}...\n"
         f"Responses so far: {responses_so_far}...\n"
         f"Error: {error_as_string}\n"

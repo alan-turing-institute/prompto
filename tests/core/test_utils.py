@@ -150,7 +150,7 @@ def test_log_success_response_query(caplog):
     )
 
     expected_log_message = (
-        "Response received for model test (i=0)\n"
+        "Response received for model test (i=0, id=NA)\n"
         "Prompt: test prompt...\n"
         "Response: test response...\n"
     )
@@ -176,7 +176,7 @@ def test_log_success_response_chat(caplog):
     )
 
     expected_log_message = (
-        "Response received for model test (i=0, message=3/4)\n"
+        "Response received for model test (i=0, id=NA, message=3/4)\n"
         "Prompt: test prompt...\n"
         "Response: test response...\n"
     )
@@ -196,9 +196,7 @@ def test_log_error_response_query(caplog):
         index=0, model="test", prompt="test prompt", error_as_string="test error"
     )
 
-    expected_log_message = (
-        "Error with model test (i=0)\nPrompt: test prompt...\nError: test error\n"
-    )
+    expected_log_message = "Error with model test (i=0, id=NA)\nPrompt: test prompt...\nError: test error\n"
     assert log_message == expected_log_message
     assert expected_log_message in caplog.text
 
@@ -223,7 +221,7 @@ def test_log_error_response_chat(caplog):
     )
 
     expected_log_message = (
-        "Error with model test (i=0, message=3/4)\n"
+        "Error with model test (i=0, id=NA, message=3/4)\n"
         "Prompt: test prompt...\n"
         "Responses so far: ['hi', 'hello']...\n"
         "Error: test error\n"
