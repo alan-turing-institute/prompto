@@ -11,12 +11,6 @@ from google.generativeai.types import (
 from ollama import Client
 from openai import OpenAI
 from openai.types.chat import ChatCompletion
-from tqdm import tqdm
-
-
-def send_prompts_sync(prompt_dicts: list[dict]) -> list[str]:
-    # naive for loop to synchronously dispatch prompts
-    return [send_prompt(prompt_dict) for prompt_dict in tqdm(prompt_dicts)]
 
 
 def send_prompt(prompt_dict: dict) -> str:
