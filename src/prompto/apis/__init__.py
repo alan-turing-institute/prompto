@@ -109,4 +109,18 @@ except ImportError as exc:
         category=DependencyWarning,
     )
 
+try:
+    from prompto.apis.anthropic import AnthropicAPI
+
+    ASYNC_APIS["anthropic"] = AnthropicAPI
+except ImportError as exc:
+    warnings.warn(
+        message=(
+            f"Anthropic API ('anthropic') not available. Perhaps you need to install the Anthropic dependencies: {exc}. "
+            "Try `pip install prompto[anthropic]`"
+        ),
+        category=DependencyWarning,
+    )
+
+
 __all__ = ["ASYNC_APIS"]
