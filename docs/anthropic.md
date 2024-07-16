@@ -2,11 +2,11 @@
 
 **Environment variables**:
 
-* `ANTHROPIC_API_KEY`: the API key for the OpenAI API
+* `ANTHROPIC_API_KEY`: the API key for the Anthropic API
 
 **Model-specific environment variables**:
 
-As described in the [model-specific environment variables](./environment_variables.md#model-specific-environment-variables) of the [environment variables document](./environment_variables.md) section, you can set model-specific environment variables for different models in OpenAI by appending the model name to the environment variable name. For example, if `"model_name": "claude-3-haiku-20240307"` is specified in the `prompt_dict`, the following model-specific environment variables can be used:
+As described in the [model-specific environment variables](./environment_variables.md#model-specific-environment-variables) of the [environment variables document](./environment_variables.md) section, you can set model-specific environment variables for different models in Anthropic by appending the model name to the environment variable name. For example, if `"model_name": "claude-3-haiku-20240307"` is specified in the `prompt_dict`, the following model-specific environment variables can be used:
 
 * `ANTHROPIC_API_KEY_claude_3_haiku_20240307`
 
