@@ -2,6 +2,7 @@ from anthropic.types.message import Message
 
 anthropic_chat_roles = set(["user", "assistant", "system"])
 
+
 def process_response(response: Message) -> str | list[str]:
     """
     Helper function to process the response from the Anthropic API.
@@ -24,5 +25,3 @@ def process_response(response: Message) -> str | list[str]:
         return response.content[0].text
     else:
         return [choice.text for choice in response.content]
-
-

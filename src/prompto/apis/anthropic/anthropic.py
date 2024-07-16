@@ -3,8 +3,11 @@ from typing import Any
 
 from anthropic import AsyncAnthropic
 
+from prompto.apis.anthropic.anthropic_utils import (
+    anthropic_chat_roles,
+    process_response,
+)
 from prompto.apis.base import AsyncAPI
-from prompto.apis.anthropic.anthropic_utils import process_response, anthropic_chat_roles
 from prompto.settings import Settings
 from prompto.utils import (
     FILE_WRITE_LOCK,
@@ -22,8 +25,8 @@ from prompto.utils import (
 # set names of environment variables
 API_KEY_VAR_NAME = "ANTHROPIC_API_KEY"
 
-class AnthropicAPI(AsyncAPI):
 
+class AnthropicAPI(AsyncAPI):
     """
     Class for querying the Anthropic API asynchronously.
 
@@ -73,7 +76,6 @@ class AnthropicAPI(AsyncAPI):
         issues.extend(check_optional_env_variables_set([API_KEY_VAR_NAME]))
 
         return issues
-
 
     @staticmethod
     def check_prompt_dict(prompt_dict: dict) -> list[Exception]:
@@ -164,8 +166,8 @@ class AnthropicAPI(AsyncAPI):
         # obtain model name
         model_name = prompt_dict["model_name"]
         api_key = get_environment_variable(
-                env_variable=API_KEY_VAR_NAME, model_name=model_name
-            )
+            env_variable=API_KEY_VAR_NAME, model_name=model_name
+        )
 
         # create the AsyncAnthropic client object
         client = AsyncAnthropic(api_key=api_key, max_retries=1)
@@ -187,16 +189,16 @@ class AnthropicAPI(AsyncAPI):
         (prompt_dict["prompt"] is a string),
         i.e. single-turn completion or chat.
         """
-        prompt, model_name, client, generation_config = (
-            await self._obtain_model_inputs(prompt_dict)
+        prompt, model_name, client, generation_config = await self._obtain_model_inputs(
+            prompt_dict
         )
 
         try:
             response = await client.messages.create(
-                    model=model_name,
-                    messages=[{"role": "user", "content": prompt}],
-                    **generation_config,
-                )
+                model=model_name,
+                messages=[{"role": "user", "content": prompt}],
+                **generation_config,
+            )
 
             response_text = process_response(response)
 
@@ -233,8 +235,8 @@ class AnthropicAPI(AsyncAPI):
         (prompt_dict["prompt"] is a list of strings to sequentially send to the model),
         i.e. multi-turn chat with history.
         """
-        prompt, model_name, client, generation_config = (
-            await self._obtain_model_inputs(prompt_dict)
+        prompt, model_name, client, generation_config = await self._obtain_model_inputs(
+            prompt_dict
         )
 
         messages = []
@@ -305,8 +307,8 @@ class AnthropicAPI(AsyncAPI):
         There is no "system role". Instead, it is handled in a seperate parameter
         outside of the dictionary. This argument accepts the system role in the prompt_dict, but extracts it from the dictionary and passes it as a seperate argument.
         """
-        prompt, model_name, client, generation_config = (
-            await self._obtain_model_inputs(prompt_dict)
+        prompt, model_name, client, generation_config = await self._obtain_model_inputs(
+            prompt_dict
         )
 
         # Remove the "system" role from the prompt and add it to the system parameter
@@ -317,9 +319,7 @@ class AnthropicAPI(AsyncAPI):
         ]
 
         prompt = [
-            message_dict
-            for message_dict in prompt
-            if message_dict["role"] != "system"
+            message_dict for message_dict in prompt if message_dict["role"] != "system"
         ]
 
         # If system message is present, then it must be the only one
@@ -328,7 +328,9 @@ class AnthropicAPI(AsyncAPI):
         elif len(system) == 1:
             system = system[0]
         else:
-            raise ValueError(f"There are {len(system)} system messages. Only one system message is supported.")
+            raise ValueError(
+                f"There are {len(system)} system messages. Only one system message is supported."
+            )
 
         try:
             response = await client.messages.create(
