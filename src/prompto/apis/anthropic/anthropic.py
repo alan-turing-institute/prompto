@@ -48,9 +48,18 @@ class AnthropicAPI(AsyncAPI):
         self.api_type = "anthropic"
 
     @staticmethod
-    def check_environment_variables():
+    def check_environment_variables() -> list[Exception]:
         """
+        For Anthropic, there are some optional environment variables:
+        - ANTHROPIC_API_KEY
 
+        These are optional only if the model_name is passed
+        in the prompt dictionary. If the model_name is not
+        passed, then the default values are taken from these
+        environment variables.
+
+        These are checked in the check_prompt_dict method to ensure that
+        the required environment variables are set.
 
         Returns
         -------
@@ -58,11 +67,79 @@ class AnthropicAPI(AsyncAPI):
             A list of exceptions or warnings if the environment variables
             are not set
         """
-        pass
+        issues = []
+
+        # check the optional environment variables are set and warn if not
+        issues.extend(check_optional_env_variables_set([API_KEY_VAR_NAME]))
+
+        return issues
+
 
     @staticmethod
-    def check_prompt_dict(prompt_dict: dict):
-        pass
+    def check_prompt_dict(prompt_dict: dict) -> list[Exception]:
+        """
+        For Anthropic, we make the following model-specific checks:
+        - "prompt" key must be of type str, list[str], or list[dict[str,str]]
+        - model-specific environment variable (ANTHROPIC_API_KEY_{identifier})
+          (where identifier is the model name with invalid characters replaced
+          by underscores obtained using get_model_name_identifier function)
+          can be set or the default environment variable must be set
+
+        Parameters
+        ----------
+        prompt_dict : dict
+            The prompt dictionary to check
+
+        Returns
+        -------
+        list[Exception]
+            A list of exceptions or warnings if the prompt dictionary
+            is not valid
+        """
+        issues = []
+
+        # check prompt is of the right type
+        if isinstance(prompt_dict["prompt"], str):
+            pass
+        elif isinstance(prompt_dict["prompt"], list):
+            if all([isinstance(message, str) for message in prompt_dict["prompt"]]):
+                pass
+            if all(
+                isinstance(message, dict) for message in prompt_dict["prompt"]
+            ) and all(
+                [
+                    set(d.keys()) == {"role", "content"}
+                    and d["role"] in anthropic_chat_roles
+                    for d in prompt_dict["prompt"]
+                ]
+            ):
+                pass
+        else:
+            issues.append(
+                TypeError(
+                    "if api == 'anthropic', then the prompt must be a str, list[str], or "
+                    "list[dict[str,str]] where the dictionary contains the keys 'role' and "
+                    "'content' only, and the values for 'role' must be one of 'system', 'user' or "
+                    "'assistant'"
+                )
+            )
+
+        # use the model specific environment variables if they exist
+        model_name = prompt_dict["model_name"]
+        # replace any invalid characters in the model name
+        identifier = get_model_name_identifier(model_name)
+
+        # check the required environment variables are set
+        # must either have the model specific key or the default key set
+        issues.extend(
+            check_either_required_env_variables_set(
+                [
+                    [f"{API_KEY_VAR_NAME}_{identifier}", API_KEY_VAR_NAME],
+                ]
+            )
+        )
+
+        return issues
 
     async def _obtain_model_inputs(
         self, prompt_dict: dict
@@ -77,8 +154,8 @@ class AnthropicAPI(AsyncAPI):
 
         Returns
         -------
-        tuple[str, str, AsyncAzureOpenAI, dict, str]
-            A tuple containing the prompt, model name, AzureOpenAI client object,
+        tuple[str, str, AsyncAnthropic, dict, str]
+            A tuple containing the prompt, model name, AsyncAnthropic client object,
             the generation config, and mode to use for querying the model
         """
         # obtain the prompt from the prompt dictionary
@@ -90,7 +167,7 @@ class AnthropicAPI(AsyncAPI):
                 env_variable=API_KEY_VAR_NAME, model_name=model_name
             )
 
-        # create the AzureOpenAI client object
+        # create the AsyncAnthropic client object
         client = AsyncAnthropic(api_key=api_key, max_retries=1)
 
         # get parameters dict (if any)
@@ -102,12 +179,7 @@ class AnthropicAPI(AsyncAPI):
                 f"parameters must be a dictionary, not {type(generation_config)}"
             )
 
-        # obtain mode (default is chat)
-        mode = prompt_dict.get("mode", "chat")
-        if mode not in ["chat", "completion"]:
-            raise ValueError(f"mode must be one of 'chat' or 'completion', not {mode}")
-
-        return prompt, model_name, client, generation_config, mode
+        return prompt, model_name, client, generation_config
 
     async def _query_string(self, prompt_dict: dict, index: int | str) -> dict:
         """
@@ -115,7 +187,7 @@ class AnthropicAPI(AsyncAPI):
         (prompt_dict["prompt"] is a string),
         i.e. single-turn completion or chat.
         """
-        prompt, model_name, client, generation_config, mode = (
+        prompt, model_name, client, generation_config = (
             await self._obtain_model_inputs(prompt_dict)
         )
 
@@ -130,7 +202,7 @@ class AnthropicAPI(AsyncAPI):
 
             log_success_response_query(
                 index=index,
-                model=f"OpenAI ({model_name})",
+                model=f"Anthropic ({model_name})",
                 prompt=prompt,
                 response_text=response_text,
                 id=prompt_dict.get("id", "NA"),
@@ -161,7 +233,7 @@ class AnthropicAPI(AsyncAPI):
         (prompt_dict["prompt"] is a list of strings to sequentially send to the model),
         i.e. multi-turn chat with history.
         """
-        prompt, model_name, client, generation_config, _ = (
+        prompt, model_name, client, generation_config = (
             await self._obtain_model_inputs(prompt_dict)
         )
 
@@ -233,7 +305,7 @@ class AnthropicAPI(AsyncAPI):
         There is no "system role". Instead, it is handled in a seperate parameter
         outside of the dictionary. This argument accepts the system role in the prompt_dict, but extracts it from the dictionary and passes it as a seperate argument.
         """
-        prompt, model_name, client, generation_config, _ = (
+        prompt, model_name, client, generation_config = (
             await self._obtain_model_inputs(prompt_dict)
         )
 
@@ -346,7 +418,7 @@ class AnthropicAPI(AsyncAPI):
                 )
 
         raise TypeError(
-            "if api == 'openai', then the prompt must be a str, list[str], or "
+            "if api == 'anthropic', then the prompt must be a str, list[str], or "
             "list[dict[str,str]] where the dictionary contains the keys 'role' and "
             "'content' only, and the values for 'role' must be one of 'system', 'user' or "
             "'assistant'"
