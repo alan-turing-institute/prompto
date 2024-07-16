@@ -4,7 +4,7 @@ from typing import Any
 from anthropic import AsyncAnthropic
 
 from prompto.apis.base import AsyncAPI
-from prompto.apis.anthropic.anthropic_utils import process_response
+from prompto.apis.anthropic.anthropic_utils import process_response, anthropic_chat_roles
 from prompto.settings import Settings
 from prompto.utils import (
     FILE_WRITE_LOCK,
@@ -228,15 +228,41 @@ class AnthropicAPI(AsyncAPI):
         (prompt_dict["prompt"] is a list of dictionaries with keys "role" and "content",
         where "role" is one of "user", "assistant", or "system" and "content" is the message),
         i.e. multi-turn chat with history.
+
+        The "system" role is not handled the same way as in the OpenAI API.
+        There is no "system role". Instead, it is handled in a seperate parameter
+        outside of the dictionary. This argument accepts the system role in the prompt_dict, but extracts it from the dictionary and passes it as a seperate argument.
         """
         prompt, model_name, client, generation_config, _ = (
             await self._obtain_model_inputs(prompt_dict)
         )
 
+        # Remove the "system" role from the prompt and add it to the system parameter
+        system = [
+            message_dict["content"]
+            for message_dict in prompt
+            if message_dict["role"] == "system"
+        ]
+
+        prompt = [
+            message_dict
+            for message_dict in prompt
+            if message_dict["role"] != "system"
+        ]
+
+        # If system message is present, then it must be the only one
+        if len(system) == 0:
+            system = None
+        elif len(system) == 1:
+            system = system[0]
+        else:
+            raise ValueError(f"There are {len(system)} system messages. Only one system message is supported.")
+
         try:
             response = await client.messages.create(
                 model=model_name,
                 messages=prompt,
+                system=system,
                 **generation_config,
             )
 
@@ -291,17 +317,34 @@ class AnthropicAPI(AsyncAPI):
         Exception
             If an error occurs during the querying process
         """
+        # If prompt is a single string, then use query string method
         if isinstance(prompt_dict["prompt"], str):
             return await self._query_string(
                 prompt_dict=prompt_dict,
                 index=index,
             )
         elif isinstance(prompt_dict["prompt"], list):
+            # If prompt is a list of strings, then use query chat method
             if all([isinstance(message, str) for message in prompt_dict["prompt"]]):
                 return await self._query_chat(
                     prompt_dict=prompt_dict,
                     index=index,
                 )
+            # If prompt is a list of dictionaries, then use query history method
+            if all(
+                isinstance(message, dict) for message in prompt_dict["prompt"]
+            ) and all(
+                [
+                    set(d.keys()) == {"role", "content"}
+                    and d["role"] in anthropic_chat_roles
+                    for d in prompt_dict["prompt"]
+                ]
+            ):
+                return await self._query_history(
+                    prompt_dict=prompt_dict,
+                    index=index,
+                )
+
         raise TypeError(
             "if api == 'openai', then the prompt must be a str, list[str], or "
             "list[dict[str,str]] where the dictionary contains the keys 'role' and "
