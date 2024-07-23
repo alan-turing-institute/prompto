@@ -43,6 +43,7 @@ nav:
     - APIs overview: docs/models.md
     - Azure OpenAI: docs/azure_openai.md
     - OpenAI: docs/openai.md
+    - Anthropic: docs/anthropic.md
     - Gemini: docs/gemini.md
     - Vertex AI: docs/vertexai.md
     - Ollama: docs/ollama.md

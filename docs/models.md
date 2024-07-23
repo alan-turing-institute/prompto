@@ -21,6 +21,7 @@ Each API has a number of environment variables that are either required or optio
 
 * [Azure OpenAI ("azure-openai")](./azure_openai.md)
 * [OpenAI ("openai")](./openai.md)
+* [Anthropic ("anthropic")](./anthropic.md)
 * [Gemini ("gemini")](./gemini.md)
 * [Vertex AI ("vertexai")](./vertexai.md)
 
