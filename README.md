@@ -23,10 +23,10 @@ The library supports querying several APIs and models. The following APIs are cu
 * [OpenAI](./docs/openai.md) (`"openai"`)
 * [Azure OpenAI](./docs/azure_openai.md) (`"azure-openai"`)
 * [Gemini](./docs/gemini.md) (`"gemini"`)
+* [Anthropic](./docs/anthropic.md) (`"anthropic"`)
 * [Vertex AI](./docs/vertexai.md) (`"vertexai"`)
 * [Huggingface text-generation-inference](./docs/huggingface_tgi.md) (`"huggingface-tgi"`)
 * [Ollama](./docs/ollama.md) (`"ollama"`)
-* [Anthropic](./docs/anthropic.md) (`"anthropic"`)
 * [A simple Quart API](./docs/quart.md) for running models from [`transformers`](https://github.com/huggingface/transformers) locally (`"quart"`)
 
 Our aim for `prompto` is to support more APIs and models in the future and to make it easy to add new APIs and models to the library. We welcome contributions to add new APIs and models to the library. We have a [contribution guide](docs/contribution.md) and a [guide on how to add new APIs and models](./docs/add_new_api.md) to the library in the [docs](./docs/README.md).
