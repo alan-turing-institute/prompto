@@ -4,7 +4,7 @@ docs_dir: .
 
 nav:
   - Home: README.md
-  - Documentation Guide: docs/README.md
+  - Documentation guide: docs/README.md
   - Examples:
     - Examples: examples/README.md
     - Running experiments with prompto: examples/notebooks/running_experiments.ipynb
