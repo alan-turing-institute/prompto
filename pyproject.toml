@@ -6,7 +6,8 @@ authors = [
     "rchan <rchan@turing.ac.uk>",
     "fedenanni <nanni.federico@gmail.com>",
     "evelinag <evelina@evelinag.com>",
-    "edchapman88 <echapman@turing.ac.uk>"
+    "edchapman88 <echapman@turing.ac.uk>",
+    "edwinb12 <w.edwin.brown@outlook.com>"
 ]
 readme = "README.md"
 
@@ -40,6 +41,7 @@ transformers = { version = "^4.41.2", optional = true }
 torch = { version = "^2.3.1", optional = true }
 accelerate = { version = "^0.31.0", optional = true }
 aiohttp = { version = "^3.9.5", optional = true }
+anthropic = { version = "^0.31.1", optional = true }
 
 [tool.poetry.extras]
 all = [
@@ -70,6 +72,7 @@ all = [
     "torch",
     "accelerate",
     "aiohttp",
+    "anthropic"
 ]
 dev = [
     "black",
@@ -95,6 +98,7 @@ openai = ["openai", "pillow"]
 ollama = ["ollama"]
 huggingface_tgi = ["openai", "huggingface-hub"]
 quart = ["quart", "transformers", "torch", "accelerate", "aiohttp"]
+anthropic = ['anthropic']
 
 [tool.pytest.ini_options]
 log_format = "%(asctime)s %(levelname)s %(message)s"

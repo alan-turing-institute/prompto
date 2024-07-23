@@ -21,6 +21,9 @@ nav:
     - OpenAI:
       - Example: examples/openai/README.md
       - Notebook: examples/openai/openai.ipynb
+    - Anthropic:
+      - Example: examples/anthropic/README.md
+      - Notebook: examples/anthropic/anthropic.ipynb
     - Gemini:
       - Example: examples/gemini/README.md
       - Notebook: examples/gemini/gemini.ipynb
@@ -40,6 +43,7 @@ nav:
     - APIs overview: docs/models.md
     - Azure OpenAI: docs/azure_openai.md
     - OpenAI: docs/openai.md
+    - Anthropic: docs/anthropic.md
     - Gemini: docs/gemini.md
     - Vertex AI: docs/vertexai.md
     - Ollama: docs/ollama.md

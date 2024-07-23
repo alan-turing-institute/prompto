@@ -4,7 +4,7 @@ For prompts to OpenAI API, you can simply add a line in your experiment (`.jsonl
 
 We provide an example experiment file in [data/input/openai-example.jsonl](./data/input/openai-example.jsonl). You can run it with the following command (assuming that your working directory is the current directory of this notebook, i.e. `examples/openai`):
 ```bash
-prompto_run_experiment --file data/input/openai-example.jsonl --max_queries 30
+prompto_run_experiment --file data/input/openai-example.jsonl --max-queries 30
 ```
 
 To run the experiment, you will need to set the following environment variables first:
