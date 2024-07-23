@@ -21,6 +21,9 @@ nav:
     - OpenAI:
       - Example: examples/openai/README.md
       - Notebook: examples/openai/openai.ipynb
+    - Anthropic:
+      - Example: examples/anthropic/README.md
+      - Notebook: examples/anthropic/anthropic.ipynb
     - Gemini:
       - Example: examples/gemini/README.md
       - Notebook: examples/gemini/gemini.ipynb
