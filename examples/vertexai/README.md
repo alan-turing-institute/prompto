@@ -6,7 +6,7 @@ Note that the Vertex AI API is different to the Gemini API. For Gemini API, see 
 
 We provide an example experiment file in [data/input/vertexai-example.jsonl](./data/input/vertexai-example.jsonl). You can run it with the following command (assuming that your working directory is the current directory of this notebook, i.e. `examples/vertexai`):
 ```bash
-prompto_run_experiment --file data/input/vertexai-example.jsonl --max_queries 30
+prompto_run_experiment --file data/input/vertexai-example.jsonl --max-queries 30
 ```
 
 To run the experiment, you will need to set the following environment variables first:
