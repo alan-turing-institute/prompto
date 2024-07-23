@@ -305,7 +305,8 @@ class AnthropicAPI(AsyncAPI):
 
         The "system" role is not handled the same way as in the OpenAI API.
         There is no "system role". Instead, it is handled in a seperate parameter
-        outside of the dictionary. This argument accepts the system role in the prompt_dict, but extracts it from the dictionary and passes it as a seperate argument.
+        outside of the dictionary. This argument accepts the system role in the prompt_dict,
+        but extracts it from the dictionary and passes it as a seperate argument.
         """
         prompt, model_name, client, generation_config = await self._obtain_model_inputs(
             prompt_dict
