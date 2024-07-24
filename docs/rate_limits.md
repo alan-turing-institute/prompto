@@ -8,6 +8,12 @@ Another key setting is whether or not to process the prompts in the experiments 
 
 For more examples and a walkthrough of how to set the rate limits for parallel processing of prompts, see the [Grouping prompts and specifying rate limits notebook](./../examples/notebooks/grouping_prompts_and_specifying_rate_limits.ipynb).
 
+## Implementation note
+
+Note that our implementation of "parallel" processing is in fact still using asynchronous processing. When sending queries at a particular rate limit, we use the `asyncio` library to send the queries asynchronously and add asynchronous sleeps (of length `60 / rate_limit`) to ensure that we do not exceed the rate limit.
+
+To processes different groups/queues of prompts in parallel, we can still use the `asyncio` library to send the queries asynchronously and essentially the program jumps between the different groups/queues of prompts to send the queries during the asynchronous sleeps. The advantage of this is that we can still send queries to different APIs or models in parallel on a single execution thread without having to use multiple threads or processes.
+
 ## Using no parallel processing
 
 If the `--parallel` flag is not set, the rate limit is set using the `--max-queries` flag. This is the simplest pipeline setting and typically should only be used when the experiment file contains prompts for a single API and model, e.g.:
