@@ -22,8 +22,8 @@ The library supports querying several APIs and models. The following APIs are cu
 
 * [OpenAI](./docs/openai.md) (`"openai"`)
 * [Azure OpenAI](./docs/azure_openai.md) (`"azure-openai"`)
-* [Gemini](./docs/gemini.md) (`"gemini"`)
 * [Anthropic](./docs/anthropic.md) (`"anthropic"`)
+* [Gemini](./docs/gemini.md) (`"gemini"`)
 * [Vertex AI](./docs/vertexai.md) (`"vertexai"`)
 * [Huggingface text-generation-inference](./docs/huggingface_tgi.md) (`"huggingface-tgi"`)
 * [Ollama](./docs/ollama.md) (`"ollama"`)

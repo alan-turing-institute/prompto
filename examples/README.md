@@ -10,7 +10,7 @@ There are also specific examples for different APIs:
 
 * [Azure OpenAI](./azure-openai/README.md)
 * [OpenAI](./openai/README.md)
-* [Gemini](./gemini/README.md)
 * [Anthropic](./anthropic/README.md)
+* [Gemini](./gemini/README.md)
 * [Vertex AI](./vertexai/README.md)
 * [Ollama](./ollama/README.md)
