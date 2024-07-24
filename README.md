@@ -124,7 +124,7 @@ The resulting folder structure will look like this:
 ├── .env
 ```
 
-The completed experiment file will contain the responses from the OpenAI API for the specific model in each prompt in the input file in `data/output/openai/DD-MM-YYYY-hh-mm-ss-completed-openai.jsonl` where `DD-MM-YYYY-hh-mm-ss` is the timestamp of when the input file was created.
+The completed experiment file will contain the responses from the OpenAI API for the specific model in each prompt in the input file in `data/output/openai/DD-MM-YYYY-hh-mm-ss-completed-openai.jsonl` where `DD-MM-YYYY-hh-mm-ss` is the timestamp of when the experiment file started to be processed.
 
 For a more detailed walkthrough on using `prompto` with the OpenAI API, see the [`openai` example](examples/openai).
 
@@ -165,7 +165,7 @@ As with the above example, the resulting folder structure will look like this:
 ├── .env
 ```
 
-The completed experiment file will contain the responses from the Gemini API for the specified model in each prompt in the input file in `data/output/gemini/DD-MM-YYYY-hh-mm-ss-completed-gemini.jsonl` where `DD-MM-YYYY-hh-mm-ss` is the timestamp of when the input file was created.
+The completed experiment file will contain the responses from the Gemini API for the specified model in each prompt in the input file in `data/output/gemini/DD-MM-YYYY-hh-mm-ss-completed-gemini.jsonl` where `DD-MM-YYYY-hh-mm-ss` is the timestamp of when the experiment file started to be processed.
 
 For a more detailed walkthrough on using `prompto` with the Gemini API, see the [`gemini` example](examples/gemini).
 
