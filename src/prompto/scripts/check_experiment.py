@@ -106,7 +106,7 @@ def is_valid_jsonl(
     multimedia_path_errors = set()
     valid_indicator = True
     if log_file is None:
-        log_file = os.path.basename(file_path).replace(".jsonl", "_error_log.txt")
+        log_file = os.path.basename(file_path).replace(".jsonl", "-error-log.txt")
         logging.info("Log file not provided. Generating one in current directory")
 
     logging.info(

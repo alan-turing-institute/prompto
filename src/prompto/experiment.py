@@ -93,7 +93,7 @@ class Experiment:
 
         # log file is a file in the experiment output folder
         self.log_file: str = os.path.join(
-            self.output_folder, f"{self.start_time}-{self.experiment_name}-log.txt"
+            self.output_folder, f"{self.start_time}-log-{self.experiment_name}.txt"
         )
         # file path of the completed experiment file in the output experiment folder
         self.output_completed_file_path: str = os.path.join(

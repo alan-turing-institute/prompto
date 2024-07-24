@@ -105,7 +105,7 @@ prompto_run_experiment --file data/input/openai.jsonl --max-queries 30
 This will:
 
 1. Create subfolders in the `data` folder (in particular, it will create `media` (`data/media`) and `output` (`data/media`) folders)
-2. Create a folder in the the `output` folder with the name of the experiment (the file name without the `.jsonl` extention * in this case, `openai`)
+2. Create a folder in the`output` folder with the name of the experiment (the file name without the `.jsonl` extention * in this case, `openai`)
 3. Move the `openai.jsonl` file to the `output/openai` folder (and add a timestamp of when the run of the experiment started)
 4. Start running the experiment and sending requests to the OpenAI API asynchronously which we specified in this command to be 30 queries a minute (so requests are sent every 2 seconds) * the default is 10 queries per minute
 5. Results will be stored in a "completed" jsonl file in the output folder (which is also timestamped)
@@ -120,7 +120,7 @@ The resulting folder structure will look like this:
 │   │   └── openai
 │   │       ├── DD-MM-YYYY-hh-mm-ss-completed-openai.jsonl
 │   │       ├── DD-MM-YYYY-hh-mm-ss-input-openai.jsonl
-│   │       └── DD-MM-YYYY-hh-mm-ss-openai-log.txt
+│   │       └── DD-MM-YYYY-hh-mm-ss-log-openai.txt
 ├── .env
 ```
 
@@ -161,7 +161,7 @@ As with the above example, the resulting folder structure will look like this:
 │   │   └── gemini
 │   │       ├── DD-MM-YYYY-hh-mm-ss-completed-gemini.jsonl
 │   │       ├── DD-MM-YYYY-hh-mm-ss-input-gemini.jsonl
-│   │       └── DD-MM-YYYY-hh-mm-ss-gemini-log.txt
+│   │       └── DD-MM-YYYY-hh-mm-ss-log-gemini.txt
 ├── .env
 ```
 
@@ -173,7 +173,7 @@ For a more detailed walkthrough on using `prompto` with the Gemini API, see the 
 
 The library has a few key classes:
 
-* [`Settings`](https://github.com/alan-turing-institute/prompto/blob/main/src/prompto/settings.py): this defines the settings of the the experiment pipeline which stores the paths to the relevant data folders and the parameters for the pipeline.
+* [`Settings`](https://github.com/alan-turing-institute/prompto/blob/main/src/prompto/settings.py): this defines the settings of theexperiment pipeline which stores the paths to the relevant data folders and the parameters for the pipeline.
 * [`Experiment`](https://github.com/alan-turing-institute/prompto/blob/main/src/prompto/experiment.py): this defines all the variables related to a _single_ experiment. An 'experiment' here is defined by a particular JSONL file which contains the data/prompts for each experiment. Each line in this file is a particular input to the LLM which we will obtain a response for. An experiment can be processed by calling the `Experiment.process()` method which will query the model and store the results in the output folder.
 * [`ExperimentPipeline`](https://github.com/alan-turing-institute/prompto/blob/main/src/prompto/experiment_pipeline.py): this is the main class for running the full pipeline. The pipeline can be ran using the `ExperimentPipeline.run()` method which will continually check the input folder for new experiments to process.
 * [`AsyncAPI`](https://github.com/alan-turing-institute/prompto/blob/main/src/prompto/apis/base.py): this is the base class for querying all APIs. Each API/model should inherit from this class and implement the `query` method which will (asynchronously) query the model's API and return the response. When running an experiment, the `Experiment` class will call this method for each experiment to send requests asynchronously.

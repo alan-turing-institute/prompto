@@ -71,7 +71,7 @@ def test_experiment_init(temporary_data_folders):
     assert experiment.number_queries == 2
     assert (
         experiment.log_file
-        == f"data/output/test_in_input/{experiment.start_time}-test_in_input-log.txt"
+        == f"data/output/test_in_input/{experiment.start_time}-log-test_in_input.txt"
     )
 
     # test str method
