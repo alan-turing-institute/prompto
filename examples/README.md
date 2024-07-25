@@ -14,3 +14,5 @@ There are also specific examples for different APIs:
 * [Gemini](./gemini/README.md)
 * [Vertex AI](./vertexai/README.md)
 * [Ollama](./ollama/README.md)
+
+Note that if you're viewing this page on the documentation pages, you might want to visit the [GitHub repository](https://github.com/alan-turing-institute/prompto/tree/main/examples) to access the examples and notebooks directly where you can see the folder structure of the [pipeline data folders](./../docs/pipeline.md) for each example.

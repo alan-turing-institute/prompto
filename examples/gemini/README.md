@@ -4,7 +4,7 @@ For prompts to Gemini API, you can simply add a line in your experiment (`.jsonl
 
 Note that the Gemini API is different to the Vertex AI API. For Vertex AI API, see the [vertexai](./../vertexai/README.md) example.
 
-We provide an example experiment file in [data/input/gemini-example.jsonl](./data/input/gemini-example.jsonl). You can run it with the following command (assuming that your working directory is the current directory of this notebook, i.e. `examples/gemini`):
+We provide an example experiment file in [data/input/gemini-example.jsonl](https://github.com/alan-turing-institute/prompto/blob/main/examples/gemini/data/input/gemini-example.jsonl). You can run it with the following command (assuming that your working directory is the current directory of this notebook, i.e. `examples/gemini`):
 ```bash
 prompto_run_experiment --file data/input/gemini-example.jsonl --max-queries 30
 ```
@@ -23,4 +23,4 @@ By default, the `prompto_run_experiment` command will look for an `.env` file in
 
 Also see the [gemini.ipynb](./gemini.ipynb) notebook for a more detailed walkthrough on the how to set the environment variables and run the experiment and the different types of prompts you can run.
 
-Do note that when you run the experiment, the input file ([data/input/gemini-example.jsonl](./data/input/gemini-example.jsonl)) will be moved to the output directory (timestamped for when you run the experiment).
+Do note that when you run the experiment, the input file ([data/input/gemini-example.jsonl](https://github.com/alan-turing-institute/prompto/blob/main/examples/gemini/data/input/gemini-example.jsonl)) will be moved to the output directory (timestamped for when you run the experiment).

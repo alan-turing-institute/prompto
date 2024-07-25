@@ -2,7 +2,7 @@
 
 For prompts to OpenAI API, you can simply add a line in your experiment (`.jsonl`) file where you specify the `api` to be `openai`. See the [models doc](./../../docs/openai.md) for some details on the environment variables you need to set.
 
-We provide an example experiment file in [data/input/openai-example.jsonl](./data/input/openai-example.jsonl). You can run it with the following command (assuming that your working directory is the current directory of this notebook, i.e. `examples/openai`):
+We provide an example experiment file in [data/input/openai-example.jsonl](https://github.com/alan-turing-institute/prompto/blob/main/examples/openai/data/input/openai-example.jsonl). You can run it with the following command (assuming that your working directory is the current directory of this notebook, i.e. `examples/openai`):
 ```bash
 prompto_run_experiment --file data/input/openai-example.jsonl --max-queries 30
 ```
@@ -21,4 +21,4 @@ By default, the `prompto_run_experiment` command will look for an `.env` file in
 
 Also see the [openai.ipynb](./openai.ipynb) notebook for a more detailed walkthrough on the how to set the environment variables and run the experiment and the different types of prompts you can run.
 
-Do note that when you run the experiment, the input file ([data/input/openai-example.jsonl](./data/input/openai-example.jsonl)) will be moved to the output directory (timestamped for when you run the experiment).
+Do note that when you run the experiment, the input file ([data/input/openai-example.jsonl](https://github.com/alan-turing-institute/prompto/blob/main/examples/openai/data/input/openai-example.jsonl)) will be moved to the output directory (timestamped for when you run the experiment).

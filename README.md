@@ -74,7 +74,7 @@ The main command line interface for running an experiment is the `prompto_run_ex
 prompto_run_experiment --help
 ```
 
-See the [examples](examples) folder for examples of how to use the library with different APIs/models. Each example contains an experiment file which contains prompts for the model(s) and a walkthrough on how to run the experiment.
+See the [examples](./examples/README.md) for examples of how to use the library with different APIs/models. Each example contains an experiment file which contains prompts for the model(s) and a walkthrough on how to run the experiment.
 
 ### OpenAI example
 
@@ -126,7 +126,7 @@ The resulting folder structure will look like this:
 
 The completed experiment file will contain the responses from the OpenAI API for the specific model in each prompt in the input file in `data/output/openai/DD-MM-YYYY-hh-mm-ss-completed-openai.jsonl` where `DD-MM-YYYY-hh-mm-ss` is the timestamp of when the experiment file started to be processed.
 
-For a more detailed walkthrough on using `prompto` with the OpenAI API, see the [`openai` example](examples/openai).
+For a more detailed walkthrough on using `prompto` with the OpenAI API, see the [`openai` example](./examples/openai/README.md).
 
 ### Gemini example
 
@@ -167,7 +167,7 @@ As with the above example, the resulting folder structure will look like this:
 
 The completed experiment file will contain the responses from the Gemini API for the specified model in each prompt in the input file in `data/output/gemini/DD-MM-YYYY-hh-mm-ss-completed-gemini.jsonl` where `DD-MM-YYYY-hh-mm-ss` is the timestamp of when the experiment file started to be processed.
 
-For a more detailed walkthrough on using `prompto` with the Gemini API, see the [`gemini` example](examples/gemini).
+For a more detailed walkthrough on using `prompto` with the Gemini API, see the [`gemini` example](./examples/gemini/README.md).
 
 ## Using the Library in Python
 
