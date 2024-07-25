@@ -1,7 +1,7 @@
 [tool.poetry]
 name = "prompto"
-version = "0.1.0"
-description = "Library for facilitating processing of experiments stored as jsonl files by automating querying LLM APIs and logging progress"
+version = "0.1.1"
+description = "Library for asynchronous querying of LLM API endpoints and logging progress"
 authors = [
     "rchan <rchan@turing.ac.uk>",
     "fedenanni <nanni.federico@gmail.com>",
