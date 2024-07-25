@@ -2,13 +2,20 @@
 
 To query models from Huggingface that are not available via the `text-generation-inference` API, we have written a simple [script to start up a Quart API](https://github.com/alan-turing-institute/prompto/blob/main/src/prompto/apis/quart/quart_api.py)
 ``` that can be used to query a text-generation model from the [Huggingface model hub](https://huggingface.co/models) using the Huggingface `transformers` library. This can be started using the `prompto_quart_server` command, e.g.
-
-prompto_quart_server --model-name vicgalle/gpt2-open-instruct-v1 --host localhost --port 5000 --max-length 200
+```bash
+prompto_quart_server \
+    --model-name vicgalle/gpt2-open-instruct-v1 \
+    --host localhost \
+    --port 5000 \
+    --max-length 200
 ```
 
 Once the server is running, you can query the model by sending a POST request to the endpoint with the prompt in the request body, e.g.
-```
-curl -X POST http://localhost:5000/generate -H "Content-Type: application/json" -d '{"text": "This is a test prompt"}'
+```bash
+curl \
+    -X POST http://localhost:5000/generate \
+    -H "Content-Type: application/json" \
+    -d '{"text": "This is a test prompt"}'
 ```
 
 In Python, you can use the `requests` library to send a POST request to the endpoint, e.g.

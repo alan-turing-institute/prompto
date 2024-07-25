@@ -17,7 +17,7 @@ To run a particular experiment file with the data-folder set to the default path
 prompto_run_experiment --file path/to/experiment.jsonl
 ```
 
-This uses the default settings for the pipeline. You can also set the `--max-queries`, `--max-attempts`, and `--parallel` flags as detailed in the [pipeline documentation](pipeline.md).
+This uses the default settings for the pipeline. You can also set the `--max-queries`, `--max-attempts`, and `--parallel` flags as detailed in the [pipeline documentation](./pipeline.md).
 
 If the experiment file is not in the input folder of the data folder, we will make a copy of the file in the input folder which will get processed. If you want to move the file to the input folder, you can use the `--move-to-input` flag:
 ```
