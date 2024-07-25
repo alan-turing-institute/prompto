@@ -10,6 +10,8 @@ We then have a series of different settings to illustrate the performance of `pr
 - [Querying different LLM endpoints: `prompto` _with parallel processing_ vs. synchronous Python for loop](./experiment_2.ipynb)
 - [Querying different models from the same endpoint: `prompto` vs. synchronous Python for loop](./experiment_3.ipynb)
 
+Note that if you're viewing this page on the documentation pages, you might want to visit the [GitHub repository](https://github.com/alan-turing-institute/prompto/tree/main/examples/system-demo) to access the examples and notebooks directly where you can see the folder structure of the [pipeline data folders](./../docs/pipeline.md) for each example.
+
 ### References
 
 [1]: Self-Instruct: Aligning Language Model with Self Generated Instructions. Yizhong Wang, Yeganeh Kordi, Swaroop Mishra, Alisa Liu, Noah A. Smith, Daniel Khashabi, Hannaneh Hajishirzi. 2022. https://arxiv.org/abs/2212.10560
