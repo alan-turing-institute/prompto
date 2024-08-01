@@ -400,35 +400,35 @@ class AnthropicAPI(AsyncAPI):
         Exception
             If an error occurs during the querying process
         """
-        # If prompt is a single string, then use query string method
         if isinstance(prompt_dict["prompt"], str):
             return await self._query_string(
                 prompt_dict=prompt_dict,
                 index=index,
             )
         elif isinstance(prompt_dict["prompt"], list):
-            # If prompt is a list of strings, then use query chat method
             if all([isinstance(message, str) for message in prompt_dict["prompt"]]):
                 return await self._query_chat(
                     prompt_dict=prompt_dict,
                     index=index,
                 )
-            # If prompt is a list of dictionaries, then use query history method
-            elif all(isinstance(message, dict) for message in prompt_dict["prompt"]):
-                if (
+            elif (
+                all(isinstance(message, dict) for message in prompt_dict["prompt"])
+                and (
                     set(prompt_dict["prompt"][0].keys()) == {"role", "content"}
                     and prompt_dict["prompt"][0]["role"]
                     in list(anthropic_chat_roles) + ["system"]
-                ) and all(
+                )
+                and all(
                     [
                         set(d.keys()) == {"role", "content"}
                         and d["role"] in anthropic_chat_roles
                         for d in prompt_dict["prompt"][1:]
                     ]
-                ):
-                    return await self._query_history(
-                        prompt_dict=prompt_dict,
-                        index=index,
-                    )
+                )
+            ):
+                return await self._query_history(
+                    prompt_dict=prompt_dict,
+                    index=index,
+                )
 
         raise TYPE_ERROR
