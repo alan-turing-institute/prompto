@@ -2,7 +2,6 @@ import logging
 from unittest.mock import AsyncMock, Mock, patch
 
 import pytest
-from anthropic import AsyncAnthropic
 
 from prompto.apis.anthropic import AnthropicAPI
 from prompto.settings import Settings
@@ -17,43 +16,6 @@ PROMPT_DICT_STRING = {
     "prompt": "test prompt",
     "parameters": {"temperature": 1, "max_tokens": 100},
 }
-
-
-@pytest.mark.asyncio
-async def test_anthropic_obtain_model_inputs_string(
-    temporary_data_folders, monkeypatch
-):
-    # create a settings object and log file name
-    settings = Settings(data_folder="data")
-    log_file = "log.txt"
-
-    # set up environment variables
-    monkeypatch.setenv("ANTHROPIC_API_KEY", "DUMMY")
-
-    # intialise the AnthropicAPI class
-    anthropic_api = AnthropicAPI(settings=settings, log_file=log_file)
-
-    # test for string prompt
-    test_case = await anthropic_api._obtain_model_inputs(PROMPT_DICT_STRING)
-    assert isinstance(test_case, tuple)
-    assert len(test_case) == 4
-    assert test_case[0] == PROMPT_DICT_STRING["prompt"]
-    assert test_case[1] == PROMPT_DICT_STRING["model_name"]
-    assert isinstance(test_case[2], AsyncAnthropic)
-    assert test_case[2].api_key == "DUMMY"
-    assert test_case[3] == PROMPT_DICT_STRING["parameters"]
-
-    # test for case where no parameters in prompt_dict
-    new_prompt_dict = PROMPT_DICT_STRING.copy()
-    new_prompt_dict.pop("parameters")
-    test_case = await anthropic_api._obtain_model_inputs(new_prompt_dict)
-    assert isinstance(test_case, tuple)
-    assert len(test_case) == 4
-    assert test_case[0] == new_prompt_dict["prompt"]
-    assert test_case[1] == new_prompt_dict["model_name"]
-    assert isinstance(test_case[2], AsyncAnthropic)
-    assert test_case[2].api_key == "DUMMY"
-    assert test_case[3] == {}
 
 
 @pytest.mark.asyncio
