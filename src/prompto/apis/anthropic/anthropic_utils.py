@@ -1,6 +1,6 @@
 from anthropic.types.message import Message
 
-anthropic_chat_roles = set(["user", "assistant", "system"])
+anthropic_chat_roles = set(["user", "assistant"])
 
 
 def process_response(response: Message) -> str | list[str]:

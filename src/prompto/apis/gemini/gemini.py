@@ -117,19 +117,22 @@ class GeminiAPI(AsyncAPI):
         elif isinstance(prompt_dict["prompt"], list):
             if all([isinstance(message, str) for message in prompt_dict["prompt"]]):
                 pass
-            elif all(isinstance(message, dict) for message in prompt_dict["prompt"]):
-                if (
+            elif (
+                all(isinstance(message, dict) for message in prompt_dict["prompt"])
+                and (
                     set(prompt_dict["prompt"][0].keys()) == {"role", "parts"}
                     and prompt_dict["prompt"][0]["role"]
                     in gemini_chat_roles + ["system"]
-                ) and all(
+                )
+                and all(
                     [
                         set(d.keys()) == {"role", "parts"}
                         and d["role"] in gemini_chat_roles
                         for d in prompt_dict["prompt"][1:]
                     ]
-                ):
-                    pass
+                )
+            ):
+                pass
             else:
                 issues.append(TYPE_ERROR)
         else:
@@ -569,21 +572,24 @@ class GeminiAPI(AsyncAPI):
                     prompt_dict=prompt_dict,
                     index=index,
                 )
-            elif all(isinstance(message, dict) for message in prompt_dict["prompt"]):
-                if (
+            elif (
+                all(isinstance(message, dict) for message in prompt_dict["prompt"])
+                and (
                     set(prompt_dict["prompt"][0].keys()) == {"role", "parts"}
                     and prompt_dict["prompt"][0]["role"]
-                    in gemini_chat_roles + ["system"]
-                ) and all(
+                    in list(gemini_chat_roles) + ["system"]
+                )
+                and all(
                     [
                         set(d.keys()) == {"role", "parts"}
                         and d["role"] in gemini_chat_roles
                         for d in prompt_dict["prompt"][1:]
                     ]
-                ):
-                    return await self._query_history(
-                        prompt_dict=prompt_dict,
-                        index=index,
-                    )
+                )
+            ):
+                return await self._query_history(
+                    prompt_dict=prompt_dict,
+                    index=index,
+                )
 
         raise TYPE_ERROR

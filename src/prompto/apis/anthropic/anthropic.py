@@ -22,8 +22,15 @@ from prompto.utils import (
     write_log_message,
 )
 
-# set names of environment variables
 API_KEY_VAR_NAME = "ANTHROPIC_API_KEY"
+
+TYPE_ERROR = TypeError(
+    "if api == 'anthropic', then the prompt must be a str, list[str], or "
+    "list[dict[str,str]] where the dictionary contains the keys 'role' and "
+    "'content' only, and the values for 'role' must be one of 'user' or 'model', "
+    "except for the first message in the list of dictionaries can be a "
+    "system message with the key 'role' set to 'system'."
+)
 
 
 class AnthropicAPI(AsyncAPI):
@@ -100,32 +107,31 @@ class AnthropicAPI(AsyncAPI):
         issues = []
 
         # check prompt is of the right type
-        type_error = TypeError(
-            "if api == 'anthropic', then the prompt must be a str, list[str], or "
-            "list[dict[str,str]] where the dictionary contains the keys 'role' and "
-            "'content' only, and the values for 'role' must be one of 'system', 'user' or "
-            "'assistant'"
-        )
-
         if isinstance(prompt_dict["prompt"], str):
             pass
         elif isinstance(prompt_dict["prompt"], list):
             if all([isinstance(message, str) for message in prompt_dict["prompt"]]):
                 pass
-            elif all(
-                isinstance(message, dict) for message in prompt_dict["prompt"]
-            ) and all(
-                [
-                    set(d.keys()) == {"role", "content"}
-                    and d["role"] in anthropic_chat_roles
-                    for d in prompt_dict["prompt"]
-                ]
+            elif (
+                all(isinstance(message, dict) for message in prompt_dict["prompt"])
+                and (
+                    set(prompt_dict["prompt"][0].keys()) == {"role", "content"}
+                    and prompt_dict["prompt"][0]["role"]
+                    in list(anthropic_chat_roles) + ["system"]
+                )
+                and all(
+                    [
+                        set(d.keys()) == {"role", "content"}
+                        and d["role"] in anthropic_chat_roles
+                        for d in prompt_dict["prompt"][1:]
+                    ]
+                )
             ):
                 pass
             else:
-                issues.append(type_error)
+                issues.append(TYPE_ERROR)
         else:
-            issues.append(type_error)
+            issues.append(TYPE_ERROR)
 
         # use the model specific environment variables if they exist
         model_name = prompt_dict["model_name"]
@@ -313,31 +319,32 @@ class AnthropicAPI(AsyncAPI):
             prompt_dict
         )
 
-        # Remove the "system" role from the prompt and add it to the system parameter
+        # pop the "system" role from the prompt
         system = [
             message_dict["content"]
             for message_dict in prompt
             if message_dict["role"] == "system"
         ]
 
-        prompt = [
+        # remove the system messages from prompt
+        messages = [
             message_dict for message_dict in prompt if message_dict["role"] != "system"
         ]
 
-        # If system message is present, then it must be the only one
+        # if system message is present, then it must be the only one
         if len(system) == 0:
             system = None
         elif len(system) == 1:
             system = system[0]
         else:
             raise ValueError(
-                f"There are {len(system)} system messages. Only one system message is supported."
+                f"There are {len(system)} system messages. Only one system message is supported"
             )
 
         try:
             response = await client.messages.create(
                 model=model_name,
-                messages=prompt,
+                messages=messages,
                 system=system,
                 **generation_config,
             )
@@ -407,23 +414,21 @@ class AnthropicAPI(AsyncAPI):
                     index=index,
                 )
             # If prompt is a list of dictionaries, then use query history method
-            elif all(
-                isinstance(message, dict) for message in prompt_dict["prompt"]
-            ) and all(
-                [
-                    set(d.keys()) == {"role", "content"}
-                    and d["role"] in anthropic_chat_roles
-                    for d in prompt_dict["prompt"]
-                ]
-            ):
-                return await self._query_history(
-                    prompt_dict=prompt_dict,
-                    index=index,
-                )
+            elif all(isinstance(message, dict) for message in prompt_dict["prompt"]):
+                if (
+                    set(prompt_dict["prompt"][0].keys()) == {"role", "content"}
+                    and prompt_dict["prompt"][0]["role"]
+                    in list(anthropic_chat_roles) + ["system"]
+                ) and all(
+                    [
+                        set(d.keys()) == {"role", "content"}
+                        and d["role"] in anthropic_chat_roles
+                        for d in prompt_dict["prompt"][1:]
+                    ]
+                ):
+                    return await self._query_history(
+                        prompt_dict=prompt_dict,
+                        index=index,
+                    )
 
-        raise TypeError(
-            "if api == 'anthropic', then the prompt must be a str, list[str], or "
-            "list[dict[str,str]] where the dictionary contains the keys 'role' and "
-            "'content' only, and the values for 'role' must be one of 'system', 'user' or "
-            "'assistant'"
-        )
+        raise TYPE_ERROR
