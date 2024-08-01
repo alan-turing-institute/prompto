@@ -134,7 +134,7 @@ class VertexAIAPI(AsyncAPI):
                 and (
                     set(prompt_dict["prompt"][0].keys()) == {"role", "parts"}
                     and prompt_dict["prompt"][0]["role"]
-                    in gemini_chat_roles + ["system"]
+                    in list(gemini_chat_roles) + ["system"]
                 )
                 and all(
                     [
@@ -594,7 +594,7 @@ class VertexAIAPI(AsyncAPI):
                 and (
                     set(prompt_dict["prompt"][0].keys()) == {"role", "parts"}
                     and prompt_dict["prompt"][0]["role"]
-                    in gemini_chat_roles + ["system"]
+                    in list(gemini_chat_roles) + ["system"]
                 )
                 and all(
                     [
