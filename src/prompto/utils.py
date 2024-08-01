@@ -475,7 +475,7 @@ def get_environment_variable(env_variable: str, model_name: str) -> str:
         return os.environ[env_variable]
     else:
         raise KeyError(
-            f"Neither '{env_variable}' nor '{env_variable_with_idenfier}' is set"
+            f"Neither '{env_variable}' nor '{env_variable_with_idenfier}' environment variable is set"
         )
 
 

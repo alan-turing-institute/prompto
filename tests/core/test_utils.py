@@ -585,12 +585,14 @@ def test_get_environment_variable_model_name(monkeypatch):
 def test_get_environment_variable_error():
     # raise error if the environment variable is not set
     with pytest.raises(
-        KeyError, match="Neither 'TEST_VAR' nor 'TEST_VAR_TEST_MODEL_NAME' is set"
+        KeyError,
+        match="Neither 'TEST_VAR' nor 'TEST_VAR_TEST_MODEL_NAME' environment variable is set",
     ):
         get_environment_variable(env_variable="TEST_VAR", model_name="TEST_MODEL_NAME")
 
     with pytest.raises(
-        KeyError, match="Neither 'TEST_VAR' nor 'TEST_VAR_test_model_name' is set"
+        KeyError,
+        match="Neither 'TEST_VAR' nor 'TEST_VAR_test_model_name' environment variable is set",
     ):
         get_environment_variable(env_variable="TEST_VAR", model_name="test-model-name")
 
