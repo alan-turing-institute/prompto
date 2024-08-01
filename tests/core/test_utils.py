@@ -593,3 +593,76 @@ def test_get_environment_variable_error():
         KeyError, match="Neither 'TEST_VAR' nor 'TEST_VAR_test_model_name' is set"
     ):
         get_environment_variable(env_variable="TEST_VAR", model_name="test-model-name")
+
+
+def test_check_max_queries_dict():
+    # raise error if no max_queries_dict is passed
+    with pytest.raises(TypeError, match="missing 1 required positional argument"):
+        check_max_queries_dict()
+
+    # raise error if max_queries_dict is not a dictionary
+    with pytest.raises(
+        TypeError, match="max_queries_dict must be a dictionary, not <class 'str'>"
+    ):
+        check_max_queries_dict(max_queries_dict="test")
+
+    # raise error if any of the keys is not a string
+    with pytest.raises(
+        TypeError,
+        match="max_queries_dict keys must be strings, not <class 'int'>",
+    ):
+        check_max_queries_dict(max_queries_dict={1: 10})
+
+    # raise error if any of the values is not an integer or dictionary
+    with pytest.raises(
+        TypeError,
+        match="max_queries_dict values must be integers or dictionaries, not <class 'str'>",
+    ):
+        check_max_queries_dict(max_queries_dict={"test": "test"})
+
+    # raise error if max_queries_dict has values which are negative integers
+    with pytest.raises(
+        ValueError,
+        match=(
+            "if a value of max_queries_dict is an integer, "
+            "the value must be a positive integer, not negative"
+        ),
+    ):
+        check_max_queries_dict(max_queries_dict={"test": -1})
+
+    # raise error if max_queries_dict has values which are dictionaries
+    # which have keys that are not strings
+    with pytest.raises(
+        TypeError,
+        match="if a value of max_queries_dict is a dictionary, the sub-keys must be strings, not <class 'int'>",
+    ):
+        check_max_queries_dict(max_queries_dict={"test": {1: 10}})
+
+    # raise error if max_queries_dict has values which are dictionaries
+    # which have values that are not integers
+    with pytest.raises(
+        TypeError,
+        match="if a value of max_queries_dict is a dictionary, the sub-values must be integers, not <class 'str'>",
+    ):
+        check_max_queries_dict(
+            max_queries_dict={"test": {"test_sub_key": "test_sub_value"}}
+        )
+
+    # raise error if max_queries_dict has values which are dictionaries
+    # which have values that are negative integers
+    with pytest.raises(
+        ValueError,
+        match=(
+            "if a value of max_queries_dict is a dictionary, "
+            "the sub-values must be positive integers, not negative"
+        ),
+    ):
+        check_max_queries_dict(max_queries_dict={"test": {"test_sub_key": -1}})
+
+    # check passes
+    assert check_max_queries_dict(max_queries_dict={"test": {}})
+    assert check_max_queries_dict(max_queries_dict={"test": 1})
+    assert check_max_queries_dict(max_queries_dict={"test": {"test_sub_key": 1}})
+    assert check_max_queries_dict(
+        max_queries_dict={"test": {"test_sub_key": 1, "test_sub_key_2": 2}, "test_2": 2}
+    )

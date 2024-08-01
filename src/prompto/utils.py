@@ -479,7 +479,7 @@ def get_environment_variable(env_variable: str, model_name: str) -> str:
         )
 
 
-def check_max_queries_dict(max_queries_dict: dict[str, int | dict[str, int]]) -> None:
+def check_max_queries_dict(max_queries_dict: dict[str, int | dict[str, int]]) -> bool:
     """
     Check the format of the max_queries_dict dictionary.
 
@@ -487,12 +487,17 @@ def check_max_queries_dict(max_queries_dict: dict[str, int | dict[str, int]]) ->
 
     Parameters
     ----------
-    max_queries_dict : dict[str, int | dict[str, int]], optional
+    max_queries_dict : dict[str, int | dict[str, int]]
         A dictionary of maximum queries per minute for each API or group, by default {}.
         The dictionary keys should be either a group name (which is then used in the
         "group" key of the prompt_dict) or an API name. The values should be integers
         (the maximum queries per minute or rate limit) or itself a dictionary with
         keys as the model-names and values as the maximum queries per minute for that model.
+
+    Returns
+    -------
+    bool
+        True if the max_queries_dict is valid, otherwise raises a ValueError or TypeError.
     """
     # check max_queries_dict is a dictionary
     if not isinstance(max_queries_dict, dict):
@@ -526,3 +531,15 @@ def check_max_queries_dict(max_queries_dict: dict[str, int | dict[str, int]]) ->
                         "if a value of max_queries_dict is a dictionary, "
                         f"the sub-values must be integers, not {type(sub_value)}"
                     )
+                elif sub_value < 0:
+                    raise ValueError(
+                        "if a value of max_queries_dict is a dictionary, "
+                        "the sub-values must be positive integers, not negative"
+                    )
+        elif value < 0:
+            raise ValueError(
+                "if a value of max_queries_dict is an integer, "
+                "the value must be a positive integer, not negative"
+            )
+
+    return True
