@@ -20,8 +20,14 @@ from prompto.utils import (
     write_log_message,
 )
 
-# set names of environment variables
 API_KEY_VAR_NAME = "OPENAI_API_KEY"
+
+TYPE_ERROR = TypeError(
+    "if api == 'openai', then the prompt must be a str, list[str], or "
+    "list[dict[str,str]] where the dictionary contains the keys 'role' and "
+    "'content' only, and the values for 'role' must be one of 'system', 'user' or "
+    "'assistant'"
+)
 
 
 class OpenAIAPI(AsyncAPI):
@@ -103,7 +109,7 @@ class OpenAIAPI(AsyncAPI):
         elif isinstance(prompt_dict["prompt"], list):
             if all([isinstance(message, str) for message in prompt_dict["prompt"]]):
                 pass
-            if all(
+            elif all(
                 isinstance(message, dict) for message in prompt_dict["prompt"]
             ) and all(
                 [
@@ -113,15 +119,10 @@ class OpenAIAPI(AsyncAPI):
                 ]
             ):
                 pass
+            else:
+                issues.append(TYPE_ERROR)
         else:
-            issues.append(
-                TypeError(
-                    "if api == 'openai', then the prompt must be a str, list[str], or "
-                    "list[dict[str,str]] where the dictionary contains the keys 'role' and "
-                    "'content' only, and the values for 'role' must be one of 'system', 'user' or "
-                    "'assistant'"
-                )
-            )
+            issues.append(TYPE_ERROR)
 
         # use the model specific environment variables if they exist
         model_name = prompt_dict["model_name"]
@@ -395,7 +396,7 @@ class OpenAIAPI(AsyncAPI):
                     prompt_dict=prompt_dict,
                     index=index,
                 )
-            if all(
+            elif all(
                 isinstance(message, dict) for message in prompt_dict["prompt"]
             ) and all(
                 [
@@ -409,9 +410,4 @@ class OpenAIAPI(AsyncAPI):
                     index=index,
                 )
 
-        raise TypeError(
-            "if api == 'openai', then the prompt must be a str, list[str], or "
-            "list[dict[str,str]] where the dictionary contains the keys 'role' and "
-            "'content' only, and the values for 'role' must be one of 'system', 'user' or "
-            "'assistant'"
-        )
+        raise TYPE_ERROR

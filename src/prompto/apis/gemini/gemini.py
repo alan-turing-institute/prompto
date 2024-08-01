@@ -28,6 +28,14 @@ from prompto.utils import (
 
 API_KEY_VAR_NAME = "GEMINI_API_KEY"
 
+TYPE_ERROR = TypeError(
+    "if api == 'gemini', then the prompt must be a str, list[str], or "
+    "list[dict[str,str]] where the dictionary contains the keys 'role' and "
+    "'parts' only, and the values for 'role' must be one of 'user' or 'model', "
+    "except for the first message in the list of dictionaries can be a "
+    "system message with the key 'role' set to 'system'."
+)
+
 
 class GeminiAPI(AsyncAPI):
     """
@@ -103,13 +111,13 @@ class GeminiAPI(AsyncAPI):
         """
         issues = []
 
-        # check prompt is of the right type (string or list of strings)
+        # check prompt is of the right type
         if isinstance(prompt_dict["prompt"], str):
             pass
         elif isinstance(prompt_dict["prompt"], list):
             if all([isinstance(message, str) for message in prompt_dict["prompt"]]):
                 pass
-            if all(isinstance(message, dict) for message in prompt_dict["prompt"]):
+            elif all(isinstance(message, dict) for message in prompt_dict["prompt"]):
                 if (
                     set(prompt_dict["prompt"][0].keys()) == {"role", "parts"}
                     and prompt_dict["prompt"][0]["role"]
@@ -122,16 +130,10 @@ class GeminiAPI(AsyncAPI):
                     ]
                 ):
                     pass
+            else:
+                issues.append(TYPE_ERROR)
         else:
-            issues.append(
-                TypeError(
-                    "if api == 'gemini', then the prompt must be a str, list[str], or "
-                    "list[dict[str,str]] where the dictionary contains the keys 'role' and "
-                    "'parts' only, and the values for 'role' must be one of 'user' or 'model', "
-                    "except for the first message in the list of dictionaries can be a "
-                    "system message with the key 'role' set to 'system'."
-                )
-            )
+            issues.append(TYPE_ERROR)
 
         # use the model specific environment variables
         model_name = prompt_dict["model_name"]
@@ -567,7 +569,7 @@ class GeminiAPI(AsyncAPI):
                     prompt_dict=prompt_dict,
                     index=index,
                 )
-            if all(isinstance(message, dict) for message in prompt_dict["prompt"]):
+            elif all(isinstance(message, dict) for message in prompt_dict["prompt"]):
                 if (
                     set(prompt_dict["prompt"][0].keys()) == {"role", "parts"}
                     and prompt_dict["prompt"][0]["role"]
@@ -584,10 +586,4 @@ class GeminiAPI(AsyncAPI):
                         index=index,
                     )
 
-        raise TypeError(
-            "if api == 'gemini', then the prompt must be a str, list[str], or "
-            "list[dict[str,str]] where the dictionary contains the keys 'role' and "
-            "'parts' only, and the values for 'role' must be one of 'user' or 'model', "
-            "except for the first message in the list of dictionaries can be a "
-            "system message with the key 'role' set to 'system'."
-        )
+        raise TYPE_ERROR
