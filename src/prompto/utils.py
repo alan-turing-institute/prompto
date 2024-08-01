@@ -267,7 +267,7 @@ def check_required_env_variables_set(
     """
     Check if required environment variables are set.
 
-    A list of ValueErrors are returned for each required environment variables
+    A list of KeyErrors are returned for each required environment variables
     that is not set. If they are all set, an empty list is returned.
 
     Parameters
@@ -281,7 +281,7 @@ def check_required_env_variables_set(
         List of exceptions that are raised if the required environment variables are not set.
     """
     return [
-        ValueError(f"Environment variable '{env_variable}' is not set")
+        KeyError(f"Environment variable '{env_variable}' is not set")
         for env_variable in required_env_variables
         if env_variable not in os.environ
     ]
@@ -324,7 +324,7 @@ def check_either_required_env_variables_set(
     then we first look at `['A', 'B']`, and check at least one of the
     environment variables 'A' or 'B' are set. If either 'A' or 'B' are not set,
     we add a Warning to the returned list. IF neither 'A' or 'B' are set, we add
-    a ValueError to the returned list. We then repeat this process for `['C', 'D']`.
+    a KeyError to the returned list. We then repeat this process for `['C', 'D']`.
 
     Parameters
     ----------
@@ -336,7 +336,7 @@ def check_either_required_env_variables_set(
     -------
     list[Exception]
         List of exceptions of either Warnings to say an environment variable isn't set
-        or ValueErrors if none of the required environment variables in a list are set.
+        or KeyErrors if none of the required environment variables in a list are set.
     """
     # check required environment variables is a list of lists
     if not all(
@@ -354,7 +354,7 @@ def check_either_required_env_variables_set(
         if len(warnings) == len(env_variables):
             # add a value error if none of the variables in this list are set
             issues.append(
-                ValueError(
+                KeyError(
                     f"At least one of the environment variables '{env_variables}' must be set"
                 )
             )
@@ -448,7 +448,7 @@ def get_environment_variable(env_variable: str, model_name: str) -> str:
     exists. If it does, we return the value of that environment variable.
     If it does not exist, we return the value of the environment variable
     without the model name identifier.
-    If neither environment variables exist, we raise a ValueError.
+    If neither environment variables exist, we raise a KeyError.
 
     Parameters
     ----------
@@ -474,8 +474,8 @@ def get_environment_variable(env_variable: str, model_name: str) -> str:
     elif env_variable in os.environ:
         return os.environ[env_variable]
     else:
-        raise ValueError(
-            f"Neither '{env_variable}' or '{env_variable_with_idenfier}' is not set"
+        raise KeyError(
+            f"Neither '{env_variable}' nor '{env_variable_with_idenfier}' is set"
         )
 
 

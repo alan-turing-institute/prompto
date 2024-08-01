@@ -6,9 +6,11 @@ import regex as re
 
 from prompto.utils import (
     check_either_required_env_variables_set,
+    check_max_queries_dict,
     check_optional_env_variables_set,
     check_required_env_variables_set,
     create_folder,
+    get_environment_variable,
     get_model_name_identifier,
     log_error_response_chat,
     log_error_response_query,
@@ -230,74 +232,56 @@ def test_log_error_response_chat(caplog):
     assert expected_log_message in caplog.text
 
 
-def test_check_required_env_variables_set():
-    os.environ["TEST_VAR"] = "test"
-    os.environ["TEST_VAR_2"] = "test"
-    if "TEST_VAR_3" in os.environ:
-        del os.environ["TEST_VAR_3"]
-    if "TEST_VAR_4" in os.environ:
-        del os.environ["TEST_VAR_4"]
+def test_check_required_env_variables_set(monkeypatch):
+    monkeypatch.setenv("TEST_VAR", "test")
+    monkeypatch.setenv("TEST_VAR_2", "test")
+    monkeypatch.delenv("TEST_VAR_3", raising=False)
+    monkeypatch.delenv("TEST_VAR_4", raising=False)
 
     # check passes
     assert check_required_env_variables_set(["TEST_VAR"]) == []
     assert check_required_env_variables_set(["TEST_VAR", "TEST_VAR_2"]) == []
 
-    # check ValueErrors are being returned within the list
+    # check KeyErrors are being returned within the list
     test_case = check_required_env_variables_set(["TEST_VAR_3"])
     assert len(test_case) == 1
-    with pytest.raises(
-        ValueError, match="Environment variable 'TEST_VAR_3' is not set"
-    ):
+    with pytest.raises(KeyError, match="Environment variable 'TEST_VAR_3' is not set"):
         raise test_case[0]
 
     test_case = check_required_env_variables_set(["TEST_VAR", "TEST_VAR_3"])
     assert len(test_case) == 1
-    with pytest.raises(
-        ValueError, match="Environment variable 'TEST_VAR_3' is not set"
-    ):
+    with pytest.raises(KeyError, match="Environment variable 'TEST_VAR_3' is not set"):
         raise test_case[0]
 
     test_case = check_required_env_variables_set(
         ["TEST_VAR", "TEST_VAR_2", "TEST_VAR_3"]
     )
     assert len(test_case) == 1
-    with pytest.raises(
-        ValueError, match="Environment variable 'TEST_VAR_3' is not set"
-    ):
+    with pytest.raises(KeyError, match="Environment variable 'TEST_VAR_3' is not set"):
         raise test_case[0]
 
     test_case = check_required_env_variables_set(["TEST_VAR_3", "TEST_VAR_4"])
     assert len(test_case) == 2
-    with pytest.raises(
-        ValueError, match="Environment variable 'TEST_VAR_3' is not set"
-    ):
+    with pytest.raises(KeyError, match="Environment variable 'TEST_VAR_3' is not set"):
         raise test_case[0]
-    with pytest.raises(
-        ValueError, match="Environment variable 'TEST_VAR_4' is not set"
-    ):
+    with pytest.raises(KeyError, match="Environment variable 'TEST_VAR_4' is not set"):
         raise test_case[1]
 
     test_case = check_required_env_variables_set(
         ["TEST_VAR", "TEST_VAR_2", "TEST_VAR_3", "TEST_VAR_4"]
     )
     assert len(test_case) == 2
-    with pytest.raises(
-        ValueError, match="Environment variable 'TEST_VAR_3' is not set"
-    ):
+    with pytest.raises(KeyError, match="Environment variable 'TEST_VAR_3' is not set"):
         raise test_case[0]
-    with pytest.raises(
-        ValueError, match="Environment variable 'TEST_VAR_4' is not set"
-    ):
+    with pytest.raises(KeyError, match="Environment variable 'TEST_VAR_4' is not set"):
         raise test_case[1]
 
 
-def test_check_optional_env_variables_set():
-    os.environ["TEST_VAR"] = "test"
-    os.environ["TEST_VAR_2"] = "test"
-    if "TEST_VAR_3" in os.environ:
-        del os.environ["TEST_VAR_3"]
-    if "TEST_VAR_4" in os.environ:
-        del os.environ["TEST_VAR_4"]
+def test_check_optional_env_variables_set(monkeypatch):
+    monkeypatch.setenv("TEST_VAR", "test")
+    monkeypatch.setenv("TEST_VAR_2", "test")
+    monkeypatch.delenv("TEST_VAR_3", raising=False)
+    monkeypatch.delenv("TEST_VAR_4", raising=False)
 
     # check passes
     assert check_optional_env_variables_set(["TEST_VAR"]) == []
@@ -338,20 +322,15 @@ def test_check_optional_env_variables_set():
         raise test_case[1]
 
 
-def test_check_either_required_env_variables_set():
-    os.environ["TEST_VAR"] = "test"
-    os.environ["TEST_VAR_ALT"] = "test"
-    os.environ["TEST_VAR_2"] = "test"
-    if "TEST_VAR_2_ALT" in os.environ:
-        del os.environ["TEST_VAR_2_ALT"]
-    if "TEST_VAR_3" in os.environ:
-        del os.environ["TEST_VAR_3"]
-    if "TEST_VAR_3_ALT" in os.environ:
-        del os.environ["TEST_VAR_3_ALT"]
-    if "TEST_VAR_4" in os.environ:
-        del os.environ["TEST_VAR_4"]
-    if "TEST_VAR_4_ALT" in os.environ:
-        del os.environ["TEST_VAR_4_ALT"]
+def test_check_either_required_env_variables_set(monkeypatch):
+    monkeypatch.setenv("TEST_VAR", "test")
+    monkeypatch.setenv("TEST_VAR_ALT", "test")
+    monkeypatch.setenv("TEST_VAR_2", "test")
+    monkeypatch.delenv("TEST_VAR_2_ALT", raising=False)
+    monkeypatch.delenv("TEST_VAR_3", raising=False)
+    monkeypatch.delenv("TEST_VAR_3_ALT", raising=False)
+    monkeypatch.delenv("TEST_VAR_4", raising=False)
+    monkeypatch.delenv("TEST_VAR_4_ALT", raising=False)
 
     # check error raising if parameter is not a list of lists
     with pytest.raises(
@@ -363,7 +342,7 @@ def test_check_either_required_env_variables_set():
     # check passes
     assert check_either_required_env_variables_set([["TEST_VAR", "TEST_VAR_ALT"]]) == []
 
-    # check Warnings and ValueErrors are being returned within the list
+    # check Warnings and KeyErrors are being returned within the list
     test_case = check_either_required_env_variables_set(
         [["TEST_VAR_2", "TEST_VAR_2_ALT"]]
     )
@@ -378,7 +357,7 @@ def test_check_either_required_env_variables_set():
     )
     assert len(test_case) == 1
     with pytest.raises(
-        ValueError,
+        KeyError,
         match=re.escape(
             "At least one of the environment variables '['TEST_VAR_3', 'TEST_VAR_3_ALT']' must be set"
         ),
@@ -398,7 +377,7 @@ def test_check_either_required_env_variables_set():
     ):
         raise test_case[0]
     with pytest.raises(
-        ValueError,
+        KeyError,
         match=re.escape(
             "At least one of the environment variables '['TEST_VAR_3', 'TEST_VAR_3_ALT']' must be set"
         ),
@@ -424,14 +403,14 @@ def test_check_either_required_env_variables_set():
     ):
         raise test_case[1]
     with pytest.raises(
-        ValueError,
+        KeyError,
         match=re.escape(
             "At least one of the environment variables '['TEST_VAR_3', 'TEST_VAR_3_ALT']' must be set"
         ),
     ):
         raise test_case[2]
     with pytest.raises(
-        ValueError,
+        KeyError,
         match=re.escape(
             "At least one of the environment variables '['TEST_VAR_4', 'TEST_VAR_4_ALT']' must be set"
         ),
@@ -548,3 +527,69 @@ def test_sort_prompts_by_model_for_api():
         {"api": "test", "model_name": "b", "prompt": "test prompt 1"},
         {"api": "other", "prompt": "prompt 3"},
     ]
+
+
+def test_get_environment_variable_main(monkeypatch):
+    # raise error if no arguments are passed
+    with pytest.raises(TypeError, match="missing 2 required positional argument"):
+        get_environment_variable()
+
+    # raise error if only one argument is passed
+    with pytest.raises(TypeError, match="missing 1 required positional argument"):
+        get_environment_variable("env_variable")
+
+    # raise error if only env_variable is passed
+    with pytest.raises(
+        TypeError, match="missing 1 required positional argument: 'model_name'"
+    ):
+        get_environment_variable(env_variable="TEST_VAR")
+
+    # raise error if only model_name is passed
+    with pytest.raises(
+        TypeError, match="missing 1 required positional argument: 'env_variable'"
+    ):
+        get_environment_variable(model_name="TEST_MODEL_NAME")
+
+    # get the environment variable from the main environment variable
+    monkeypatch.setenv("TEST_VAR", "test")
+    assert (
+        get_environment_variable(env_variable="TEST_VAR", model_name="TEST_MODEL_NAME")
+        == "test"
+    )
+
+
+def test_get_environment_variable_model_name(monkeypatch):
+    # get the environment variable from the model name identifier
+    monkeypatch.setenv("TEST_VAR_TEST_MODEL_NAME", "test_1")
+    assert (
+        get_environment_variable(env_variable="TEST_VAR", model_name="TEST_MODEL_NAME")
+        == "test_1"
+    )
+
+    # get the environment variable from the model name identifier with hyphens
+    monkeypatch.setenv("TEST_VAR_test_model_name", "test_2")
+    assert (
+        get_environment_variable(env_variable="TEST_VAR", model_name="test-model-name")
+        == "test_2"
+    )
+
+    # get the environment variable from the model name identifier
+    # even when the main environment variable is set
+    monkeypatch.setenv("TEST_VAR", "main")
+    assert (
+        get_environment_variable(env_variable="TEST_VAR", model_name="TEST_MODEL_NAME")
+        == "test_1"
+    )
+
+
+def test_get_environment_variable_error():
+    # raise error if the environment variable is not set
+    with pytest.raises(
+        KeyError, match="Neither 'TEST_VAR' nor 'TEST_VAR_TEST_MODEL_NAME' is set"
+    ):
+        get_environment_variable(env_variable="TEST_VAR", model_name="TEST_MODEL_NAME")
+
+    with pytest.raises(
+        KeyError, match="Neither 'TEST_VAR' nor 'TEST_VAR_test_model_name' is set"
+    ):
+        get_environment_variable(env_variable="TEST_VAR", model_name="test-model-name")
