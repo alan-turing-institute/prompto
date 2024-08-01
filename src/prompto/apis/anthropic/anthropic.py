@@ -46,7 +46,6 @@ class AnthropicAPI(AsyncAPI):
         *args: Any,
         **kwargs: Any,
     ):
-
         super().__init__(settings=settings, log_file=log_file, *args, **kwargs)
         self.api_type = "anthropic"
 
@@ -101,12 +100,19 @@ class AnthropicAPI(AsyncAPI):
         issues = []
 
         # check prompt is of the right type
+        type_error = TypeError(
+            "if api == 'anthropic', then the prompt must be a str, list[str], or "
+            "list[dict[str,str]] where the dictionary contains the keys 'role' and "
+            "'content' only, and the values for 'role' must be one of 'system', 'user' or "
+            "'assistant'"
+        )
+
         if isinstance(prompt_dict["prompt"], str):
             pass
         elif isinstance(prompt_dict["prompt"], list):
             if all([isinstance(message, str) for message in prompt_dict["prompt"]]):
                 pass
-            if all(
+            elif all(
                 isinstance(message, dict) for message in prompt_dict["prompt"]
             ) and all(
                 [
@@ -116,15 +122,10 @@ class AnthropicAPI(AsyncAPI):
                 ]
             ):
                 pass
+            else:
+                issues.append(type_error)
         else:
-            issues.append(
-                TypeError(
-                    "if api == 'anthropic', then the prompt must be a str, list[str], or "
-                    "list[dict[str,str]] where the dictionary contains the keys 'role' and "
-                    "'content' only, and the values for 'role' must be one of 'system', 'user' or "
-                    "'assistant'"
-                )
-            )
+            issues.append(type_error)
 
         # use the model specific environment variables if they exist
         model_name = prompt_dict["model_name"]
@@ -145,7 +146,7 @@ class AnthropicAPI(AsyncAPI):
 
     async def _obtain_model_inputs(
         self, prompt_dict: dict
-    ) -> tuple[str, str, AsyncAnthropic, dict, str]:
+    ) -> tuple[str, str, AsyncAnthropic, dict]:
         """
         Async method to obtain the model inputs from the prompt dictionary.
 
@@ -156,7 +157,7 @@ class AnthropicAPI(AsyncAPI):
 
         Returns
         -------
-        tuple[str, str, AsyncAnthropic, dict, str]
+        tuple[str, str, AsyncAnthropic, dict]
             A tuple containing the prompt, model name, AsyncAnthropic client object,
             the generation config, and mode to use for querying the model
         """
@@ -406,7 +407,7 @@ class AnthropicAPI(AsyncAPI):
                     index=index,
                 )
             # If prompt is a list of dictionaries, then use query history method
-            if all(
+            elif all(
                 isinstance(message, dict) for message in prompt_dict["prompt"]
             ) and all(
                 [
