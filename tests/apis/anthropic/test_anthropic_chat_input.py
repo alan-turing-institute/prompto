@@ -10,7 +10,7 @@ from prompto.settings import Settings
 pytest_plugins = ("pytest_asyncio",)
 
 PROMPT_DICT_CHAT = {
-    "id": "anthropic_1",
+    "id": "anthropic_id",
     "api": "anthropic",
     "model_name": "anthropic_model_name",
     "prompt": ["test chat 1", "test chat 2"],

@@ -56,8 +56,9 @@ def test_anthropic_check_prompt_dict(temporary_data_folders, monkeypatch):
     type_error_msg = (
         "if api == 'anthropic', then the prompt must be a str, list[str], or "
         "list[dict[str,str]] where the dictionary contains the keys 'role' and "
-        "'content' only, and the values for 'role' must be one of 'system', 'user' or "
-        "'assistant'"
+        "'content' only, and the values for 'role' must be one of 'user' or 'model', "
+        "except for the first message in the list of dictionaries can be a "
+        "system message with the key 'role' set to 'system'."
     )
 
     env_variable_error_msg = (
@@ -116,6 +117,39 @@ def test_anthropic_check_prompt_dict(temporary_data_folders, monkeypatch):
                 {"role": "system", "content": "system prompt"},
                 {"role": "user", "content": "user message"},
                 {"role": "incorrect", "content": "some message"},
+            ],
+        }
+    )
+    assert len(test_case) == 2
+    with pytest.raises(TypeError, match=re.escape(type_error_msg)):
+        raise test_case[0]
+
+    # error if prompt_dict["prompt"] is a list of dictionaries but
+    # the system message is not the first message in the list
+    test_case = AnthropicAPI.check_prompt_dict(
+        {
+            "api": "anthropic",
+            "model_name": "anthropic_model_name",
+            "prompt": [
+                {"role": "user", "content": "user message"},
+                {"role": "system", "content": "system prompt"},
+            ],
+        }
+    )
+    assert len(test_case) == 2
+    with pytest.raises(TypeError, match=re.escape(type_error_msg)):
+        raise test_case[0]
+
+    # error if prompt_dict["prompt"] is a list of dictionaries but
+    # there are multiple system messages in the list
+    test_case = AnthropicAPI.check_prompt_dict(
+        {
+            "api": "anthropic",
+            "model_name": "anthropic_model_name",
+            "prompt": [
+                {"role": "system", "content": "system prompt 1"},
+                {"role": "system", "content": "system prompt 2"},
+                {"role": "user", "content": "user message"},
             ],
         }
     )
@@ -201,6 +235,20 @@ def test_anthropic_check_prompt_dict(temporary_data_folders, monkeypatch):
                 "model_name": "anthropic_model_name",
                 "prompt": [
                     {"role": "system", "content": "system prompt"},
+                    {"role": "user", "content": "user message 1"},
+                    {"role": "assistant", "content": "assistant message"},
+                    {"role": "user", "content": "user message 2"},
+                ],
+            }
+        )
+        == []
+    )
+    assert (
+        AnthropicAPI.check_prompt_dict(
+            {
+                "api": "anthropic",
+                "model_name": "anthropic_model_name",
+                "prompt": [
                     {"role": "user", "content": "user message 1"},
                     {"role": "assistant", "content": "assistant message"},
                     {"role": "user", "content": "user message 2"},

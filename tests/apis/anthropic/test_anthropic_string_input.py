@@ -10,7 +10,7 @@ pytest_plugins = ("pytest_asyncio",)
 
 # create a prompt dictionary
 PROMPT_DICT_STRING = {
-    "id": "anthropic_1",
+    "id": "anthropic_id",
     "api": "anthropic",
     "model_name": "anthropic_model_name",
     "prompt": "test prompt",
@@ -94,7 +94,7 @@ async def test_anthropic_query_string(
     # check log message
     expected_log_message = (
         f"Response received for model Anthropic ({PROMPT_DICT_STRING['model_name']}) "
-        "(i=0, id=anthropic_1)\n"
+        "(i=0, id=anthropic_id)\n"
         f"Prompt: {PROMPT_DICT_STRING['prompt'][:50]}...\n"
         f"Response: {mock_process_response.return_value[:50]}...\n"
     )
@@ -137,7 +137,7 @@ async def test_anthropic_query_string_error(
     # check log message
     expected_log_message = (
         f"Error with model Anthropic ({PROMPT_DICT_STRING['model_name']}) "
-        "(i=0, id=anthropic_1)\n"
+        "(i=0, id=anthropic_id)\n"
         f"Prompt: {PROMPT_DICT_STRING['prompt'][:50]}...\n"
         f"Error: Exception - Test error\n"
     )
