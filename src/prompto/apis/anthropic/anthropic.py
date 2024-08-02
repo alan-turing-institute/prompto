@@ -54,7 +54,6 @@ class AnthropicAPI(AsyncAPI):
         **kwargs: Any,
     ):
         super().__init__(settings=settings, log_file=log_file, *args, **kwargs)
-        self.api_type = "anthropic"
 
     @staticmethod
     def check_environment_variables() -> list[Exception]:

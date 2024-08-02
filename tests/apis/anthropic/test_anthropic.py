@@ -80,7 +80,6 @@ def test_anthropic_api_init(temporary_data_folders):
 
     assert anthropic_api.settings == settings
     assert anthropic_api.log_file == log_file
-    assert anthropic_api.api_type == "anthropic"
 
 
 def test_anthropic_check_environment_variables(temporary_data_folders, monkeypatch):
