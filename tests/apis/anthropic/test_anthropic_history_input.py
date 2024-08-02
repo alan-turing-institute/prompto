@@ -14,12 +14,8 @@ pytest_plugins = ("pytest_asyncio",)
 @pytest.mark.asyncio
 async def test_anthropic_query_history_no_env_var(temporary_data_folders, caplog):
     caplog.set_level(logging.INFO)
-
-    # create a settings object and log file name
     settings = Settings(data_folder="data")
     log_file = "log.txt"
-
-    # intialise the AnthropicAPI class
     anthropic_api = AnthropicAPI(settings=settings, log_file=log_file)
 
     # raise error if no environment variable is set
@@ -38,15 +34,9 @@ async def test_anthropic_query_history_multiple_system_prompts(
     temporary_data_folders, monkeypatch, caplog
 ):
     caplog.set_level(logging.INFO)
-
-    # create a settings object and log file name
     settings = Settings(data_folder="data")
     log_file = "log.txt"
-
-    # set up environment variables
     monkeypatch.setenv("ANTHROPIC_API_KEY", "DUMMY")
-
-    # intialise the AnthropicAPI class
     anthropic_api = AnthropicAPI(settings=settings, log_file=log_file)
 
     # raise error if the prompt dictionary has multiple system prompts
@@ -95,15 +85,9 @@ async def test_anthropic_query_history(
     mock_process_response, mock_anthropic, temporary_data_folders, monkeypatch, caplog
 ):
     caplog.set_level(logging.INFO)
-
-    # create a settings object and log file name
     settings = Settings(data_folder="data")
     log_file = "log.txt"
-
-    # set up environment variables
     monkeypatch.setenv("ANTHROPIC_API_KEY", "DUMMY")
-
-    # intialise the AnthropicAPI class
     anthropic_api = AnthropicAPI(settings=settings, log_file=log_file)
 
     # mock the response from the API
@@ -124,7 +108,6 @@ async def test_anthropic_query_history(
     # assert that the response key is added to the prompt_dict
     assert "response" in prompt_dict.keys()
 
-    # assertions for Anthropic API mock
     mock_anthropic.assert_called_once()
     mock_anthropic.assert_awaited_once()
     mock_anthropic.assert_awaited_once_with(
@@ -136,13 +119,11 @@ async def test_anthropic_query_history(
         **PROMPT_DICT_HISTORY["parameters"],
     )
 
-    # assertions for process_response mock
     mock_process_response.assert_called_once_with(mock_anthropic.return_value)
 
     # assert that the response value is the return value of the process_response function
     assert prompt_dict["response"] == mock_process_response.return_value
 
-    # check log message
     expected_log_message = (
         f"Response received for model Anthropic ({PROMPT_DICT_HISTORY['model_name']}) "
         "(i=0, id=anthropic_id)\n"
@@ -158,25 +139,16 @@ async def test_anthropic_query_history_error(
     mock_anthropic, temporary_data_folders, monkeypatch, caplog
 ):
     caplog.set_level(logging.INFO)
-
-    # create a settings object and log file name
     settings = Settings(data_folder="data")
     log_file = "log.txt"
-
-    # set up environment variables
     monkeypatch.setenv("ANTHROPIC_API_KEY_anthropic_model_name", "DUMMY")
-
-    # intialise the AnthropicAPI class
     anthropic_api = AnthropicAPI(settings=settings, log_file=log_file)
-
-    # mock error response from the API
     mock_anthropic.side_effect = Exception("Test error")
 
     # raise error if the API call fails
     with pytest.raises(Exception, match="Test error"):
         await anthropic_api._query_history(PROMPT_DICT_HISTORY, index=0)
 
-    # assertions for Anthropic API mock
     mock_anthropic.assert_called_once()
     mock_anthropic.assert_awaited_once()
     mock_anthropic.assert_awaited_once_with(
@@ -188,7 +160,6 @@ async def test_anthropic_query_history_error(
         **PROMPT_DICT_HISTORY["parameters"],
     )
 
-    # check log message
     expected_log_message = (
         f"Error with model Anthropic ({PROMPT_DICT_HISTORY['model_name']}) "
         "(i=0, id=anthropic_id)\n"
@@ -205,15 +176,9 @@ async def test_anthropic_query_history_no_system(
     mock_process_response, mock_anthropic, temporary_data_folders, monkeypatch, caplog
 ):
     caplog.set_level(logging.INFO)
-
-    # create a settings object and log file name
     settings = Settings(data_folder="data")
     log_file = "log.txt"
-
-    # set up environment variables
     monkeypatch.setenv("ANTHROPIC_API_KEY", "DUMMY")
-
-    # intialise the AnthropicAPI class
     anthropic_api = AnthropicAPI(settings=settings, log_file=log_file)
 
     # mock the response from the API
@@ -236,7 +201,6 @@ async def test_anthropic_query_history_no_system(
     # assert that the response key is added to the prompt_dict
     assert "response" in prompt_dict.keys()
 
-    # assertions for Anthropic API mock
     mock_anthropic.assert_called_once()
     mock_anthropic.assert_awaited_once()
     mock_anthropic.assert_awaited_once_with(
@@ -259,13 +223,11 @@ async def test_anthropic_query_history_no_system(
         **PROMPT_DICT_HISTORY_NO_SYSTEM["parameters"],
     )
 
-    # assertions for process_response mock
     mock_process_response.assert_called_once_with(mock_anthropic.return_value)
 
     # assert that the response value is the return value of the process_response function
     assert prompt_dict["response"] == mock_process_response.return_value
 
-    # check log message
     expected_log_message = (
         f"Response received for model Anthropic ({PROMPT_DICT_HISTORY_NO_SYSTEM['model_name']}) "
         "(i=0, id=anthropic_id)\n"
@@ -281,15 +243,9 @@ async def test_anthropic_query_history_error(
     mock_anthropic, temporary_data_folders, monkeypatch, caplog
 ):
     caplog.set_level(logging.INFO)
-
-    # create a settings object and log file name
     settings = Settings(data_folder="data")
     log_file = "log.txt"
-
-    # set up environment variables
     monkeypatch.setenv("ANTHROPIC_API_KEY_anthropic_model_name", "DUMMY")
-
-    # intialise the AnthropicAPI class
     anthropic_api = AnthropicAPI(settings=settings, log_file=log_file)
 
     # mock error response from the API
@@ -299,7 +255,6 @@ async def test_anthropic_query_history_error(
     with pytest.raises(Exception, match="Test error"):
         await anthropic_api._query_history(PROMPT_DICT_HISTORY_NO_SYSTEM, index=0)
 
-    # assertions for Anthropic API mock
     mock_anthropic.assert_called_once()
     mock_anthropic.assert_awaited_once()
     mock_anthropic.assert_awaited_once_with(
@@ -322,7 +277,6 @@ async def test_anthropic_query_history_error(
         **PROMPT_DICT_HISTORY_NO_SYSTEM["parameters"],
     )
 
-    # check log message
     expected_log_message = (
         f"Error with model Anthropic ({PROMPT_DICT_HISTORY_NO_SYSTEM['model_name']}) "
         "(i=0, id=anthropic_id)\n"

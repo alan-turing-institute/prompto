@@ -74,11 +74,8 @@ def test_anthropic_api_init(temporary_data_folders):
     ):
         AnthropicAPI(settings=Settings(data_folder="data"))
 
-    # create a settings object and log file name
     settings = Settings(data_folder="data")
     log_file = "log.txt"
-
-    # intialise the AnthropicAPI class
     anthropic_api = AnthropicAPI(settings=settings, log_file=log_file)
 
     assert anthropic_api.settings == settings
@@ -95,9 +92,8 @@ def test_anthropic_check_environment_variables(temporary_data_folders, monkeypat
     ):
         raise test_case[0]
 
-    # set the ANTHROPIC_API_KEY environment variable
-    monkeypatch.setenv("ANTHROPIC_API_KEY", "DUMMY")
     # no warnings or errors
+    monkeypatch.setenv("ANTHROPIC_API_KEY", "DUMMY")
     assert AnthropicAPI.check_environment_variables() == []
 
 
@@ -302,14 +298,9 @@ def test_anthropic_check_prompt_dict(temporary_data_folders, monkeypatch):
 
 @pytest.mark.asyncio
 async def test_anthropic_obtain_model_inputs(temporary_data_folders, monkeypatch):
-    # create a settings object and log file name
     settings = Settings(data_folder="data")
     log_file = "log.txt"
-
-    # set up environment variables
     monkeypatch.setenv("ANTHROPIC_API_KEY", "DUMMY")
-
-    # intialise the AnthropicAPI class
     anthropic_api = AnthropicAPI(settings=settings, log_file=log_file)
 
     # test for string prompt
@@ -390,27 +381,19 @@ async def test_anthropic_obtain_model_inputs(temporary_data_folders, monkeypatch
 async def test_anthropic_query_string(
     mock_query_string, temporary_data_folders, monkeypatch
 ):
-    # create a settings object and log file name
     settings = Settings(data_folder="data")
     log_file = "log.txt"
-
-    # set up environment variables
     monkeypatch.setenv("ANTHROPIC_API_KEY", "DUMMY")
-
-    # intialise the AnthropicAPI class
     anthropic_api = AnthropicAPI(settings=settings, log_file=log_file)
 
     # mock the _query_string method to return a response
     mock_query_string.return_value = {**PROMPT_DICT_STRING, "response": "response text"}
 
-    # call the query method which should call the _query_string method
     prompt_dict = await anthropic_api.query(PROMPT_DICT_STRING)
 
-    # assert that the response is the expected value
     assert prompt_dict == mock_query_string.return_value
     assert prompt_dict["response"] == "response text"
 
-    # assertions for _query_string mock
     mock_query_string.assert_called_once_with(
         prompt_dict=PROMPT_DICT_STRING, index="NA"
     )
@@ -423,27 +406,19 @@ async def test_anthropic_query_string(
 async def test_anthropic_query_chat(
     mock_query_chat, temporary_data_folders, monkeypatch
 ):
-    # create a settings object and log file name
     settings = Settings(data_folder="data")
     log_file = "log.txt"
-
-    # set up environment variables
     monkeypatch.setenv("ANTHROPIC_API_KEY", "DUMMY")
-
-    # intialise the AnthropicAPI class
     anthropic_api = AnthropicAPI(settings=settings, log_file=log_file)
 
     # mock the _query_string method to return a response
     mock_query_chat.return_value = {**PROMPT_DICT_CHAT, "response": "response text"}
 
-    # call the query method which should call the _query_string method
     prompt_dict = await anthropic_api.query(PROMPT_DICT_CHAT)
 
-    # assert that the response is the expected value
     assert prompt_dict == mock_query_chat.return_value
     assert prompt_dict["response"] == "response text"
 
-    # assertions for _query_string mock
     mock_query_chat.assert_called_once_with(prompt_dict=PROMPT_DICT_CHAT, index="NA")
 
 
@@ -455,14 +430,9 @@ async def test_anthropic_query_chat(
 async def test_anthropic_query_history(
     mock_query_history, temporary_data_folders, monkeypatch
 ):
-    # create a settings object and log file name
     settings = Settings(data_folder="data")
     log_file = "log.txt"
-
-    # set up environment variables
     monkeypatch.setenv("ANTHROPIC_API_KEY", "DUMMY")
-
-    # intialise the AnthropicAPI class
     anthropic_api = AnthropicAPI(settings=settings, log_file=log_file)
 
     # mock the _query_string method to return a response
@@ -471,14 +441,11 @@ async def test_anthropic_query_history(
         "response": "response text",
     }
 
-    # call the query method which should call the _query_string method
     prompt_dict = await anthropic_api.query(PROMPT_DICT_HISTORY)
 
-    # assert that the response is the expected value
     assert prompt_dict == mock_query_history.return_value
     assert prompt_dict["response"] == "response text"
 
-    # assertions for _query_string mock
     mock_query_history.assert_called_once_with(
         prompt_dict=PROMPT_DICT_HISTORY, index="NA"
     )
@@ -486,14 +453,9 @@ async def test_anthropic_query_history(
 
 @pytest.mark.asyncio
 async def test_anthropic_query_error(temporary_data_folders, monkeypatch):
-    # create a settings object and log file name
     settings = Settings(data_folder="data")
     log_file = "log.txt"
-
-    # set up environment variables
     monkeypatch.setenv("ANTHROPIC_API_KEY", "DUMMY")
-
-    # intialise the AnthropicAPI class
     anthropic_api = AnthropicAPI(settings=settings, log_file=log_file)
 
     # error if prompt_dict["prompt"] is not of the correct type

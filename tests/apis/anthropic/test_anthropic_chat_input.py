@@ -15,12 +15,8 @@ pytest_plugins = ("pytest_asyncio",)
 @pytest.mark.asyncio
 async def test_anthropic_query_chat_no_env_var(temporary_data_folders, caplog):
     caplog.set_level(logging.INFO)
-
-    # create a settings object and log file name
     settings = Settings(data_folder="data")
     log_file = "log.txt"
-
-    # intialise the AnthropicAPI class
     anthropic_api = AnthropicAPI(settings=settings, log_file=log_file)
 
     # raise error if no environment variable is set
@@ -41,15 +37,9 @@ async def test_anthropic_query_chat(
     mock_process_response, mock_anthropic, temporary_data_folders, monkeypatch, caplog
 ):
     caplog.set_level(logging.INFO)
-
-    # create a settings object and log file name
     settings = Settings(data_folder="data")
     log_file = "log.txt"
-
-    # set up environment variables
     monkeypatch.setenv("ANTHROPIC_API_KEY", "DUMMY")
-
-    # intialise the AnthropicAPI class
     anthropic_api = AnthropicAPI(settings=settings, log_file=log_file)
 
     # mock the response from the API
@@ -75,7 +65,6 @@ async def test_anthropic_query_chat(
     # assert that the response key is added to the prompt_dict
     assert "response" in prompt_dict.keys()
 
-    # assertions for Anthropic API mock
     assert mock_anthropic.call_count == 2
     assert mock_anthropic.await_count == 2
     mock_anthropic.assert_any_await(
@@ -93,7 +82,6 @@ async def test_anthropic_query_chat(
         **PROMPT_DICT_CHAT["parameters"],
     )
 
-    # assertions for process_response mock
     assert mock_process_response.call_count == 2
     mock_process_response.assert_any_call(anthropic_api_sequence_responses[0])
     mock_process_response.assert_called_with(anthropic_api_sequence_responses[1])
@@ -101,7 +89,6 @@ async def test_anthropic_query_chat(
     # assert that the response value is the return value of the process_response function
     assert prompt_dict["response"] == process_response_sequence_responses
 
-    # check log message for the first response
     expected_log_message_1 = (
         f"Response received for model Anthropic ({PROMPT_DICT_CHAT['model_name']}) "
         "(i=0, id=anthropic_id, message=1/2)\n"
@@ -110,7 +97,6 @@ async def test_anthropic_query_chat(
     )
     assert expected_log_message_1 in caplog.text
 
-    # check log message for the second response
     expected_log_message_2 = (
         f"Response received for model Anthropic ({PROMPT_DICT_CHAT['model_name']}) "
         "(i=0, id=anthropic_id, message=2/2)\n"
@@ -119,7 +105,6 @@ async def test_anthropic_query_chat(
     )
     assert expected_log_message_2 in caplog.text
 
-    # check log message for the final response
     expected_log_message_final = "Chat completed (i=0, id=anthropic_id)"
     assert expected_log_message_final in caplog.text
 
@@ -130,15 +115,9 @@ async def test_anthropic_query_chat_error_1(
     mock_anthropic, temporary_data_folders, monkeypatch, caplog
 ):
     caplog.set_level(logging.INFO)
-
-    # create a settings object and log file name
     settings = Settings(data_folder="data")
     log_file = "log.txt"
-
-    # set up environment variables
     monkeypatch.setenv("ANTHROPIC_API_KEY", "DUMMY")
-
-    # intialise the AnthropicAPI class
     anthropic_api = AnthropicAPI(settings=settings, log_file=log_file)
 
     # mock error response from the API
@@ -148,7 +127,6 @@ async def test_anthropic_query_chat_error_1(
     with pytest.raises(Exception, match="Test error"):
         await anthropic_api._query_chat(PROMPT_DICT_CHAT, index=0)
 
-    # assertions for Anthropic API mock
     mock_anthropic.assert_called_once()
     mock_anthropic.assert_awaited_once()
     mock_anthropic.assert_any_await(
@@ -157,7 +135,6 @@ async def test_anthropic_query_chat_error_1(
         **PROMPT_DICT_CHAT["parameters"],
     )
 
-    # check log message
     expected_log_message = (
         f"Error with model Anthropic ({PROMPT_DICT_CHAT['model_name']}) "
         "(i=0, id=anthropic_id, message=1/2)\n"
@@ -175,15 +152,9 @@ async def test_anthropic_query_chat_error_2(
     mock_process_response, mock_anthropic, temporary_data_folders, monkeypatch, caplog
 ):
     caplog.set_level(logging.INFO)
-
-    # create a settings object and log file name
     settings = Settings(data_folder="data")
     log_file = "log.txt"
-
-    # set up environment variables
     monkeypatch.setenv("ANTHROPIC_API_KEY", "DUMMY")
-
-    # intialise the AnthropicAPI class
     anthropic_api = AnthropicAPI(settings=settings, log_file=log_file)
 
     # mock error response from the API from second response
@@ -200,7 +171,6 @@ async def test_anthropic_query_chat_error_2(
     with pytest.raises(Exception, match="Test error"):
         await anthropic_api._query_chat(PROMPT_DICT_CHAT, index=0)
 
-    # assertions for Anthropic API mock
     assert mock_anthropic.call_count == 2
     assert mock_anthropic.await_count == 2
     mock_anthropic.assert_any_await(
@@ -218,10 +188,8 @@ async def test_anthropic_query_chat_error_2(
         **PROMPT_DICT_CHAT["parameters"],
     )
 
-    # assertions for process_response mock
     mock_process_response.assert_called_once_with(anthropic_api_sequence_responses[0])
 
-    # check log message for the first response
     expected_log_message_1 = (
         f"Response received for model Anthropic ({PROMPT_DICT_CHAT['model_name']}) "
         "(i=0, id=anthropic_id, message=1/2)\n"
@@ -230,7 +198,6 @@ async def test_anthropic_query_chat_error_2(
     )
     assert expected_log_message_1 in caplog.text
 
-    # check log message for the first response
     expected_log_message_2 = (
         f"Error with model Anthropic ({PROMPT_DICT_CHAT['model_name']}) "
         "(i=0, id=anthropic_id, message=2/2)\n"
