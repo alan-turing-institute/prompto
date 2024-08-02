@@ -2,7 +2,6 @@ import logging
 from unittest.mock import AsyncMock, Mock, patch
 
 import pytest
-from anthropic import AsyncAnthropic
 
 from prompto.apis.anthropic import AnthropicAPI
 from prompto.settings import Settings
@@ -203,6 +202,6 @@ async def test_anthropic_query_history_error(
         f"Error with model Anthropic ({PROMPT_DICT_HISTORY['model_name']}) "
         "(i=0, id=anthropic_id)\n"
         f"Prompt: {PROMPT_DICT_HISTORY['prompt'][:50]}...\n"
-        f"Error: Exception - Test error\n"
+        "Error: Exception - Test error"
     )
     assert expected_log_message in caplog.text

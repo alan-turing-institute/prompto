@@ -139,6 +139,6 @@ async def test_anthropic_query_string_error(
         f"Error with model Anthropic ({PROMPT_DICT_STRING['model_name']}) "
         "(i=0, id=anthropic_id)\n"
         f"Prompt: {PROMPT_DICT_STRING['prompt'][:50]}...\n"
-        f"Error: Exception - Test error\n"
+        "Error: Exception - Test error\n"
     )
     assert expected_log_message in caplog.text

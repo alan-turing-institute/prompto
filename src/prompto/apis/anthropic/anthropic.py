@@ -282,7 +282,6 @@ class AnthropicAPI(AsyncAPI):
 
             prompt_dict["response"] = response_list
             return prompt_dict
-
         except Exception as err:
             error_as_string = f"{type(err).__name__} - {err}"
             log_message = log_error_response_chat(
