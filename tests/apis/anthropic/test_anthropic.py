@@ -36,6 +36,18 @@ PROMPT_DICT_HISTORY = {
     "parameters": {"temperature": 1, "max_tokens": 100},
 }
 
+PROMPT_DICT_HISTORY_NO_SYSTEM = {
+    "id": "anthropic_id",
+    "api": "anthropic",
+    "model_name": "anthropic_model_name",
+    "prompt": [
+        {"role": "user", "content": "user message 1"},
+        {"role": "assistant", "content": "assistant message"},
+        {"role": "user", "content": "user message 2"},
+    ],
+    "parameters": {"temperature": 1, "max_tokens": 100},
+}
+
 TYPE_ERROR_MSG = (
     "if api == 'anthropic', then the prompt must be a str, list[str], or "
     "list[dict[str,str]] where the dictionary contains the keys 'role' and "
@@ -334,6 +346,40 @@ async def test_anthropic_obtain_model_inputs(temporary_data_folders, monkeypatch
     assert isinstance(test_case[2], AsyncAnthropic)
     assert test_case[2].api_key == "DUMMY"
     assert test_case[3] == {}
+
+    # test error catching when parameters are not a dictionary
+    with pytest.raises(
+        TypeError, match="parameters must be a dictionary, not <class 'int'>"
+    ):
+        await anthropic_api._obtain_model_inputs(
+            {
+                "id": "anthropic_id",
+                "api": "anthropic",
+                "model_name": "anthropic_model_name",
+                "prompt": "test prompt",
+                "parameters": 1,
+            }
+        )
+
+    # test error if no prompt is provided
+    with pytest.raises(KeyError):
+        await anthropic_api._obtain_model_inputs(
+            {
+                "id": "anthropic_id",
+                "api": "anthropic",
+                "model_name": "anthropic_model_name",
+            }
+        )
+
+    # test error if no model_name is provided
+    with pytest.raises(KeyError):
+        await anthropic_api._obtain_model_inputs(
+            {
+                "id": "anthropic_id",
+                "api": "anthropic",
+                "prompt": "test prompt",
+            }
+        )
 
 
 @pytest.mark.asyncio
