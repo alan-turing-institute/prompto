@@ -6,18 +6,9 @@ import pytest
 from prompto.apis.anthropic import AnthropicAPI
 from prompto.settings import Settings
 
-pytest_plugins = ("pytest_asyncio",)
+from .test_anthropic import PROMPT_DICT_HISTORY
 
-PROMPT_DICT_HISTORY = {
-    "id": "anthropic_id",
-    "api": "anthropic",
-    "model_name": "anthropic_model_name",
-    "prompt": [
-        {"role": "system", "content": "test system prompt"},
-        {"role": "user", "content": "user message"},
-    ],
-    "parameters": {"temperature": 1, "max_tokens": 100},
-}
+pytest_plugins = ("pytest_asyncio",)
 
 
 @pytest.mark.asyncio
