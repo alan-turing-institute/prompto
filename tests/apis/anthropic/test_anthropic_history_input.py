@@ -239,7 +239,7 @@ async def test_anthropic_query_history_no_system(
 
 @pytest.mark.asyncio
 @patch("anthropic.resources.AsyncMessages.create", new_callable=AsyncMock)
-async def test_anthropic_query_history_error(
+async def test_anthropic_query_history_error_no_system(
     mock_anthropic, temporary_data_folders, monkeypatch, caplog
 ):
     caplog.set_level(logging.INFO)
