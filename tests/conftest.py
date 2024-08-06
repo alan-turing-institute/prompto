@@ -1,8 +1,18 @@
 import os
 import time
+from copy import deepcopy
 from pathlib import Path
+from unittest.mock import AsyncMock
 
 import pytest
+
+
+class CopyingAsyncMock(AsyncMock):
+    # used in situations where mocking mutable arguments
+    def __call__(self, /, *args, **kwargs):
+        args = deepcopy(args)
+        kwargs = deepcopy(kwargs)
+        return super().__call__(*args, **kwargs)
 
 
 @pytest.fixture(autouse=True)

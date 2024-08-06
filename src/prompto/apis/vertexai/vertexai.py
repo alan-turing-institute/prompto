@@ -33,6 +33,14 @@ from prompto.utils import (
 PROJECT_VAR_NAME = "VERTEXAI_PROJECT_ID"
 LOCATION_VAR_NAME = "VERTEXAI_LOCATION_ID"
 
+TYPE_ERROR = TypeError(
+    "if api == 'vertexai', then the prompt must be a str, list[str], or "
+    "list[dict[str,str]] where the dictionary contains the keys 'role' and "
+    "'parts' only, and the values for 'role' must be one of 'user' or 'model', "
+    "except for the first message in the list of dictionaries can be a "
+    "system message with the key 'role' set to 'system'."
+)
+
 
 class VertexAIAPI(AsyncAPI):
     """
@@ -115,35 +123,32 @@ class VertexAIAPI(AsyncAPI):
         """
         issues = []
 
-        # check prompt is of the right type (string or list of strings)
+        # check prompt is of the right type
         if isinstance(prompt_dict["prompt"], str):
             pass
         elif isinstance(prompt_dict["prompt"], list):
             if all([isinstance(message, str) for message in prompt_dict["prompt"]]):
                 pass
-            if all(isinstance(message, dict) for message in prompt_dict["prompt"]):
-                if (
+            elif (
+                all(isinstance(message, dict) for message in prompt_dict["prompt"])
+                and (
                     set(prompt_dict["prompt"][0].keys()) == {"role", "parts"}
                     and prompt_dict["prompt"][0]["role"]
-                    in gemini_chat_roles + ["system"]
-                ) and all(
+                    in list(gemini_chat_roles) + ["system"]
+                )
+                and all(
                     [
                         set(d.keys()) == {"role", "parts"}
                         and d["role"] in gemini_chat_roles
                         for d in prompt_dict["prompt"][1:]
                     ]
-                ):
-                    pass
-        else:
-            issues.append(
-                TypeError(
-                    "if api == 'vertexai', then the prompt must be a str, list[str], or "
-                    "list[dict[str,str]] where the dictionary contains the keys 'role' and "
-                    "'parts' only, and the values for 'role' must be one of 'user' or 'model', "
-                    "except for the first message in the list of dictionaries can be a "
-                    "system message with the key 'role' set to 'system'."
                 )
-            )
+            ):
+                pass
+            else:
+                issues.append(TYPE_ERROR)
+        else:
+            issues.append(TYPE_ERROR)
 
         # use the model specific environment variables
         model_name = prompt_dict["model_name"]
@@ -584,27 +589,24 @@ class VertexAIAPI(AsyncAPI):
                     prompt_dict=prompt_dict,
                     index=index,
                 )
-            if all(isinstance(message, dict) for message in prompt_dict["prompt"]):
-                if (
+            elif (
+                all(isinstance(message, dict) for message in prompt_dict["prompt"])
+                and (
                     set(prompt_dict["prompt"][0].keys()) == {"role", "parts"}
                     and prompt_dict["prompt"][0]["role"]
-                    in gemini_chat_roles + ["system"]
-                ) and all(
+                    in list(gemini_chat_roles) + ["system"]
+                )
+                and all(
                     [
                         set(d.keys()) == {"role", "parts"}
                         and d["role"] in gemini_chat_roles
                         for d in prompt_dict["prompt"][1:]
                     ]
-                ):
-                    return await self._query_history(
-                        prompt_dict=prompt_dict,
-                        index=index,
-                    )
+                )
+            ):
+                return await self._query_history(
+                    prompt_dict=prompt_dict,
+                    index=index,
+                )
 
-        raise TypeError(
-            "if api == 'vertexai', then the prompt must be a str, list[str], or "
-            "list[dict[str,str]] where the dictionary contains the keys 'role' and "
-            "'parts' only, and the values for 'role' must be one of 'user' or 'model', "
-            "except for the first message in the list of dictionaries can be a "
-            "system message with the key 'role' set to 'system'."
-        )
+        raise TYPE_ERROR

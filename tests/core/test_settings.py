@@ -163,7 +163,7 @@ def test_warning_max_queries_dict_not_used(temporary_data_folders, caplog):
     assert log_msg in caplog.text
 
 
-def test_settings_check_max_queries_dict(temporary_data_folders):
+def test_settings_check_max_queries_dict_errors(temporary_data_folders):
     # check raise error if max_queries_dict is not a dictionary
     max_queries_dict = "not_a_dict"
     with pytest.raises(
@@ -181,16 +181,27 @@ def test_settings_check_max_queries_dict(temporary_data_folders):
         Settings(max_queries_dict=max_queries_dict)
 
     # check raise error if there is a value that is not an integer or a dictionary
-    max_queries_dict = {"api": "not_an_int"}
+    max_queries_dict = {"api": 10, "api_2": "not_an_int"}
     with pytest.raises(
         TypeError,
         match="max_queries_dict values must be integers or dictionaries, not <class 'str'>",
     ):
         Settings(max_queries_dict=max_queries_dict)
 
+    # check raise error if there is a value that is a negative integer
+    max_queries_dict = {"api": 10, "api_2": -10}
+    with pytest.raises(
+        ValueError,
+        match=(
+            "if a value of max_queries_dict is an integer, "
+            "the value must be a positive integer, not negative"
+        ),
+    ):
+        Settings(max_queries_dict=max_queries_dict)
+
     # check raise error if there is a value that is a dictionary
     # which has a key that is not a string
-    max_queries_dict = {"api": {"model_name": 10, 1: 10}}
+    max_queries_dict = {"api": 10, "api_2": {"model_name": 10, 1: 10}}
     with pytest.raises(
         TypeError,
         match=(
@@ -202,12 +213,27 @@ def test_settings_check_max_queries_dict(temporary_data_folders):
 
     # check raise error if there is a value that is a dictionary
     # which has a value that is not an integer
-    max_queries_dict = {"api": {"model_name": "not_an_int"}}
+    max_queries_dict = {
+        "api": 10,
+        "api_2": {"model_name": 20, "model_name_2": "not_an_int"},
+    }
     with pytest.raises(
         TypeError,
         match=(
             "if a value of max_queries_dict is a dictionary, "
             "the sub-values must be integers, not <class 'str'>"
+        ),
+    ):
+        Settings(max_queries_dict=max_queries_dict)
+
+    # check raise error if there is a value that is a dictionary
+    # which has a value that is a negative integer
+    max_queries_dict = {"api": 10, "api_2": {"model_name": 20, "model_name_2": -10}}
+    with pytest.raises(
+        ValueError,
+        match=(
+            "if a value of max_queries_dict is a dictionary, "
+            "the sub-values must be positive integers, not negative"
         ),
     ):
         Settings(max_queries_dict=max_queries_dict)

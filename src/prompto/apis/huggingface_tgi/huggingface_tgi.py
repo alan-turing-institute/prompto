@@ -12,7 +12,6 @@ from prompto.utils import (
     FILE_WRITE_LOCK,
     check_either_required_env_variables_set,
     check_optional_env_variables_set,
-    check_required_env_variables_set,
     get_environment_variable,
     get_model_name_identifier,
     log_error_response_chat,
@@ -24,6 +23,10 @@ from prompto.utils import (
 
 API_ENDPOINT_VAR_NAME = "HUGGINGFACE_TGI_API_ENDPOINT"
 API_KEY_VAR_NAME = "HUGGINGFACE_TGI_API_KEY"
+
+TYPE_ERROR = TypeError(
+    "if api == 'huggingface-tgi', then prompt must be a str or a list[str]"
+)
 
 
 class HuggingfaceTGIAPI(AsyncAPI):
@@ -111,12 +114,7 @@ class HuggingfaceTGIAPI(AsyncAPI):
             if all([isinstance(message, str) for message in prompt_dict["prompt"]]):
                 pass
         else:
-            issues.append(
-                TypeError(
-                    f"if api == 'huggingface-tgi', then prompt must be a str or a list[str], "
-                    f"not {type(prompt_dict['prompt'])}"
-                )
-            )
+            issues.append(TYPE_ERROR)
 
         # use the model specific environment variables
         model_name = prompt_dict["model_name"]
@@ -351,7 +349,4 @@ class HuggingfaceTGIAPI(AsyncAPI):
                     index=index,
                 )
 
-        raise TypeError(
-            f"if api == 'huggingface-tgi', then prompt must be a str or a list[str], "
-            f"not {type(prompt_dict['prompt'])}"
-        )
+        raise TYPE_ERROR

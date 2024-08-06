@@ -21,13 +21,17 @@ from prompto.utils import (
     write_log_message,
 )
 
-# set default API version
 AZURE_API_VERSION_DEFAULT = "2024-02-01"
-
-# set names of the environment variables
 API_KEY_VAR_NAME = "AZURE_OPENAI_API_KEY"
 API_ENDPOINT_VAR_NAME = "AZURE_OPENAI_API_ENDPOINT"
 API_VERSION_VAR_NAME = "AZURE_OPENAI_API_VERSION"
+
+TYPE_ERROR = TypeError(
+    "if api == 'azure-openai', then the prompt must be a str, list[str], or "
+    "list[dict[str,str]] where the dictionary contains the keys 'role' and "
+    "'content' only, and the values for 'role' must be one of 'system', 'user' or "
+    "'assistant'"
+)
 
 
 class AzureOpenAIAPI(AsyncAPI):
@@ -120,7 +124,7 @@ class AzureOpenAIAPI(AsyncAPI):
         elif isinstance(prompt_dict["prompt"], list):
             if all([isinstance(message, str) for message in prompt_dict["prompt"]]):
                 pass
-            if all(
+            elif all(
                 isinstance(message, dict) for message in prompt_dict["prompt"]
             ) and all(
                 [
@@ -130,15 +134,10 @@ class AzureOpenAIAPI(AsyncAPI):
                 ]
             ):
                 pass
+            else:
+                issues.append(TYPE_ERROR)
         else:
-            issues.append(
-                TypeError(
-                    "if api == 'azure-openai', then the prompt must be a str, list[str], or "
-                    "list[dict[str,str]] where the dictionary contains the keys 'role' and "
-                    "'content' only, and the values for 'role' must be one of 'system', 'user' or "
-                    "'assistant'"
-                )
-            )
+            issues.append(TYPE_ERROR)
 
         # use the model specific environment variables
         model_name = prompt_dict["model_name"]
@@ -436,7 +435,7 @@ class AzureOpenAIAPI(AsyncAPI):
                     prompt_dict=prompt_dict,
                     index=index,
                 )
-            if all(
+            elif all(
                 [
                     set(d.keys()) == {"role", "content"}
                     and d["role"] in openai_chat_roles
@@ -448,9 +447,4 @@ class AzureOpenAIAPI(AsyncAPI):
                     index=index,
                 )
 
-        raise TypeError(
-            "if api == 'azure-openai', then the prompt must be a str, list[str], or "
-            "list[dict[str,str]] where the dictionary contains the keys 'role' and "
-            "'content' only, and the values for 'role' must be one of 'system', 'user' or "
-            "'assistant'"
-        )
+        raise TYPE_ERROR

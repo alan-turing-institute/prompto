@@ -3,7 +3,7 @@ import os
 import PIL.Image
 from google.generativeai import get_file
 
-gemini_chat_roles = ["user", "model"]
+gemini_chat_roles = set(["user", "model"])
 
 
 def parse_multimedia_dict(multimedia_dict: dict, media_folder: str) -> any:

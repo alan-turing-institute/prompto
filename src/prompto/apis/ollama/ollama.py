@@ -22,6 +22,13 @@ from prompto.utils import (
 
 API_ENDPOINT_VAR_NAME = "OLLAMA_API_ENDPOINT"
 
+TYPE_ERROR = TypeError(
+    "if api == 'ollama', then the prompt must be a str, list[str], or "
+    "list[dict[str,str]] where the dictionary contains the keys 'role' and "
+    "'content' only, and the values for 'role' must be one of 'system', 'user' or "
+    "'assistant'"
+)
+
 
 class OllamaAPI(AsyncAPI):
     """
@@ -116,7 +123,9 @@ class OllamaAPI(AsyncAPI):
         elif isinstance(prompt_dict["prompt"], list):
             if all([isinstance(message, str) for message in prompt_dict["prompt"]]):
                 pass
-            if all(
+            elif all(
+                isinstance(message, dict) for message in prompt_dict["prompt"]
+            ) and all(
                 [
                     set(d.keys()) == {"role", "content"}
                     and d["role"] in ollama_chat_roles
@@ -124,13 +133,10 @@ class OllamaAPI(AsyncAPI):
                 ]
             ):
                 pass
+            else:
+                issues.append(TYPE_ERROR)
         else:
-            issues.append(
-                TypeError(
-                    "if api == 'ollama', then prompt must be a string, "
-                    f"not {type(prompt_dict['prompt'])}"
-                )
-            )
+            issues.append(TYPE_ERROR)
 
         # use the model specific environment variables
         model_name = prompt_dict["model_name"]
@@ -401,9 +407,4 @@ class OllamaAPI(AsyncAPI):
                     index=index,
                 )
 
-        raise TypeError(
-            "if api == 'ollama', then the prompt must be a str, list[str], or "
-            "list[dict[str,str]] where the dictionary contains the keys 'role' and "
-            "'content' only, and the values for 'role' must be one of 'system', 'user' or "
-            "'assistant'"
-        )
+        raise TYPE_ERROR
