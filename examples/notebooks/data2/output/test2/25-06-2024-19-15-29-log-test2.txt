@@ -1,0 +1,1 @@
+25-06-2024, 19:19: Completed experiment test2.jsonl! Experiment processing time: 4.613 seconds, Average time per query: 1.538 seconds
