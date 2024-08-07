@@ -1,9 +1,9 @@
 [![Actions Status][actions-badge]][actions-link]
-[![Codecov Status][codecov-badge]][codecov-link]
 [![PyPI version][pypi-version]][pypi-link]
 [![PyPI platforms][pypi-platforms]][pypi-link]
 ![GitHub](https://img.shields.io/github/license/alan-turing-institute/prompto)
 
+<!-- [![Codecov Status][codecov-badge]][codecov-link] -->
 <!-- [![GitHub Discussion][github-discussions-badge]][github-discussions-link]
 [![Gitter][gitter-badge]][gitter-link] -->
 
