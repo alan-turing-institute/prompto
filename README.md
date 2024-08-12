@@ -1,3 +1,25 @@
+[![Actions Status][actions-badge]][actions-link]
+[![PyPI version][pypi-version]][pypi-link]
+[![PyPI platforms][pypi-platforms]][pypi-link]
+![GitHub](https://img.shields.io/github/license/alan-turing-institute/prompto)
+
+<!-- [![Codecov Status][codecov-badge]][codecov-link] -->
+<!-- [![GitHub Discussion][github-discussions-badge]][github-discussions-link]
+[![Gitter][gitter-badge]][gitter-link] -->
+
+<!-- prettier-ignore-start -->
+[actions-badge]:            https://github.com/alan-turing-institute/prompto/workflows/CI/badge.svg
+[actions-link]:             https://github.com/alan-turing-institute/prompto/actions
+[codecov-badge]:            https://codecov.io/gh/alan-turing-institute/prompto/branch/main/graph/badge.svg?token=SU9HZ9NH70
+[codecov-link]:             https://codecov.io/gh/alan-turing-institute/prompto
+[github-discussions-badge]: https://img.shields.io/static/v1?label=Discussions&message=Ask&color=blue&logo=github
+[github-discussions-link]:  https://github.com/alan-turing-institute/prompto/discussions
+[pypi-link]:                https://pypi.org/project/prompto/
+[pypi-platforms]:           https://img.shields.io/pypi/pyversions/prompto
+[pypi-version]:             https://img.shields.io/pypi/v/prompto
+<!-- prettier-ignore-end -->
+
+
 # prompto
 
 `prompto` is a Python library which facilitates processing of experiments of Large Language Models (LLMs) stored as jsonl files. It automates _asynchronous querying of LLM API endpoints_ and logs progress.
