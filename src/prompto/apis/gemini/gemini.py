@@ -147,8 +147,7 @@ class GeminiAPI(AsyncAPI):
         issues.extend(
             check_either_required_env_variables_set(
                 [
-                    f"{API_KEY_VAR_NAME}_{identifier}",
-                    API_KEY_VAR_NAME,
+                    [f"{API_KEY_VAR_NAME}_{identifier}", API_KEY_VAR_NAME],
                 ]
             )
         )
