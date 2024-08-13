@@ -44,7 +44,7 @@ async def test_anthropic_query_history_multiple_system_prompts(
         ValueError,
         match="There are 2 system messages. Only one system message is supported",
     ):
-        prompt_dict = await anthropic_api._query_history(
+        await anthropic_api._query_history(
             {
                 "id": "anthropic_id",
                 "api": "anthropic",
@@ -63,7 +63,7 @@ async def test_anthropic_query_history_multiple_system_prompts(
         ValueError,
         match="There are 2 system messages. Only one system message is supported",
     ):
-        prompt_dict = await anthropic_api._query_history(
+        await anthropic_api._query_history(
             {
                 "id": "anthropic_id",
                 "api": "anthropic",

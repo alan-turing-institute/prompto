@@ -2,6 +2,8 @@ from unittest.mock import AsyncMock, patch
 
 import pytest
 import regex as re
+from google.generativeai import GenerativeModel
+from google.generativeai.types import HarmBlockThreshold, HarmCategory, content_types
 
 from prompto.apis.gemini import GeminiAPI
 from prompto.settings import Settings
@@ -45,6 +47,13 @@ PROMPT_DICT_HISTORY_NO_SYSTEM = {
         {"role": "user", "parts": "user message 2"},
     ],
     "parameters": {"temperature": 1, "max_output_tokens": 100},
+}
+
+DEFAULT_SAFETY_SETTINGS = {
+    HarmCategory.HARM_CATEGORY_DANGEROUS_CONTENT: HarmBlockThreshold.BLOCK_MEDIUM_AND_ABOVE,
+    HarmCategory.HARM_CATEGORY_HATE_SPEECH: HarmBlockThreshold.BLOCK_MEDIUM_AND_ABOVE,
+    HarmCategory.HARM_CATEGORY_HARASSMENT: HarmBlockThreshold.BLOCK_MEDIUM_AND_ABOVE,
+    HarmCategory.HARM_CATEGORY_SEXUALLY_EXPLICIT: HarmBlockThreshold.BLOCK_MEDIUM_AND_ABOVE,
 }
 
 TYPE_ERROR_MSG = (
@@ -341,12 +350,15 @@ async def test_gemini_obtain_model_inputs(temporary_data_folders, monkeypatch):
         }
     )
     assert isinstance(test_case, tuple)
-    assert len(test_case) == 5
+    assert len(test_case) == 6
     assert test_case[0] == "test prompt"
     assert test_case[1] == "gemini_model_name"
-    assert isinstance(test_case[2], dict)
-    assert test_case[3] == {"temperature": 1, "max_output_tokens": 100}
-    assert test_case[4] is None
+    assert isinstance(test_case[2], GenerativeModel)
+    assert test_case[2]._model_name == "models/gemini_model_name"
+    assert test_case[2]._system_instruction is None
+    assert isinstance(test_case[3], dict)
+    assert test_case[4] == {"temperature": 1, "max_output_tokens": 100}
+    assert test_case[5] is None
 
     # test for case where no parameters in prompt_dict
     test_case = await gemini_api._obtain_model_inputs(
@@ -358,12 +370,36 @@ async def test_gemini_obtain_model_inputs(temporary_data_folders, monkeypatch):
         }
     )
     assert isinstance(test_case, tuple)
-    assert len(test_case) == 5
+    assert len(test_case) == 6
     assert test_case[0] == "test prompt"
     assert test_case[1] == "gemini_model_name"
-    assert isinstance(test_case[2], dict)
-    assert test_case[3] == {}
-    assert test_case[4] is None
+    assert isinstance(test_case[2], GenerativeModel)
+    assert test_case[2]._model_name == "models/gemini_model_name"
+    assert test_case[2]._system_instruction is None
+    assert isinstance(test_case[3], dict)
+    assert test_case[4] == {}
+    assert test_case[5] is None
+
+    # test for case where system_instruction is provided
+    test_case = await gemini_api._obtain_model_inputs(
+        {
+            "id": "gemini_id",
+            "api": "gemini",
+            "model_name": "gemini_model_name",
+            "prompt": "test prompt",
+        },
+        system_instruction="hello",
+    )
+    assert isinstance(test_case, tuple)
+    assert len(test_case) == 6
+    assert test_case[0] == "test prompt"
+    assert test_case[1] == "gemini_model_name"
+    assert isinstance(test_case[2], GenerativeModel)
+    assert test_case[2]._model_name == "models/gemini_model_name"
+    assert test_case[2]._system_instruction is not None
+    assert isinstance(test_case[3], dict)
+    assert test_case[4] == {}
+    assert test_case[5] is None
 
     # test error catching when parameters are not a dictionary
     with pytest.raises(
@@ -423,12 +459,15 @@ async def test_gemini_obtain_model_inputs_safety_filters(
             }
         )
         assert isinstance(test_case, tuple)
-        assert len(test_case) == 5
+        assert len(test_case) == 6
         assert test_case[0] == "test prompt"
         assert test_case[1] == "gemini_model_name"
-        assert isinstance(test_case[2], dict)
-        assert test_case[3] == {"temperature": 1, "max_output_tokens": 100}
-        assert test_case[4] is None
+        assert isinstance(test_case[2], GenerativeModel)
+        assert test_case[2]._model_name == "models/gemini_model_name"
+        assert test_case[2]._system_instruction is None
+        assert isinstance(test_case[3], dict)
+        assert test_case[4] == {"temperature": 1, "max_output_tokens": 100}
+        assert test_case[5] is None
 
     # test error if safety filter is not recognised
     with pytest.raises(

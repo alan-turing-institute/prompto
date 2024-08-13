@@ -9,6 +9,7 @@ from prompto.utils import (
     check_max_queries_dict,
     check_optional_env_variables_set,
     check_required_env_variables_set,
+    copy_file,
     create_folder,
     get_environment_variable,
     get_model_name_identifier,
@@ -105,6 +106,35 @@ def test_move_file(temporary_data_folders, caplog):
     assert "source.txt" not in os.listdir()
     assert "destination.txt" in os.listdir()
     assert "Moving file from source.txt to destination.txt" in caplog.text
+
+
+def test_copy_file(temporary_data_folders, caplog):
+    caplog.set_level(logging.INFO)
+
+    # raise error if no source or destination is passed
+    with pytest.raises(TypeError, match="missing 2 required positional arguments"):
+        copy_file()
+
+    # raise error if only source is passed
+    with pytest.raises(TypeError, match="missing 1 required positional argument"):
+        copy_file(source="source.txt")
+
+    # raise error if only destination is passed
+    with pytest.raises(TypeError, match="missing 1 required positional argument"):
+        copy_file(destination="destination.txt")
+
+    # raise error if source file does not exist
+    with pytest.raises(FileNotFoundError, match="File 'source.txt' does not exist"):
+        copy_file(source="source.txt", destination="destination.txt")
+
+    # move a file from one location to another
+    with open("source.txt", "w") as f:
+        f.write("source")
+    copy_file(source="source.txt", destination="destination.txt")
+
+    assert "source.txt" in os.listdir()
+    assert "destination.txt" in os.listdir()
+    assert "Copying file from source.txt to destination.txt" in caplog.text
 
 
 def test_write_log_message(caplog):

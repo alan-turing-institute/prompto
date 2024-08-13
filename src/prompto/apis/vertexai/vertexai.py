@@ -314,7 +314,7 @@ class VertexAIAPI(AsyncAPI):
 
             log_success_response_query(
                 index=index,
-                model=f"vertexai ({model_name})",
+                model=f"VertexAI ({model_name})",
                 prompt=prompt,
                 response_text=response_text,
                 id=prompt_dict.get("id", "NA"),
@@ -329,7 +329,7 @@ class VertexAIAPI(AsyncAPI):
             )
             log_message = log_error_response_query(
                 index=index,
-                model=f"vertexai ({model_name})",
+                model=f"VertexAI ({model_name})",
                 prompt=prompt,
                 error_as_string=error_as_string,
                 id=prompt_dict.get("id", "NA"),
@@ -358,7 +358,7 @@ class VertexAIAPI(AsyncAPI):
             error_as_string = f"{type(err).__name__} - {err}"
             log_message = log_error_response_query(
                 index=index,
-                model=f"vertexai ({model_name})",
+                model=f"VertexAI ({model_name})",
                 prompt=prompt,
                 error_as_string=error_as_string,
                 id=prompt_dict.get("id", "NA"),
@@ -404,7 +404,7 @@ class VertexAIAPI(AsyncAPI):
 
                 log_success_response_chat(
                     index=index,
-                    model=f"vertexai ({model_name})",
+                    model=f"VertexAI ({model_name})",
                     message_index=message_index,
                     n_messages=len(prompt),
                     message=message,
@@ -425,7 +425,7 @@ class VertexAIAPI(AsyncAPI):
             )
             log_message = log_error_response_chat(
                 index=index,
-                model=f"vertexai ({model_name})",
+                model=f"VertexAI ({model_name})",
                 message_index=message_index,
                 n_messages=len(prompt),
                 message=message,
@@ -456,7 +456,7 @@ class VertexAIAPI(AsyncAPI):
             error_as_string = f"{type(err).__name__} - {err}"
             log_message = log_error_response_chat(
                 index=index,
-                model=f"vertexai ({model_name})",
+                model=f"VertexAI ({model_name})",
                 message_index=message_index,
                 n_messages=len(prompt),
                 message=message,
@@ -503,7 +503,7 @@ class VertexAIAPI(AsyncAPI):
 
             log_success_response_query(
                 index=index,
-                model=f"gemini ({model_name})",
+                model=f"VertexAI ({model_name})",
                 prompt=prompt,
                 response_text=response_text,
                 id=prompt_dict.get("id", "NA"),
@@ -518,7 +518,7 @@ class VertexAIAPI(AsyncAPI):
             )
             log_message = log_error_response_query(
                 index=index,
-                model=f"gemini ({model_name})",
+                model=f"VertexAI ({model_name})",
                 prompt=prompt,
                 error_as_string=error_as_string,
                 id=prompt_dict.get("id", "NA"),
@@ -547,7 +547,7 @@ class VertexAIAPI(AsyncAPI):
             error_as_string = f"{type(err).__name__} - {err}"
             log_message = log_error_response_query(
                 index=index,
-                model=f"gemini ({model_name})",
+                model=f"VertexAI ({model_name})",
                 prompt=prompt,
                 error_as_string=error_as_string,
                 id=prompt_dict.get("id", "NA"),

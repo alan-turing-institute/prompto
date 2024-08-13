@@ -173,8 +173,8 @@ class GeminiAPI(AsyncAPI):
         return issues
 
     async def _obtain_model_inputs(
-        self, prompt_dict: dict
-    ) -> tuple[str, str, dict, dict, list | None]:
+        self, prompt_dict: dict, system_instruction: str | None = None
+    ) -> tuple[str, str, GenerativeModel, dict, dict, list | None]:
         """
         Async method to obtain the model inputs from the prompt dictionary.
 
@@ -186,9 +186,9 @@ class GeminiAPI(AsyncAPI):
         Returns
         -------
         tuple[str, str, dict, dict, list | None]
-            A tuple containing the prompt, model name, safety settings,
-            the generation config, and list of multimedia parts (if passed)
-            to use for querying the model
+            A tuple containing the prompt, model name, GenerativeModel instance,
+            safety settings, the generation config, and list of multimedia parts
+            (if passed) to use for querying the model
         """
         prompt = prompt_dict["prompt"]
 
@@ -200,6 +200,11 @@ class GeminiAPI(AsyncAPI):
 
         # configure the API key
         genai.configure(api_key=api_key)
+
+        # create the model instance
+        model = GenerativeModel(
+            model_name=model_name, system_instruction=system_instruction
+        )
 
         # define safety settings
         safety_filter = prompt_dict.get("safety_filter", None)
@@ -259,7 +264,7 @@ class GeminiAPI(AsyncAPI):
         else:
             multimedia = None
 
-        return prompt, model_name, safety_settings, generation_config, multimedia
+        return prompt, model_name, model, safety_settings, generation_config, multimedia
 
     async def _query_string(self, prompt_dict: dict, index: int | str):
         """
@@ -267,8 +272,10 @@ class GeminiAPI(AsyncAPI):
         (prompt_dict["prompt"] is a string),
         i.e. single-turn completion or chat.
         """
-        prompt, model_name, safety_settings, generation_config, multimedia = (
-            await self._obtain_model_inputs(prompt_dict=prompt_dict)
+        prompt, model_name, model, safety_settings, generation_config, multimedia = (
+            await self._obtain_model_inputs(
+                prompt_dict=prompt_dict, system_instruction=None
+            )
         )
 
         # prepare the contents to send to the model
@@ -279,7 +286,7 @@ class GeminiAPI(AsyncAPI):
             contents = [prompt]
 
         try:
-            response = await GenerativeModel(model_name).generate_content_async(
+            response = await model.generate_content_async(
                 contents=contents,
                 generation_config=generation_config,
                 safety_settings=safety_settings,
@@ -290,7 +297,7 @@ class GeminiAPI(AsyncAPI):
 
             log_success_response_query(
                 index=index,
-                model=f"gemini ({model_name})",
+                model=f"Gemini ({model_name})",
                 prompt=prompt,
                 response_text=response_text,
                 id=prompt_dict.get("id", "NA"),
@@ -305,8 +312,7 @@ class GeminiAPI(AsyncAPI):
             )
             log_message = log_error_response_query(
                 index=index,
-                model=f"gemini ({model_name})",
-                prompt=prompt,
+                model=f"Gemini ({model_name})",
                 error_as_string=error_as_string,
                 id=prompt_dict.get("id", "NA"),
             )
@@ -334,7 +340,7 @@ class GeminiAPI(AsyncAPI):
             error_as_string = f"{type(err).__name__} - {err}"
             log_message = log_error_response_query(
                 index=index,
-                model=f"gemini ({model_name})",
+                model=f"Gemini ({model_name})",
                 prompt=prompt,
                 error_as_string=error_as_string,
                 id=prompt_dict.get("id", "NA"),
@@ -353,8 +359,10 @@ class GeminiAPI(AsyncAPI):
         (prompt_dict["prompt"] is a list of strings to sequentially send to the model),
         i.e. multi-turn chat with history.
         """
-        prompt, model_name, safety_settings, generation_config, _ = (
-            await self._obtain_model_inputs(prompt_dict=prompt_dict)
+        prompt, model_name, model, safety_settings, generation_config, _ = (
+            await self._obtain_model_inputs(
+                prompt_dict=prompt_dict, system_instruction=None
+            )
         )
 
         model = GenerativeModel(model_name)
@@ -380,7 +388,7 @@ class GeminiAPI(AsyncAPI):
 
                 log_success_response_chat(
                     index=index,
-                    model=f"gemini ({model_name})",
+                    model=f"Gemini ({model_name})",
                     message_index=message_index,
                     n_messages=len(prompt),
                     message=message,
@@ -401,7 +409,7 @@ class GeminiAPI(AsyncAPI):
             )
             log_message = log_error_response_chat(
                 index=index,
-                model=f"gemini ({model_name})",
+                model=f"Gemini ({model_name})",
                 message_index=message_index,
                 n_messages=len(prompt),
                 message=message,
@@ -432,7 +440,7 @@ class GeminiAPI(AsyncAPI):
             error_as_string = f"{type(err).__name__} - {err}"
             log_message = log_error_response_chat(
                 index=index,
-                model=f"gemini ({model_name})",
+                model=f"Gemini ({model_name})",
                 message_index=message_index,
                 n_messages=len(prompt),
                 message=message,
@@ -455,15 +463,19 @@ class GeminiAPI(AsyncAPI):
         where "role" is one of "user", "model" and "parts" is the message),
         i.e. multi-turn chat with history.
         """
-        prompt, model_name, safety_settings, generation_config, _ = (
-            await self._obtain_model_inputs(prompt_dict=prompt_dict)
-        )
-
         if prompt[0]["role"] == "system":
-            model = GenerativeModel(model_name, system_instruction=prompt[0]["parts"])
+            prompt, model_name, model, safety_settings, generation_config, _ = (
+                await self._obtain_model_inputs(
+                    prompt_dict=prompt_dict, system_instruction=prompt[0]["parts"]
+                )
+            )
             chat = model.start_chat(history=prompt[1:-1])
         else:
-            model = GenerativeModel(model_name)
+            prompt, model_name, model, safety_settings, generation_config, _ = (
+                await self._obtain_model_inputs(
+                    prompt_dict=prompt_dict, system_instruction=None
+                )
+            )
             chat = model.start_chat(history=prompt[:-1])
 
         try:
@@ -479,7 +491,7 @@ class GeminiAPI(AsyncAPI):
 
             log_success_response_query(
                 index=index,
-                model=f"gemini ({model_name})",
+                model=f"Gemini ({model_name})",
                 prompt=prompt,
                 response_text=response_text,
                 id=prompt_dict.get("id", "NA"),
@@ -494,7 +506,7 @@ class GeminiAPI(AsyncAPI):
             )
             log_message = log_error_response_query(
                 index=index,
-                model=f"gemini ({model_name})",
+                model=f"Gemini ({model_name})",
                 prompt=prompt,
                 error_as_string=error_as_string,
                 id=prompt_dict.get("id", "NA"),
@@ -523,7 +535,7 @@ class GeminiAPI(AsyncAPI):
             error_as_string = f"{type(err).__name__} - {err}"
             log_message = log_error_response_query(
                 index=index,
-                model=f"gemini ({model_name})",
+                model=f"Gemini ({model_name})",
                 prompt=prompt,
                 error_as_string=error_as_string,
                 id=prompt_dict.get("id", "NA"),
