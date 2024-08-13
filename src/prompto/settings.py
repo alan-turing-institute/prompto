@@ -43,6 +43,7 @@ class Settings:
         max_attempts: int = 3,
         parallel: bool = False,
         max_queries_dict: dict[str, int | dict[str, int]] = {},
+        evaluation_func: callable = None,
     ):
         # check the data folder exists
         self.check_folder_exists(data_folder)
@@ -64,6 +65,8 @@ class Settings:
                 "max_queries_dict will not be used. Set parallel to True to use max_queries_dict"
             )
             logging.warning(log_msg)
+
+        self.evaluation_func = evaluation_func
 
     def __str__(self) -> str:
         max_queries_dict_str = (

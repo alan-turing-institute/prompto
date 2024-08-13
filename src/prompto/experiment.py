@@ -333,6 +333,12 @@ class Experiment:
         processing_time = end_time - start_time
         avg_query_processing_time = processing_time / self.number_queries
 
+        # read the output file
+        with open(self.output_completed_file_path, "r") as f:
+            self.completed_responses: list[dict] = [
+                dict(json.loads(line)) for line in f
+            ]
+
         # log completion of experiment
         log_message = (
             f"Completed experiment {self.__str__()}! "
@@ -341,12 +347,6 @@ class Experiment:
         )
         async with FILE_WRITE_LOCK:
             write_log_message(log_file=self.log_file, log_message=log_message, log=True)
-
-        # read the output file
-        with open(self.output_completed_file_path, "r") as f:
-            self.completed_responses: list[dict] = [
-                dict(json.loads(line)) for line in f
-            ]
 
         return self.completed_responses, avg_query_processing_time
 
@@ -595,6 +595,10 @@ class Experiment:
                 # return Execption to indicate that we should try this prompt again later
                 return Exception(f"{type(err).__name__} - {err}\n")
 
+        # Perform Evaluation if evaluation function is provided
+        if self.settings.evaluation_func is not None:
+            completed_prompt_dict = await self.evaluate_responses(completed_prompt_dict)
+
         # record the response in a jsonl file asynchronously using FILE_WRITE_LOCK
         async with FILE_WRITE_LOCK:
             with open(self.output_completed_file_path, "a") as f:
@@ -652,3 +656,9 @@ class Experiment:
         response = await api.query(prompt_dict=prompt_dict, index=index)
 
         return response
+
+    async def evaluate_responses(self, completed_responses) -> dict:
+        """
+        Runs evaluation functions set in the settings object on the completed responses.
+        """
+        return self.settings.evaluation_func(completed_responses)
