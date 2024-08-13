@@ -167,10 +167,8 @@ class GeminiAPI(AsyncAPI):
         if "parameters" in prompt_dict:
             try:
                 GenerationConfig(**prompt_dict["parameters"])
-            except TypeError as err:
-                issues.append(TypeError(f"Invalid generation_config parameter: {err}"))
             except Exception as err:
-                issues.append(ValueError(f"Invalid generation_config parameter: {err}"))
+                issues.append(Exception(f"Invalid generation_config parameter: {err}"))
 
         return issues
 

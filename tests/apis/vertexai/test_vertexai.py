@@ -3,31 +3,31 @@ from unittest.mock import AsyncMock, patch
 import pytest
 import regex as re
 
-from prompto.apis.gemini import GeminiAPI
+from prompto.apis.vertexai import VertexAIAPI
 from prompto.settings import Settings
 
 pytest_plugins = ("pytest_asyncio",)
 
 PROMPT_DICT_STRING = {
-    "id": "gemini_id",
-    "api": "gemini",
-    "model_name": "gemini_model_name",
+    "id": "vertexai_id",
+    "api": "vertexai",
+    "model_name": "vertexai_model_name",
     "prompt": "test prompt",
     "parameters": {"temperature": 1, "max_output_tokens": 100},
 }
 
 PROMPT_DICT_CHAT = {
-    "id": "gemini_id",
-    "api": "gemini",
-    "model_name": "gemini_model_name",
+    "id": "vertexai_id",
+    "api": "vertexai",
+    "model_name": "vertexai_model_name",
     "prompt": ["test chat 1", "test chat 2"],
     "parameters": {"temperature": 1, "max_output_tokens": 100},
 }
 
 PROMPT_DICT_HISTORY = {
-    "id": "gemini_id",
-    "api": "gemini",
-    "model_name": "gemini_model_name",
+    "id": "vertexai_id",
+    "api": "vertexai",
+    "model_name": "vertexai_model_name",
     "prompt": [
         {"role": "system", "parts": "test system prompt"},
         {"role": "user", "parts": "user message"},
@@ -36,9 +36,9 @@ PROMPT_DICT_HISTORY = {
 }
 
 PROMPT_DICT_HISTORY_NO_SYSTEM = {
-    "id": "gemini_id",
-    "api": "gemini",
-    "model_name": "gemini_model_name",
+    "id": "vertexai_id",
+    "api": "vertexai",
+    "model_name": "vertexai_model_name",
     "prompt": [
         {"role": "user", "parts": "user message 1"},
         {"role": "model", "parts": "model message"},
@@ -48,7 +48,7 @@ PROMPT_DICT_HISTORY_NO_SYSTEM = {
 }
 
 TYPE_ERROR_MSG = (
-    "if api == 'gemini', then the prompt must be a str, list[str], or "
+    "if api == 'vertexai', then the prompt must be a str, list[str], or "
     "list[dict[str,str]] where the dictionary contains the keys 'role' and "
     "'parts' only, and the values for 'role' must be one of 'user' or 'model', "
     "except for the first message in the list of dictionaries can be a "
@@ -56,81 +56,115 @@ TYPE_ERROR_MSG = (
 )
 
 
-def test_gemini_api_init(temporary_data_folders):
+def test_vertexai_api_init(temporary_data_folders):
     # raise error if no arguments are provided
     with pytest.raises(TypeError, match="missing 2 required positional arguments"):
-        GeminiAPI()
+        VertexAIAPI()
 
     # raise error if no settings object is provided
     with pytest.raises(
         TypeError, match="missing 1 required positional argument: 'settings'"
     ):
-        GeminiAPI(log_file="log.txt")
+        VertexAIAPI(log_file="log.txt")
 
     # raise error if no log file name is provided
     with pytest.raises(
         TypeError, match="missing 1 required positional argument: 'log_file'"
     ):
-        GeminiAPI(settings=Settings(data_folder="data"))
+        VertexAIAPI(settings=Settings(data_folder="data"))
 
     settings = Settings(data_folder="data")
     log_file = "log.txt"
-    gemini_api = GeminiAPI(settings=settings, log_file=log_file)
+    vertexai_api = VertexAIAPI(settings=settings, log_file=log_file)
 
-    assert gemini_api.settings == settings
-    assert gemini_api.log_file == log_file
+    assert vertexai_api.settings == settings
+    assert vertexai_api.log_file == log_file
 
 
-def test_gemini_check_environment_variables(temporary_data_folders, monkeypatch):
-    # only warn on the GEMINI_API_KEY environment variable
-    test_case = GeminiAPI.check_environment_variables()
+def test_vertexai_check_environment_variables(temporary_data_folders, monkeypatch):
+    # only warn on the VERTEXAI_PROJECT_ID environment variable
+    test_case = VertexAIAPI.check_environment_variables()
+    assert len(test_case) == 2
+    with pytest.raises(
+        Warning, match="Environment variable 'VERTEXAI_PROJECT_ID' is not set"
+    ):
+        raise test_case[0]
+    with pytest.raises(
+        Warning, match="Environment variable 'VERTEXAI_LOCATION_ID' is not set"
+    ):
+        raise test_case[1]
+
+    # warning if only the VERTEXAI_PROJECT_ID set
+    monkeypatch.setenv("VERTEXAI_PROJECT_ID", "DUMMY")
+    test_case = VertexAIAPI.check_environment_variables()
     assert len(test_case) == 1
     with pytest.raises(
-        Warning, match="Environment variable 'GEMINI_API_KEY' is not set"
+        Warning, match="Environment variable 'VERTEXAI_LOCATION_ID' is not set"
     ):
         raise test_case[0]
 
-    # no warnings or errors
-    monkeypatch.setenv("GEMINI_API_KEY", "DUMMY")
-    assert GeminiAPI.check_environment_variables() == []
+    # warning if only the VERTEXAI_LOCATION_ID set
+    monkeypatch.delenv("VERTEXAI_PROJECT_ID", "DUMMY")
+    monkeypatch.setenv("VERTEXAI_LOCATION_ID", "DUMMY")
+    test_case = VertexAIAPI.check_environment_variables()
+    assert len(test_case) == 1
+    with pytest.raises(
+        Warning, match="Environment variable 'VERTEXAI_PROJECT_ID' is not set"
+    ):
+        raise test_case[0]
+
+    # no warnings if both environment variables are set
+    monkeypatch.setenv("VERTEXAI_PROJECT_ID", "DUMMY")
+    assert VertexAIAPI.check_environment_variables() == []
 
 
-def test_gemini_check_prompt_dict(temporary_data_folders, monkeypatch):
-    env_variable_error_msg = (
-        "At least one of the environment variables '['GEMINI_API_KEY_gemini_model_name', "
-        "'GEMINI_API_KEY']' must be set"
-    )
-
+def test_vertexai_check_prompt_dict(temporary_data_folders, monkeypatch):
     # error if prompt_dict["prompt"] is not of the correct type
     # also error for no environment variables set
-    test_case = GeminiAPI.check_prompt_dict(
-        {"api": "gemini", "model_name": "gemini_model_name", "prompt": 1}
+    test_case = VertexAIAPI.check_prompt_dict(
+        {"api": "vertexai", "model_name": "vertexai_model_name", "prompt": 1}
     )
-    assert len(test_case) == 2
+    assert len(test_case) == 5
     with pytest.raises(TypeError, match=re.escape(TYPE_ERROR_MSG)):
         raise test_case[0]
-    with pytest.raises(KeyError, match=re.escape(env_variable_error_msg)):
+    with pytest.raises(
+        Warning,
+        match="Environment variable 'VERTEXAI_PROJECT_ID_vertexai_model_name' is not set",
+    ):
         raise test_case[1]
+    with pytest.raises(
+        Warning, match="Environment variable 'VERTEXAI_PROJECT_ID' is not set"
+    ):
+        raise test_case[2]
+    with pytest.raises(
+        Warning,
+        match="Environment variable 'VERTEXAI_LOCATION_ID_vertexai_model_name' is not set",
+    ):
+        raise test_case[3]
+    with pytest.raises(
+        Warning, match="Environment variable 'VERTEXAI_LOCATION_ID' is not set"
+    ):
+        raise test_case[4]
 
     # error if prompt_dict["prompt"] is a list of strings but
     # also contains an incorrect type
-    test_case = GeminiAPI.check_prompt_dict(
+    test_case = VertexAIAPI.check_prompt_dict(
         {
-            "api": "gemini",
-            "model_name": "gemini_model_name",
+            "api": "vertexai",
+            "model_name": "vertexai_model_name",
             "prompt": ["prompt 1", "prompt 2", 1],
         }
     )
-    assert len(test_case) == 2
+    assert len(test_case) == 5
     with pytest.raises(TypeError, match=re.escape(TYPE_ERROR_MSG)):
         raise test_case[0]
 
     # error if prompt_dict["prompt"] is a list of dictionaries but
     # also contains an incorrect type
-    test_case = GeminiAPI.check_prompt_dict(
+    test_case = VertexAIAPI.check_prompt_dict(
         {
-            "api": "gemini",
-            "model_name": "gemini_model_name",
+            "api": "vertexai",
+            "model_name": "vertexai_model_name",
             "prompt": [
                 {"role": "system", "parts": "system prompt"},
                 {"role": "user", "parts": "user message"},
@@ -138,16 +172,16 @@ def test_gemini_check_prompt_dict(temporary_data_folders, monkeypatch):
             ],
         }
     )
-    assert len(test_case) == 2
+    assert len(test_case) == 5
     with pytest.raises(TypeError, match=re.escape(TYPE_ERROR_MSG)):
         raise test_case[0]
 
     # error if prompt_dict["prompt"] is a list of dictionaries but
     # one of the roles is incorrect
-    test_case = GeminiAPI.check_prompt_dict(
+    test_case = VertexAIAPI.check_prompt_dict(
         {
-            "api": "gemini",
-            "model_name": "gemini_model_name",
+            "api": "vertexai",
+            "model_name": "vertexai_model_name",
             "prompt": [
                 {"role": "system", "parts": "system prompt"},
                 {"role": "user", "parts": "user message"},
@@ -155,32 +189,32 @@ def test_gemini_check_prompt_dict(temporary_data_folders, monkeypatch):
             ],
         }
     )
-    assert len(test_case) == 2
+    assert len(test_case) == 5
     with pytest.raises(TypeError, match=re.escape(TYPE_ERROR_MSG)):
         raise test_case[0]
 
     # error if prompt_dict["prompt"] is a list of dictionaries but
     # the system message is not the first message in the list
-    test_case = GeminiAPI.check_prompt_dict(
+    test_case = VertexAIAPI.check_prompt_dict(
         {
-            "api": "gemini",
-            "model_name": "gemini_model_name",
+            "api": "vertexai",
+            "model_name": "vertexai_model_name",
             "prompt": [
                 {"role": "user", "parts": "user message"},
                 {"role": "system", "parts": "system prompt"},
             ],
         }
     )
-    assert len(test_case) == 2
+    assert len(test_case) == 5
     with pytest.raises(TypeError, match=re.escape(TYPE_ERROR_MSG)):
         raise test_case[0]
 
     # error if prompt_dict["prompt"] is a list of dictionaries but
     # there are multiple system messages in the list
-    test_case = GeminiAPI.check_prompt_dict(
+    test_case = VertexAIAPI.check_prompt_dict(
         {
-            "api": "gemini",
-            "model_name": "gemini_model_name",
+            "api": "vertexai",
+            "model_name": "vertexai_model_name",
             "prompt": [
                 {"role": "system", "parts": "system prompt 1"},
                 {"role": "system", "parts": "system prompt 2"},
@@ -188,12 +222,12 @@ def test_gemini_check_prompt_dict(temporary_data_folders, monkeypatch):
             ],
         }
     )
-    assert len(test_case) == 2
+    assert len(test_case) == 5
     with pytest.raises(TypeError, match=re.escape(TYPE_ERROR_MSG)):
         raise test_case[0]
 
     # error if safety_filter is not recognised
-    test_case = GeminiAPI.check_prompt_dict(
+    test_case = VertexAIAPI.check_prompt_dict(
         {
             "api": "gemini",
             "model_name": "gemini_model_name",
@@ -201,15 +235,15 @@ def test_gemini_check_prompt_dict(temporary_data_folders, monkeypatch):
             "safety_filter": "unknown-safety-filter",
         }
     )
-    assert len(test_case) == 2
+    assert len(test_case) == 5
     with pytest.raises(
         ValueError,
         match="Invalid safety_filter value",
     ):
-        raise test_case[1]
+        raise test_case[4]
 
-    # error if there is a parameter that is not recognised by Gemini
-    test_case = GeminiAPI.check_prompt_dict(
+    # error if there is a parameter that is not recognised by VertexAI
+    test_case = VertexAIAPI.check_prompt_dict(
         {
             "api": "gemini",
             "model_name": "gemini_model_name",
@@ -217,86 +251,88 @@ def test_gemini_check_prompt_dict(temporary_data_folders, monkeypatch):
             "parameters": {"temperature": 1, "max_output_tokens": 100, "unknown": 1},
         }
     )
-    assert len(test_case) == 2
+    assert len(test_case) == 5
     with pytest.raises(Exception, match="Invalid generation_config parameter: "):
-        raise test_case[1]
+        raise test_case[4]
 
-    # error if neither environment variable is set
-    test_case = GeminiAPI.check_prompt_dict(
-        {
-            "api": "gemini",
-            "model_name": "gemini_model_name",
-            "prompt": "test prompt",
-        }
-    )
-    assert len(test_case) == 1
-    with pytest.raises(KeyError, match=re.escape(env_variable_error_msg)):
-        raise test_case[0]
-
-    # set the GEMINI_API_KEY environment variable
-    monkeypatch.setenv("GEMINI_API_KEY", "DUMMY")
+    # set the VERTEXAI_PROJECT_ID and VERTEXAI_LOCATION_ID environment variables
+    monkeypatch.setenv("VERTEXAI_PROJECT_ID", "DUMMY")
+    monkeypatch.setenv("VERTEXAI_LOCATION_ID", "DUMMY")
     # error if the model-specific environment variable is not set
-    test_case = GeminiAPI.check_prompt_dict(
+    test_case = VertexAIAPI.check_prompt_dict(
         {
-            "api": "gemini",
-            "model_name": "gemini_model_name",
+            "api": "vertexai",
+            "model_name": "vertexai_model_name",
             "prompt": "test prompt",
         }
     )
-    assert len(test_case) == 1
+    assert len(test_case) == 2
     with pytest.raises(
         Warning,
         match=re.escape(
-            "Environment variable 'GEMINI_API_KEY_gemini_model_name' is not set"
+            "Environment variable 'VERTEXAI_PROJECT_ID_vertexai_model_name' is not set"
         ),
     ):
         raise test_case[0]
+    with pytest.raises(
+        Warning,
+        match="Environment variable 'VERTEXAI_LOCATION_ID_vertexai_model_name' is not set",
+    ):
+        raise test_case[1]
 
-    # unset the GEMINI_API_KEY environment variable and
-    # set the model-specific environment variable
-    monkeypatch.delenv("GEMINI_API_KEY")
-    monkeypatch.setenv("GEMINI_API_KEY_gemini_model_name", "DUMMY")
-    test_case = GeminiAPI.check_prompt_dict(
+    # unset the VERTEXAI_PROJECT_ID and VERTEXAI_LOCATION_ID environment variables and
+    # set the model-specific environment variables
+    monkeypatch.delenv("VERTEXAI_PROJECT_ID")
+    monkeypatch.delenv("VERTEXAI_LOCATION_ID")
+    monkeypatch.setenv("VERTEXAI_PROJECT_ID_vertexai_model_name", "DUMMY")
+    monkeypatch.setenv("VERTEXAI_LOCATION_ID_vertexai_model_name", "DUMMY")
+    test_case = VertexAIAPI.check_prompt_dict(
         {
-            "api": "gemini",
-            "model_name": "gemini_model_name",
+            "api": "vertexai",
+            "model_name": "vertexai_model_name",
             "prompt": "test prompt",
         }
     )
-    assert len(test_case) == 1
+    assert len(test_case) == 2
     with pytest.raises(
-        Warning, match=re.escape("Environment variable 'GEMINI_API_KEY' is not set")
+        Warning,
+        match=re.escape("Environment variable 'VERTEXAI_PROJECT_ID' is not set"),
     ):
         raise test_case[0]
+    with pytest.raises(
+        Warning, match="Environment variable 'VERTEXAI_LOCATION_ID' is not set"
+    ):
+        raise test_case[1]
 
     # full passes
     # set both environment variables
-    monkeypatch.setenv("GEMINI_API_KEY", "DUMMY")
+    monkeypatch.setenv("VERTEXAI_PROJECT_ID", "DUMMY")
+    monkeypatch.setenv("VERTEXAI_LOCATION_ID", "DUMMY")
     assert (
-        GeminiAPI.check_prompt_dict(
+        VertexAIAPI.check_prompt_dict(
             {
-                "api": "gemini",
-                "model_name": "gemini_model_name",
+                "api": "vertexai",
+                "model_name": "vertexai_model_name",
                 "prompt": "test prompt",
             }
         )
         == []
     )
     assert (
-        GeminiAPI.check_prompt_dict(
+        VertexAIAPI.check_prompt_dict(
             {
-                "api": "gemini",
-                "model_name": "gemini_model_name",
+                "api": "vertexai",
+                "model_name": "vertexai_model_name",
                 "prompt": ["prompt 1", "prompt 2"],
             }
         )
         == []
     )
     assert (
-        GeminiAPI.check_prompt_dict(
+        VertexAIAPI.check_prompt_dict(
             {
-                "api": "gemini",
-                "model_name": "gemini_model_name",
+                "api": "vertexai",
+                "model_name": "vertexai_model_name",
                 "prompt": [
                     {"role": "system", "parts": "system prompt"},
                     {"role": "user", "parts": "user message 1"},
@@ -308,10 +344,10 @@ def test_gemini_check_prompt_dict(temporary_data_folders, monkeypatch):
         == []
     )
     assert (
-        GeminiAPI.check_prompt_dict(
+        VertexAIAPI.check_prompt_dict(
             {
-                "api": "gemini",
-                "model_name": "gemini_model_name",
+                "api": "vertexai",
+                "model_name": "vertexai_model_name",
                 "prompt": [
                     {"role": "user", "parts": "user message 1"},
                     {"role": "model", "parts": "model message"},
@@ -324,18 +360,17 @@ def test_gemini_check_prompt_dict(temporary_data_folders, monkeypatch):
 
 
 @pytest.mark.asyncio
-async def test_gemini_obtain_model_inputs(temporary_data_folders, monkeypatch):
+async def test_vertexai_obtain_model_inputs(temporary_data_folders, monkeypatch):
     settings = Settings(data_folder="data")
     log_file = "log.txt"
-    monkeypatch.setenv("GEMINI_API_KEY", "DUMMY")
-    gemini_api = GeminiAPI(settings=settings, log_file=log_file)
+    vertexai_api = VertexAIAPI(settings=settings, log_file=log_file)
 
     # test for string prompt
-    test_case = await gemini_api._obtain_model_inputs(
+    test_case = await vertexai_api._obtain_model_inputs(
         {
-            "id": "gemini_id",
-            "api": "gemini",
-            "model_name": "gemini_model_name",
+            "id": "vertexai_id",
+            "api": "vertexai",
+            "model_name": "vertexai_model_name",
             "prompt": "test prompt",
             "parameters": {"temperature": 1, "max_output_tokens": 100},
         }
@@ -343,24 +378,24 @@ async def test_gemini_obtain_model_inputs(temporary_data_folders, monkeypatch):
     assert isinstance(test_case, tuple)
     assert len(test_case) == 5
     assert test_case[0] == "test prompt"
-    assert test_case[1] == "gemini_model_name"
+    assert test_case[1] == "vertexai_model_name"
     assert isinstance(test_case[2], dict)
     assert test_case[3] == {"temperature": 1, "max_output_tokens": 100}
     assert test_case[4] is None
 
     # test for case where no parameters in prompt_dict
-    test_case = await gemini_api._obtain_model_inputs(
+    test_case = await vertexai_api._obtain_model_inputs(
         {
-            "id": "gemini_id",
-            "api": "gemini",
-            "model_name": "gemini_model_name",
+            "id": "vertexai_id",
+            "api": "vertexai",
+            "model_name": "vertexai_model_name",
             "prompt": "test prompt",
         }
     )
     assert isinstance(test_case, tuple)
     assert len(test_case) == 5
     assert test_case[0] == "test prompt"
-    assert test_case[1] == "gemini_model_name"
+    assert test_case[1] == "vertexai_model_name"
     assert isinstance(test_case[2], dict)
     assert test_case[3] == {}
     assert test_case[4] is None
@@ -369,11 +404,11 @@ async def test_gemini_obtain_model_inputs(temporary_data_folders, monkeypatch):
     with pytest.raises(
         TypeError, match="parameters must be a dictionary, not <class 'int'>"
     ):
-        await gemini_api._obtain_model_inputs(
+        await vertexai_api._obtain_model_inputs(
             {
-                "id": "gemini_id",
-                "api": "gemini",
-                "model_name": "gemini_model_name",
+                "id": "vertexai_id",
+                "api": "vertexai",
+                "model_name": "vertexai_model_name",
                 "prompt": "test prompt",
                 "parameters": 1,
             }
@@ -381,42 +416,41 @@ async def test_gemini_obtain_model_inputs(temporary_data_folders, monkeypatch):
 
     # test error if no prompt is provided
     with pytest.raises(KeyError):
-        await gemini_api._obtain_model_inputs(
+        await vertexai_api._obtain_model_inputs(
             {
-                "id": "gemini_id",
-                "api": "gemini",
-                "model_name": "gemini_model_name",
+                "id": "vertexai_id",
+                "api": "vertexai",
+                "model_name": "vertexai_model_name",
             }
         )
 
     # test error if no model_name is provided
     with pytest.raises(KeyError):
-        await gemini_api._obtain_model_inputs(
+        await vertexai_api._obtain_model_inputs(
             {
-                "id": "gemini_id",
-                "api": "gemini",
+                "id": "vertexai_id",
+                "api": "vertexai",
                 "prompt": "test prompt",
             }
         )
 
 
 @pytest.mark.asyncio
-async def test_gemini_obtain_model_inputs_safety_filters(
+async def test_vertexai_obtain_model_inputs_safety_filters(
     temporary_data_folders, monkeypatch
 ):
     settings = Settings(data_folder="data")
     log_file = "log.txt"
-    monkeypatch.setenv("GEMINI_API_KEY", "DUMMY")
-    gemini_api = GeminiAPI(settings=settings, log_file=log_file)
+    vertexai_api = VertexAIAPI(settings=settings, log_file=log_file)
 
     valid_safety_filter_choices = ["none", "few", "default", "some", "most"]
 
     for safety_filter in valid_safety_filter_choices:
-        test_case = await gemini_api._obtain_model_inputs(
+        test_case = await vertexai_api._obtain_model_inputs(
             {
-                "id": "gemini_id",
-                "api": "gemini",
-                "model_name": "gemini_model_name",
+                "id": "vertexai_id",
+                "api": "vertexai",
+                "model_name": "vertexai_model_name",
                 "prompt": "test prompt",
                 "parameters": {"temperature": 1, "max_output_tokens": 100},
                 "safety_filter": safety_filter,
@@ -425,7 +459,7 @@ async def test_gemini_obtain_model_inputs_safety_filters(
         assert isinstance(test_case, tuple)
         assert len(test_case) == 5
         assert test_case[0] == "test prompt"
-        assert test_case[1] == "gemini_model_name"
+        assert test_case[1] == "vertexai_model_name"
         assert isinstance(test_case[2], dict)
         assert test_case[3] == {"temperature": 1, "max_output_tokens": 100}
         assert test_case[4] is None
@@ -438,11 +472,11 @@ async def test_gemini_obtain_model_inputs_safety_filters(
             "none', 'few', 'default'/'some', 'most'"
         ),
     ):
-        await gemini_api._obtain_model_inputs(
+        await vertexai_api._obtain_model_inputs(
             {
-                "id": "gemini_id",
-                "api": "gemini",
-                "model_name": "gemini_model_name",
+                "id": "vertexai_id",
+                "api": "vertexai",
+                "model_name": "vertexai_model_name",
                 "prompt": "test prompt",
                 "parameters": {"temperature": 1, "max_output_tokens": 100},
                 "safety_filter": "unknown-safety-filter",
@@ -452,21 +486,20 @@ async def test_gemini_obtain_model_inputs_safety_filters(
 
 @pytest.mark.asyncio
 @patch(
-    "prompto.apis.gemini.gemini.GeminiAPI._query_string",
+    "prompto.apis.vertexai.vertexai.VertexAIAPI._query_string",
     new_callable=AsyncMock,
 )
-async def test_gemini_query_string(
+async def test_vertexai_query_string(
     mock_query_string, temporary_data_folders, monkeypatch
 ):
     settings = Settings(data_folder="data")
     log_file = "log.txt"
-    monkeypatch.setenv("GEMINI_API_KEY", "DUMMY")
-    gemini_api = GeminiAPI(settings=settings, log_file=log_file)
+    vertexai_api = VertexAIAPI(settings=settings, log_file=log_file)
 
     # mock the _query_string method to return a response
     mock_query_string.return_value = {**PROMPT_DICT_STRING, "response": "response text"}
 
-    prompt_dict = await gemini_api.query(PROMPT_DICT_STRING)
+    prompt_dict = await vertexai_api.query(PROMPT_DICT_STRING)
 
     assert prompt_dict == mock_query_string.return_value
     assert prompt_dict["response"] == "response text"
@@ -477,17 +510,18 @@ async def test_gemini_query_string(
 
 
 @pytest.mark.asyncio
-@patch("prompto.apis.gemini.gemini.GeminiAPI._query_chat", new_callable=AsyncMock)
-async def test_gemini_query_chat(mock_query_chat, temporary_data_folders, monkeypatch):
+@patch("prompto.apis.vertexai.vertexai.VertexAIAPI._query_chat", new_callable=AsyncMock)
+async def test_vertexai_query_chat(
+    mock_query_chat, temporary_data_folders, monkeypatch
+):
     settings = Settings(data_folder="data")
     log_file = "log.txt"
-    monkeypatch.setenv("GEMINI_API_KEY", "DUMMY")
-    gemini_api = GeminiAPI(settings=settings, log_file=log_file)
+    vertexai_api = VertexAIAPI(settings=settings, log_file=log_file)
 
     # mock the _query_string method to return a response
     mock_query_chat.return_value = {**PROMPT_DICT_CHAT, "response": "response text"}
 
-    prompt_dict = await gemini_api.query(PROMPT_DICT_CHAT)
+    prompt_dict = await vertexai_api.query(PROMPT_DICT_CHAT)
 
     assert prompt_dict == mock_query_chat.return_value
     assert prompt_dict["response"] == "response text"
@@ -497,16 +531,15 @@ async def test_gemini_query_chat(mock_query_chat, temporary_data_folders, monkey
 
 @pytest.mark.asyncio
 @patch(
-    "prompto.apis.gemini.gemini.GeminiAPI._query_history",
+    "prompto.apis.vertexai.vertexai.VertexAIAPI._query_history",
     new_callable=AsyncMock,
 )
-async def test_gemini_query_history(
+async def test_vertexai_query_history(
     mock_query_history, temporary_data_folders, monkeypatch
 ):
     settings = Settings(data_folder="data")
     log_file = "log.txt"
-    monkeypatch.setenv("GEMINI_API_KEY", "DUMMY")
-    gemini_api = GeminiAPI(settings=settings, log_file=log_file)
+    vertexai_api = VertexAIAPI(settings=settings, log_file=log_file)
 
     # mock the _query_string method to return a response
     mock_query_history.return_value = {
@@ -514,7 +547,7 @@ async def test_gemini_query_history(
         "response": "response text",
     }
 
-    prompt_dict = await gemini_api.query(PROMPT_DICT_HISTORY)
+    prompt_dict = await vertexai_api.query(PROMPT_DICT_HISTORY)
 
     assert prompt_dict == mock_query_history.return_value
     assert prompt_dict["response"] == "response text"
@@ -525,25 +558,24 @@ async def test_gemini_query_history(
 
 
 @pytest.mark.asyncio
-async def test_gemini_query_error(temporary_data_folders, monkeypatch):
+async def test_vertexai_query_error(temporary_data_folders, monkeypatch):
     settings = Settings(data_folder="data")
     log_file = "log.txt"
-    monkeypatch.setenv("GEMINI_API_KEY", "DUMMY")
-    gemini_api = GeminiAPI(settings=settings, log_file=log_file)
+    vertexai_api = VertexAIAPI(settings=settings, log_file=log_file)
 
     # error if prompt_dict["prompt"] is not of the correct type
     with pytest.raises(TypeError, match=re.escape(TYPE_ERROR_MSG)):
-        await gemini_api.query(
-            {"api": "gemini", "model_name": "gemini_model_name", "prompt": 1}
+        await vertexai_api.query(
+            {"api": "vertexai", "model_name": "vertexai_model_name", "prompt": 1}
         )
 
     # error if prompt_dict["prompt"] is a list of strings but
     # also contains an incorrect type
     with pytest.raises(TypeError, match=re.escape(TYPE_ERROR_MSG)):
-        await gemini_api.query(
+        await vertexai_api.query(
             {
-                "api": "gemini",
-                "model_name": "gemini_model_name",
+                "api": "vertexai",
+                "model_name": "vertexai_model_name",
                 "prompt": ["prompt 1", "prompt 2", 1],
             }
         )
@@ -551,10 +583,10 @@ async def test_gemini_query_error(temporary_data_folders, monkeypatch):
     # error if prompt_dict["prompt"] is a list of dictionaries but
     # also contains an incorrect type
     with pytest.raises(TypeError, match=re.escape(TYPE_ERROR_MSG)):
-        await gemini_api.query(
+        await vertexai_api.query(
             {
-                "api": "gemini",
-                "model_name": "gemini_model_name",
+                "api": "vertexai",
+                "model_name": "vertexai_model_name",
                 "prompt": [
                     {"role": "system", "parts": "system prompt"},
                     {"role": "user", "parts": "user message"},
@@ -566,10 +598,10 @@ async def test_gemini_query_error(temporary_data_folders, monkeypatch):
     # error if prompt_dict["prompt"] is a list of dictionaries but
     # one of the roles is incorrect
     with pytest.raises(TypeError, match=re.escape(TYPE_ERROR_MSG)):
-        await gemini_api.query(
+        await vertexai_api.query(
             {
-                "api": "gemini",
-                "model_name": "gemini_model_name",
+                "api": "vertexai",
+                "model_name": "vertexai_model_name",
                 "prompt": [
                     {"role": "system", "parts": "system prompt"},
                     {"role": "user", "parts": "user message"},
@@ -581,10 +613,10 @@ async def test_gemini_query_error(temporary_data_folders, monkeypatch):
     # error if prompt_dict["prompt"] is a list of dictionaries but
     # the system message is not the first message in the list
     with pytest.raises(TypeError, match=re.escape(TYPE_ERROR_MSG)):
-        await gemini_api.query(
+        await vertexai_api.query(
             {
-                "api": "gemini",
-                "model_name": "gemini_model_name",
+                "api": "vertexai",
+                "model_name": "vertexai_model_name",
                 "prompt": [
                     {"role": "user", "parts": "user message"},
                     {"role": "system", "parts": "system prompt"},
@@ -595,10 +627,10 @@ async def test_gemini_query_error(temporary_data_folders, monkeypatch):
     # error if prompt_dict["prompt"] is a list of dictionaries but
     # there are multiple system messages in the list
     with pytest.raises(TypeError, match=re.escape(TYPE_ERROR_MSG)):
-        await gemini_api.query(
+        await vertexai_api.query(
             {
-                "api": "gemini",
-                "model_name": "gemini_model_name",
+                "api": "vertexai",
+                "model_name": "vertexai_model_name",
                 "prompt": [
                     {"role": "system", "parts": "system prompt 1"},
                     {"role": "system", "parts": "system prompt 2"},

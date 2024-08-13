@@ -182,10 +182,8 @@ class VertexAIAPI(AsyncAPI):
         if "parameters" in prompt_dict:
             try:
                 GenerationConfig(**prompt_dict["parameters"])
-            except TypeError as err:
-                issues.append(TypeError(f"Invalid generation_config parameter: {err}"))
             except Exception as err:
-                issues.append(ValueError(f"Invalid generation_config parameter: {err}"))
+                issues.append(Exception(f"Invalid generation_config parameter: {err}"))
 
         return issues
 
@@ -211,12 +209,18 @@ class VertexAIAPI(AsyncAPI):
 
         # obtain model name
         model_name = prompt_dict["model_name"]
-        project_id = get_environment_variable(
-            env_variable=PROJECT_VAR_NAME, model_name=model_name
-        )
-        location_id = get_environment_variable(
-            env_variable=LOCATION_VAR_NAME, model_name=model_name
-        )
+        try:
+            project_id = get_environment_variable(
+                env_variable=PROJECT_VAR_NAME, model_name=model_name
+            )
+        except KeyError:
+            project_id = None
+        try:
+            location_id = get_environment_variable(
+                env_variable=LOCATION_VAR_NAME, model_name=model_name
+            )
+        except:
+            location_id = None
 
         # initialise the vertexai project
         vertexai.init(project=project_id, location=location_id)
