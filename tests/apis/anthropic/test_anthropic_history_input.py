@@ -143,6 +143,7 @@ async def test_anthropic_query_history_error(
     log_file = "log.txt"
     monkeypatch.setenv("ANTHROPIC_API_KEY_anthropic_model_name", "DUMMY")
     anthropic_api = AnthropicAPI(settings=settings, log_file=log_file)
+
     mock_anthropic.side_effect = Exception("Test error")
 
     # raise error if the API call fails
@@ -248,7 +249,6 @@ async def test_anthropic_query_history_error_no_system(
     monkeypatch.setenv("ANTHROPIC_API_KEY_anthropic_model_name", "DUMMY")
     anthropic_api = AnthropicAPI(settings=settings, log_file=log_file)
 
-    # mock error response from the API
     mock_anthropic.side_effect = Exception("Test error")
 
     # raise error if the API call fails

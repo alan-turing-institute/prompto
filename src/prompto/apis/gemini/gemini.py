@@ -463,10 +463,11 @@ class GeminiAPI(AsyncAPI):
         where "role" is one of "user", "model" and "parts" is the message),
         i.e. multi-turn chat with history.
         """
-        if prompt[0]["role"] == "system":
+        if prompt_dict["prompt"][0]["role"] == "system":
             prompt, model_name, model, safety_settings, generation_config, _ = (
                 await self._obtain_model_inputs(
-                    prompt_dict=prompt_dict, system_instruction=prompt[0]["parts"]
+                    prompt_dict=prompt_dict,
+                    system_instruction=prompt_dict["prompt"][0]["parts"],
                 )
             )
             chat = model.start_chat(history=prompt[1:-1])

@@ -1,7 +1,8 @@
 import logging
-from unittest.mock import Mock, patch
+from unittest.mock import AsyncMock, Mock, patch
 
 import pytest
+from google.generativeai import GenerativeModel
 
 from prompto.apis.gemini import GeminiAPI
 from prompto.settings import Settings
@@ -51,7 +52,8 @@ async def test_gemini_query_chat(
     gemini_api = GeminiAPI(settings=settings, log_file=log_file)
 
     # mock the response from the API
-    # NOTE: The actual response from the API is a gemini.types.message.Message objects
+    # NOTE: The actual response from the API is a
+    # google.generativeai.types.AsyncGenerateContentResponse object
     # not a string value, but for the purpose of this test, we are using a string value
     # and testing that this is the input to the process_response function
     gemini_api_sequence_responses = [
@@ -117,6 +119,46 @@ async def test_gemini_query_chat(
 
     expected_log_message_final = "Chat completed (i=0, id=gemini_id)"
     assert expected_log_message_final in caplog.text
+
+
+@pytest.mark.asyncio
+@patch("google.generativeai.GenerativeModel.start_chat", new_callable=Mock)
+@patch(
+    "prompto.apis.gemini.gemini.GeminiAPI._obtain_model_inputs", new_callable=AsyncMock
+)
+async def test_gemini_query_history_check_chat_init(
+    mock_obtain_model_inputs,
+    mock_start_chat,
+    temporary_data_folders,
+    monkeypatch,
+    caplog,
+):
+    caplog.set_level(logging.INFO)
+    settings = Settings(data_folder="data")
+    log_file = "log.txt"
+    monkeypatch.setenv("GEMINI_API_KEY_gemini_model_name", "DUMMY")
+    gemini_api = GeminiAPI(settings=settings, log_file=log_file)
+
+    mock_obtain_model_inputs.return_value = (
+        PROMPT_DICT_CHAT["prompt"],
+        PROMPT_DICT_CHAT["model_name"],
+        GenerativeModel(
+            model_name=PROMPT_DICT_CHAT["model_name"], system_instruction=None
+        ),
+        DEFAULT_SAFETY_SETTINGS,
+        PROMPT_DICT_CHAT["parameters"],
+        None,
+    )
+
+    # error will be raised as we've mocked the start_chat method
+    # which leads to an error when the method is called on the mocked object
+    with pytest.raises(Exception):
+        await gemini_api._query_chat(PROMPT_DICT_CHAT, index=0)
+
+    mock_obtain_model_inputs.assert_called_once_with(
+        prompt_dict=PROMPT_DICT_CHAT, system_instruction=None
+    )
+    mock_start_chat.assert_called_once_with(history=[])
 
 
 @pytest.mark.asyncio

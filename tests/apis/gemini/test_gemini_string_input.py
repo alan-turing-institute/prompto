@@ -1,6 +1,7 @@
 import logging
 from unittest.mock import AsyncMock, Mock, patch
 
+import google.generativeai.types.generation_types
 import pytest
 
 from prompto.apis.gemini import GeminiAPI
@@ -50,7 +51,8 @@ async def test_gemini_query_string(
     gemini_api = GeminiAPI(settings=settings, log_file=log_file)
 
     # mock the response from the API
-    # NOTE: The actual response from the API is a gemini.types.message.Message object
+    # NOTE: The actual response from the API is a
+    # google.generativeai.types.AsyncGenerateContentResponse object
     # not a string value, but for the purpose of this test, we are using a string value
     # and testing that this is the input to the process_response function
     mock_gemini_call.return_value = "response Messages object"
