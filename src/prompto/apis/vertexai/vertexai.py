@@ -41,6 +41,11 @@ TYPE_ERROR = TypeError(
     "system message with the key 'role' set to 'system'."
 )
 
+BLOCKED_SAFETY_ATTRIBUTES = {
+    "blocked": "True",
+    "finish_reason": "block_reason: OTHER",
+}
+
 
 class VertexAIAPI(AsyncAPI):
     """
@@ -188,8 +193,8 @@ class VertexAIAPI(AsyncAPI):
         return issues
 
     async def _obtain_model_inputs(
-        self, prompt_dict: dict
-    ) -> tuple[str, str, dict, dict, list[Part] | None]:
+        self, prompt_dict: dict, system_instruction: str | None = None
+    ) -> tuple[str, str, GenerativeModel, dict, dict, list | None]:
         """
         Async method to obtain the model inputs from the prompt dictionary.
 
@@ -197,13 +202,16 @@ class VertexAIAPI(AsyncAPI):
         ----------
         prompt_dict : dict
             The prompt dictionary to use for querying the model
+        system_instruction : str | None
+            The system instruction to use for querying the model if any,
+            defaults to None
 
         Returns
         -------
         tuple[str, str, dict, dict, list[Part] | None]
-            A tuple containing the prompt, model name, safety settings,
-            the generation config, and list of multimedia parts (if passed)
-            to use for querying the model
+            A tuple containing the prompt, model name, GenerativeModel instance,
+            safety settings, the generation config, and list of multimedia parts
+            (if passed) to use for querying the model
         """
         prompt = prompt_dict["prompt"]
 
@@ -219,11 +227,16 @@ class VertexAIAPI(AsyncAPI):
             location_id = get_environment_variable(
                 env_variable=LOCATION_VAR_NAME, model_name=model_name
             )
-        except:
+        except KeyError:
             location_id = None
 
         # initialise the vertexai project
         vertexai.init(project=project_id, location=location_id)
+
+        # create the model instance
+        model = GenerativeModel(
+            model_name=model_name, system_instruction=system_instruction
+        )
 
         # define safety settings
         safety_filter = prompt_dict.get("safety_filter", None)
@@ -283,7 +296,7 @@ class VertexAIAPI(AsyncAPI):
         else:
             multimedia = None
 
-        return prompt, model_name, safety_settings, generation_config, multimedia
+        return prompt, model_name, model, safety_settings, generation_config, multimedia
 
     async def _query_string(self, prompt_dict: dict, index: int | str):
         """
@@ -291,8 +304,10 @@ class VertexAIAPI(AsyncAPI):
         (prompt_dict["prompt"] is a string),
         i.e. single-turn completion or chat.
         """
-        prompt, model_name, safety_settings, generation_config, multimedia = (
-            await self._obtain_model_inputs(prompt_dict=prompt_dict)
+        prompt, model_name, model, safety_settings, generation_config, multimedia = (
+            await self._obtain_model_inputs(
+                prompt_dict=prompt_dict, system_instruction=None
+            )
         )
 
         # prepare the contents to send to the model
@@ -303,7 +318,7 @@ class VertexAIAPI(AsyncAPI):
             contents = [Part.from_text(prompt)]
 
         try:
-            response = await GenerativeModel(model_name).generate_content_async(
+            response = await model.generate_content_async(
                 contents=contents,
                 generation_config=generation_config,
                 safety_settings=safety_settings,
@@ -337,23 +352,22 @@ class VertexAIAPI(AsyncAPI):
             logging.info(
                 f"Response is empty and blocked (i={index}, id={prompt_dict.get('id', 'NA')}) \nPrompt: {prompt[:50]}..."
             )
-            if isinstance(err, IndexError):
-                async with FILE_WRITE_LOCK:
-                    write_log_message(
-                        log_file=self.log_file, log_message=log_message, log=True
-                    )
-                response_text = ""
+            async with FILE_WRITE_LOCK:
+                write_log_message(
+                    log_file=self.log_file, log_message=log_message, log=True
+                )
+            response_text = ""
+            try:
                 if len(response.candidates) == 0:
-                    safety_attributes = {
-                        "blocked": "True",
-                        "finish_reason": "block_reason: OTHER",
-                    }
+                    safety_attributes = BLOCKED_SAFETY_ATTRIBUTES
                 else:
                     safety_attributes = process_safety_attributes(response)
+            except:
+                safety_attributes = BLOCKED_SAFETY_ATTRIBUTES
 
-                prompt_dict["response"] = response_text
-                prompt_dict["safety_attributes"] = safety_attributes
-                return prompt_dict
+            prompt_dict["response"] = response_text
+            prompt_dict["safety_attributes"] = safety_attributes
+            return prompt_dict
         except Exception as err:
             error_as_string = f"{type(err).__name__} - {err}"
             log_message = log_error_response_query(
@@ -377,11 +391,12 @@ class VertexAIAPI(AsyncAPI):
         (prompt_dict["prompt"] is a list of strings to sequentially send to the model),
         i.e. multi-turn chat with history.
         """
-        prompt, model_name, safety_settings, generation_config, _ = (
-            await self._obtain_model_inputs(prompt_dict=prompt_dict)
+        prompt, model_name, model, safety_settings, generation_config, _ = (
+            await self._obtain_model_inputs(
+                prompt_dict=prompt_dict, system_instruction=None
+            )
         )
 
-        model = GenerativeModel(model_name)
         chat = model.start_chat(history=[])
 
         response_list = []
@@ -440,14 +455,14 @@ class VertexAIAPI(AsyncAPI):
                 write_log_message(
                     log_file=self.log_file, log_message=log_message, log=True
                 )
-            response_text = ""
-            if len(response.candidates) == 0:
-                safety_attributes = {
-                    "blocked": "True",
-                    "finish_reason": "block_reason: OTHER",
-                }
-            else:
-                safety_attributes = process_safety_attributes(response)
+            response_text = response_list + [""]
+            try:
+                if len(response.candidates) == 0:
+                    safety_attributes = BLOCKED_SAFETY_ATTRIBUTES
+                else:
+                    safety_attributes = process_safety_attributes(response)
+            except:
+                safety_attributes = BLOCKED_SAFETY_ATTRIBUTES
 
             prompt_dict["response"] = response_text
             prompt_dict["safety_attributes"] = safety_attributes
@@ -479,15 +494,20 @@ class VertexAIAPI(AsyncAPI):
         where "role" is one of "user", "model", and "parts" is the message),
         i.e. multi-turn chat with history.
         """
-        prompt, model_name, safety_settings, generation_config, _ = (
-            await self._obtain_model_inputs(prompt_dict=prompt_dict)
-        )
-
-        if prompt[0]["role"] == "system":
-            model = GenerativeModel(model_name, system_instruction=prompt[0]["parts"])
+        if prompt_dict["prompt"][0]["role"] == "system":
+            prompt, model_name, model, safety_settings, generation_config, _ = (
+                await self._obtain_model_inputs(
+                    prompt_dict=prompt_dict,
+                    system_instruction=prompt_dict["prompt"][0]["parts"],
+                )
+            )
             chat = model.start_chat(history=[dict_to_content(x) for x in prompt[1:-1]])
         else:
-            model = GenerativeModel(model_name)
+            prompt, model_name, model, safety_settings, generation_config, _ = (
+                await self._obtain_model_inputs(
+                    prompt_dict=prompt_dict, system_instruction=None
+                )
+            )
             chat = model.start_chat(history=[dict_to_content(x) for x in prompt[:-1]])
 
         try:
@@ -526,23 +546,22 @@ class VertexAIAPI(AsyncAPI):
             logging.info(
                 f"Response is empty and blocked (i={index}, id={prompt_dict.get('id', 'NA')}) \nPrompt: {prompt[:50]}..."
             )
-            if isinstance(err, IndexError):
-                async with FILE_WRITE_LOCK:
-                    write_log_message(
-                        log_file=self.log_file, log_message=log_message, log=True
-                    )
-                response_text = ""
+            async with FILE_WRITE_LOCK:
+                write_log_message(
+                    log_file=self.log_file, log_message=log_message, log=True
+                )
+            response_text = ""
+            try:
                 if len(response.candidates) == 0:
-                    safety_attributes = {
-                        "blocked": "True",
-                        "finish_reason": "block_reason: OTHER",
-                    }
+                    safety_attributes = BLOCKED_SAFETY_ATTRIBUTES
                 else:
                     safety_attributes = process_safety_attributes(response)
+            except:
+                safety_attributes = BLOCKED_SAFETY_ATTRIBUTES
 
-                prompt_dict["response"] = response_text
-                prompt_dict["safety_attributes"] = safety_attributes
-                return prompt_dict
+            prompt_dict["response"] = response_text
+            prompt_dict["safety_attributes"] = safety_attributes
+            return prompt_dict
         except Exception as err:
             error_as_string = f"{type(err).__name__} - {err}"
             log_message = log_error_response_query(

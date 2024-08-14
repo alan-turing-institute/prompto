@@ -2,6 +2,7 @@ from unittest.mock import AsyncMock, patch
 
 import pytest
 import regex as re
+from vertexai.generative_models import GenerativeModel, HarmBlockThreshold, HarmCategory
 
 from prompto.apis.vertexai import VertexAIAPI
 from prompto.settings import Settings
@@ -59,6 +60,13 @@ def prompt_dict_history_no_system():
         "parameters": {"temperature": 1, "max_output_tokens": 100},
     }
 
+
+DEFAULT_SAFETY_SETTINGS = {
+    HarmCategory.HARM_CATEGORY_DANGEROUS_CONTENT: HarmBlockThreshold.BLOCK_MEDIUM_AND_ABOVE,
+    HarmCategory.HARM_CATEGORY_HATE_SPEECH: HarmBlockThreshold.BLOCK_MEDIUM_AND_ABOVE,
+    HarmCategory.HARM_CATEGORY_HARASSMENT: HarmBlockThreshold.BLOCK_MEDIUM_AND_ABOVE,
+    HarmCategory.HARM_CATEGORY_SEXUALLY_EXPLICIT: HarmBlockThreshold.BLOCK_MEDIUM_AND_ABOVE,
+}
 
 TYPE_ERROR_MSG = (
     "if api == 'vertexai', then the prompt must be a str, list[str], or "
@@ -242,8 +250,8 @@ def test_vertexai_check_prompt_dict(temporary_data_folders, monkeypatch):
     # error if safety_filter is not recognised
     test_case = VertexAIAPI.check_prompt_dict(
         {
-            "api": "gemini",
-            "model_name": "gemini_model_name",
+            "api": "vertexai",
+            "model_name": "vertexai_model_name",
             "prompt": "test prompt",
             "safety_filter": "unknown-safety-filter",
         }
@@ -258,8 +266,8 @@ def test_vertexai_check_prompt_dict(temporary_data_folders, monkeypatch):
     # error if there is a parameter that is not recognised by VertexAI
     test_case = VertexAIAPI.check_prompt_dict(
         {
-            "api": "gemini",
-            "model_name": "gemini_model_name",
+            "api": "vertexai",
+            "model_name": "vertexai_model_name",
             "prompt": "test prompt",
             "parameters": {"temperature": 1, "max_output_tokens": 100, "unknown": 1},
         }
@@ -376,6 +384,8 @@ def test_vertexai_check_prompt_dict(temporary_data_folders, monkeypatch):
 async def test_vertexai_obtain_model_inputs(temporary_data_folders, monkeypatch):
     settings = Settings(data_folder="data")
     log_file = "log.txt"
+    monkeypatch.setenv("VERTEXAI_PROJECT_ID", "DUMMY")
+    monkeypatch.setenv("VERTEXAI_LOCATION_ID", "europe-west2")
     vertexai_api = VertexAIAPI(settings=settings, log_file=log_file)
 
     # test for string prompt
@@ -389,12 +399,15 @@ async def test_vertexai_obtain_model_inputs(temporary_data_folders, monkeypatch)
         }
     )
     assert isinstance(test_case, tuple)
-    assert len(test_case) == 5
+    assert len(test_case) == 6
     assert test_case[0] == "test prompt"
     assert test_case[1] == "vertexai_model_name"
-    assert isinstance(test_case[2], dict)
-    assert test_case[3] == {"temperature": 1, "max_output_tokens": 100}
-    assert test_case[4] is None
+    assert isinstance(test_case[2], GenerativeModel)
+    assert test_case[2]._model_name == "publishers/google/models/vertexai_model_name"
+    assert test_case[2]._system_instruction is None
+    assert isinstance(test_case[3], dict)
+    assert test_case[4] == {"temperature": 1, "max_output_tokens": 100}
+    assert test_case[5] is None
 
     # test for case where no parameters in prompt_dict
     test_case = await vertexai_api._obtain_model_inputs(
@@ -403,15 +416,39 @@ async def test_vertexai_obtain_model_inputs(temporary_data_folders, monkeypatch)
             "api": "vertexai",
             "model_name": "vertexai_model_name",
             "prompt": "test prompt",
-        }
+        },
     )
     assert isinstance(test_case, tuple)
-    assert len(test_case) == 5
+    assert len(test_case) == 6
     assert test_case[0] == "test prompt"
     assert test_case[1] == "vertexai_model_name"
-    assert isinstance(test_case[2], dict)
-    assert test_case[3] == {}
-    assert test_case[4] is None
+    assert isinstance(test_case[2], GenerativeModel)
+    assert test_case[2]._model_name == "publishers/google/models/vertexai_model_name"
+    assert test_case[2]._system_instruction is None
+    assert isinstance(test_case[3], dict)
+    assert test_case[4] == {}
+    assert test_case[5] is None
+
+    # test for case where system_instruction is provided
+    test_case = await vertexai_api._obtain_model_inputs(
+        {
+            "id": "vertexai_id",
+            "api": "vertexai",
+            "model_name": "vertexai_model_name",
+            "prompt": "test prompt",
+        },
+        system_instruction="hello",
+    )
+    assert isinstance(test_case, tuple)
+    assert len(test_case) == 6
+    assert test_case[0] == "test prompt"
+    assert test_case[1] == "vertexai_model_name"
+    assert isinstance(test_case[2], GenerativeModel)
+    assert test_case[2]._model_name == "publishers/google/models/vertexai_model_name"
+    assert test_case[2]._system_instruction is not None
+    assert isinstance(test_case[3], dict)
+    assert test_case[4] == {}
+    assert test_case[5] is None
 
     # test error catching when parameters are not a dictionary
     with pytest.raises(
@@ -470,12 +507,17 @@ async def test_vertexai_obtain_model_inputs_safety_filters(
             }
         )
         assert isinstance(test_case, tuple)
-        assert len(test_case) == 5
+        assert len(test_case) == 6
         assert test_case[0] == "test prompt"
         assert test_case[1] == "vertexai_model_name"
-        assert isinstance(test_case[2], dict)
-        assert test_case[3] == {"temperature": 1, "max_output_tokens": 100}
-        assert test_case[4] is None
+        assert isinstance(test_case[2], GenerativeModel)
+        assert (
+            test_case[2]._model_name == "publishers/google/models/vertexai_model_name"
+        )
+        assert test_case[2]._system_instruction is None
+        assert isinstance(test_case[3], dict)
+        assert test_case[4] == {"temperature": 1, "max_output_tokens": 100}
+        assert test_case[5] is None
 
     # test error if safety filter is not recognised
     with pytest.raises(

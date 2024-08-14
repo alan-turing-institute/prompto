@@ -74,7 +74,7 @@ def parse_multimedia(multimedia: list[dict] | dict, media_folder: str) -> list[P
         return [parse_multimedia_dict(m, media_folder=media_folder) for m in multimedia]
 
 
-def dict_to_content(content_dict: dict):
+def dict_to_content(content_dict: dict) -> Content:
     """
     Convert content dictionary to Vertex AI Content object.
 
