@@ -36,6 +36,11 @@ TYPE_ERROR = TypeError(
     "system message with the key 'role' set to 'system'."
 )
 
+BLOCKED_SAFETY_ATTRIBUTES = {
+    "blocked": "True",
+    "finish_reason": "block_reason: OTHER",
+}
+
 
 class GeminiAPI(AsyncAPI):
     """
@@ -313,29 +318,30 @@ class GeminiAPI(AsyncAPI):
             log_message = log_error_response_query(
                 index=index,
                 model=f"Gemini ({model_name})",
+                prompt=prompt,
                 error_as_string=error_as_string,
                 id=prompt_dict.get("id", "NA"),
             )
             logging.info(
                 f"Response is empty and blocked (i={index}, id={prompt_dict.get('id', 'NA')}) \nPrompt: {prompt[:50]}..."
             )
-            if isinstance(err, IndexError):
-                async with FILE_WRITE_LOCK:
-                    write_log_message(
-                        log_file=self.log_file, log_message=log_message, log=True
-                    )
-                response_text = ""
+            async with FILE_WRITE_LOCK:
+                write_log_message(
+                    log_file=self.log_file, log_message=log_message, log=True
+                )
+            response_text = ""
+            try:
                 if len(response.candidates) == 0:
-                    safety_attributes = {
-                        "blocked": "True",
-                        "finish_reason": "block_reason: OTHER",
-                    }
+                    safety_attributes = BLOCKED_SAFETY_ATTRIBUTES
                 else:
                     safety_attributes = process_safety_attributes(response)
+            except:
+                safety_attributes = BLOCKED_SAFETY_ATTRIBUTES
 
-                prompt_dict["response"] = response_text
-                prompt_dict["safety_attributes"] = safety_attributes
-                return prompt_dict
+            prompt_dict["response"] = response_text
+            prompt_dict["safety_attributes"] = safety_attributes
+            return prompt_dict
+
         except Exception as err:
             error_as_string = f"{type(err).__name__} - {err}"
             log_message = log_error_response_query(
@@ -424,14 +430,14 @@ class GeminiAPI(AsyncAPI):
                 write_log_message(
                     log_file=self.log_file, log_message=log_message, log=True
                 )
-            response_text = ""
-            if len(response.candidates) == 0:
-                safety_attributes = {
-                    "blocked": "True",
-                    "finish_reason": "block_reason: OTHER",
-                }
-            else:
-                safety_attributes = process_safety_attributes(response)
+            response_text = response_list + [""]
+            try:
+                if len(response.candidates) == 0:
+                    safety_attributes = BLOCKED_SAFETY_ATTRIBUTES
+                else:
+                    safety_attributes = process_safety_attributes(response)
+            except:
+                safety_attributes = BLOCKED_SAFETY_ATTRIBUTES
 
             prompt_dict["response"] = response_text
             prompt_dict["safety_attributes"] = safety_attributes
@@ -515,23 +521,22 @@ class GeminiAPI(AsyncAPI):
             logging.info(
                 f"Response is empty and blocked (i={index}) \nPrompt: {prompt[:50]}..."
             )
-            if isinstance(err, IndexError):
-                async with FILE_WRITE_LOCK:
-                    write_log_message(
-                        log_file=self.log_file, log_message=log_message, log=True
-                    )
-                response_text = ""
+            async with FILE_WRITE_LOCK:
+                write_log_message(
+                    log_file=self.log_file, log_message=log_message, log=True
+                )
+            response_text = ""
+            try:
                 if len(response.candidates) == 0:
-                    safety_attributes = {
-                        "blocked": "True",
-                        "finish_reason": "block_reason: OTHER",
-                    }
+                    safety_attributes = BLOCKED_SAFETY_ATTRIBUTES
                 else:
                     safety_attributes = process_safety_attributes(response)
+            except:
+                safety_attributes = BLOCKED_SAFETY_ATTRIBUTES
 
-                prompt_dict["response"] = response_text
-                prompt_dict["safety_attributes"] = safety_attributes
-                return prompt_dict
+            prompt_dict["response"] = response_text
+            prompt_dict["safety_attributes"] = safety_attributes
+            return prompt_dict
         except Exception as err:
             error_as_string = f"{type(err).__name__} - {err}"
             log_message = log_error_response_query(

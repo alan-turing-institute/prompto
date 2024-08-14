@@ -1,19 +1,20 @@
 import logging
 from unittest.mock import AsyncMock, Mock, patch
 
-import google.generativeai.types.generation_types
 import pytest
 
 from prompto.apis.gemini import GeminiAPI
 from prompto.settings import Settings
 
-from .test_gemini import DEFAULT_SAFETY_SETTINGS, PROMPT_DICT_STRING
+from .test_gemini import DEFAULT_SAFETY_SETTINGS, prompt_dict_string
 
 pytest_plugins = ("pytest_asyncio",)
 
 
 @pytest.mark.asyncio
-async def test_gemini_query_string_no_env_var(temporary_data_folders, caplog):
+async def test_gemini_query_string_no_env_var(
+    prompt_dict_string, temporary_data_folders, caplog
+):
     caplog.set_level(logging.INFO)
     settings = Settings(data_folder="data")
     log_file = "log.txt"
@@ -27,7 +28,7 @@ async def test_gemini_query_string_no_env_var(temporary_data_folders, caplog):
             "environment variable is set."
         ),
     ):
-        await gemini_api._query_string(PROMPT_DICT_STRING, index=0)
+        await gemini_api._query_string(prompt_dict_string, index=0)
 
 
 @pytest.mark.asyncio
@@ -40,6 +41,7 @@ async def test_gemini_query_string(
     mock_process_safety_attr,
     mock_process_response,
     mock_gemini_call,
+    prompt_dict_string,
     temporary_data_folders,
     monkeypatch,
     caplog,
@@ -61,10 +63,10 @@ async def test_gemini_query_string(
     mock_process_response.return_value = "response text"
 
     # make sure that the input prompt_dict does not have a response key
-    assert "response" not in PROMPT_DICT_STRING.keys()
+    assert "response" not in prompt_dict_string.keys()
 
     # call the _query_string method
-    prompt_dict = await gemini_api._query_string(PROMPT_DICT_STRING, index=0)
+    prompt_dict = await gemini_api._query_string(prompt_dict_string, index=0)
 
     # assert that the response key is added to the prompt_dict
     assert "response" in prompt_dict.keys()
@@ -72,8 +74,8 @@ async def test_gemini_query_string(
     mock_gemini_call.assert_called_once()
     mock_gemini_call.assert_awaited_once()
     mock_gemini_call.assert_awaited_once_with(
-        contents=[PROMPT_DICT_STRING["prompt"]],
-        generation_config=PROMPT_DICT_STRING["parameters"],
+        contents=[prompt_dict_string["prompt"]],
+        generation_config=prompt_dict_string["parameters"],
         safety_settings=DEFAULT_SAFETY_SETTINGS,
         stream=False,
     )
@@ -85,9 +87,9 @@ async def test_gemini_query_string(
     assert prompt_dict["response"] == mock_process_response.return_value
 
     expected_log_message = (
-        f"Response received for model Gemini ({PROMPT_DICT_STRING['model_name']}) "
+        f"Response received for model Gemini ({prompt_dict_string['model_name']}) "
         "(i=0, id=gemini_id)\n"
-        f"Prompt: {PROMPT_DICT_STRING['prompt'][:50]}...\n"
+        f"Prompt: {prompt_dict_string['prompt'][:50]}...\n"
         f"Response: {mock_process_response.return_value[:50]}...\n"
     )
     assert expected_log_message in caplog.text
@@ -97,8 +99,54 @@ async def test_gemini_query_string(
 @patch(
     "google.generativeai.GenerativeModel.generate_content_async", new_callable=AsyncMock
 )
+async def test_gemini_query_string__index_error(
+    mock_gemini_call, prompt_dict_string, temporary_data_folders, monkeypatch, caplog
+):
+    caplog.set_level(logging.INFO)
+    settings = Settings(data_folder="data")
+    log_file = "log.txt"
+    monkeypatch.setenv("GEMINI_API_KEY_gemini_model_name", "DUMMY")
+    gemini_api = GeminiAPI(settings=settings, log_file=log_file)
+
+    # mock index error response from the API
+    mock_gemini_call.side_effect = IndexError("Test error")
+
+    # make sure that the input prompt_dict does not have a response key
+    assert "response" not in prompt_dict_string.keys()
+
+    # call the _query_string method
+    prompt_dict = await gemini_api._query_string(prompt_dict_string, index=0)
+
+    # assert that the response key is added to the prompt_dict
+    assert "response" in prompt_dict.keys()
+
+    mock_gemini_call.assert_called_once()
+    mock_gemini_call.assert_awaited_once()
+    mock_gemini_call.assert_awaited_once_with(
+        contents=[prompt_dict_string["prompt"]],
+        generation_config=prompt_dict_string["parameters"],
+        safety_settings=DEFAULT_SAFETY_SETTINGS,
+        stream=False,
+    )
+
+    expected_log_message = (
+        f"Error with model Gemini ({prompt_dict_string['model_name']}) "
+        "(i=0, id=gemini_id)\n"
+        f"Prompt: {prompt_dict_string['prompt'][:50]}...\n"
+        "Error: Response is empty and blocked (IndexError - Test error)\n"
+    )
+    assert expected_log_message in caplog.text
+
+    # assert that the response value is empty string
+    assert prompt_dict["response"] == ""
+
+
+@pytest.mark.asyncio
+@patch(
+    "google.generativeai.GenerativeModel.generate_content_async", new_callable=AsyncMock
+)
 async def test_gemini_query_string_error(
-    mock_gemini_call, temporary_data_folders, monkeypatch, caplog
+    mock_gemini_call, prompt_dict_string, temporary_data_folders, monkeypatch, caplog
 ):
     caplog.set_level(logging.INFO)
     settings = Settings(data_folder="data")
@@ -111,21 +159,21 @@ async def test_gemini_query_string_error(
 
     # raise error if the API call fails
     with pytest.raises(Exception, match="Test error"):
-        await gemini_api._query_string(PROMPT_DICT_STRING, index=0)
+        await gemini_api._query_string(prompt_dict_string, index=0)
 
     mock_gemini_call.assert_called_once()
     mock_gemini_call.assert_awaited_once()
     mock_gemini_call.assert_awaited_once_with(
-        contents=[PROMPT_DICT_STRING["prompt"]],
-        generation_config=PROMPT_DICT_STRING["parameters"],
+        contents=[prompt_dict_string["prompt"]],
+        generation_config=prompt_dict_string["parameters"],
         safety_settings=DEFAULT_SAFETY_SETTINGS,
         stream=False,
     )
 
     expected_log_message = (
-        f"Error with model Gemini ({PROMPT_DICT_STRING['model_name']}) "
+        f"Error with model Gemini ({prompt_dict_string['model_name']}) "
         "(i=0, id=gemini_id)\n"
-        f"Prompt: {PROMPT_DICT_STRING['prompt'][:50]}...\n"
+        f"Prompt: {prompt_dict_string['prompt'][:50]}...\n"
         "Error: Exception - Test error\n"
     )
     assert expected_log_message in caplog.text

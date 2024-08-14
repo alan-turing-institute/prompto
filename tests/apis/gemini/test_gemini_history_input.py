@@ -9,15 +9,17 @@ from prompto.settings import Settings
 
 from .test_gemini import (
     DEFAULT_SAFETY_SETTINGS,
-    PROMPT_DICT_HISTORY,
-    PROMPT_DICT_HISTORY_NO_SYSTEM,
+    prompt_dict_history,
+    prompt_dict_history_no_system,
 )
 
 pytest_plugins = ("pytest_asyncio",)
 
 
 @pytest.mark.asyncio
-async def test_gemini_query_history_no_env_var(temporary_data_folders, caplog):
+async def test_gemini_query_history_no_env_var(
+    prompt_dict_history, temporary_data_folders, caplog
+):
     caplog.set_level(logging.INFO)
     settings = Settings(data_folder="data")
     log_file = "log.txt"
@@ -31,7 +33,7 @@ async def test_gemini_query_history_no_env_var(temporary_data_folders, caplog):
             "environment variable is set."
         ),
     ):
-        await gemini_api._query_history(PROMPT_DICT_HISTORY, index=0)
+        await gemini_api._query_history(prompt_dict_history, index=0)
 
 
 @pytest.mark.asyncio
@@ -42,6 +44,7 @@ async def test_gemini_query_history(
     mock_process_safety_attr,
     mock_process_response,
     mock_gemini_call,
+    prompt_dict_history,
     temporary_data_folders,
     monkeypatch,
     caplog,
@@ -63,10 +66,10 @@ async def test_gemini_query_history(
     mock_process_response.return_value = "response text"
 
     # make sure that the input prompt_dict does not have a response key
-    assert "response" not in PROMPT_DICT_HISTORY.keys()
+    assert "response" not in prompt_dict_history.keys()
 
     # call the _query_history method
-    prompt_dict = await gemini_api._query_history(PROMPT_DICT_HISTORY, index=0)
+    prompt_dict = await gemini_api._query_history(prompt_dict_history, index=0)
 
     # assert that the response key is added to the prompt_dict
     assert "response" in prompt_dict.keys()
@@ -74,8 +77,8 @@ async def test_gemini_query_history(
     mock_gemini_call.assert_called_once()
     mock_gemini_call.assert_awaited_once()
     mock_gemini_call.assert_awaited_once_with(
-        content=PROMPT_DICT_HISTORY["prompt"][1],
-        generation_config=PROMPT_DICT_HISTORY["parameters"],
+        content=prompt_dict_history["prompt"][1],
+        generation_config=prompt_dict_history["parameters"],
         safety_settings=DEFAULT_SAFETY_SETTINGS,
         stream=False,
     )
@@ -87,9 +90,9 @@ async def test_gemini_query_history(
     assert prompt_dict["response"] == mock_process_response.return_value
 
     expected_log_message = (
-        f"Response received for model Gemini ({PROMPT_DICT_HISTORY['model_name']}) "
+        f"Response received for model Gemini ({prompt_dict_history['model_name']}) "
         "(i=0, id=gemini_id)\n"
-        f"Prompt: {PROMPT_DICT_HISTORY['prompt'][:50]}...\n"
+        f"Prompt: {prompt_dict_history['prompt'][:50]}...\n"
         f"Response: {mock_process_response.return_value[:50]}...\n"
     )
     assert expected_log_message in caplog.text
@@ -98,35 +101,81 @@ async def test_gemini_query_history(
 @pytest.mark.asyncio
 @patch("google.generativeai.ChatSession.send_message_async", new_callable=AsyncMock)
 async def test_gemini_query_history_error(
-    mock_gemini_call, temporary_data_folders, monkeypatch, caplog
+    mock_gemini_call, prompt_dict_history, temporary_data_folders, monkeypatch, caplog
 ):
     caplog.set_level(logging.INFO)
     settings = Settings(data_folder="data")
     log_file = "log.txt"
     monkeypatch.setenv("GEMINI_API_KEY_gemini_model_name", "DUMMY")
     gemini_api = GeminiAPI(settings=settings, log_file=log_file)
+
+    # mock error response from the API
     mock_gemini_call.side_effect = Exception("Test error")
 
     # raise error if the API call fails
     with pytest.raises(Exception, match="Test error"):
-        await gemini_api._query_history(PROMPT_DICT_HISTORY, index=0)
+        await gemini_api._query_history(prompt_dict_history, index=0)
 
     mock_gemini_call.assert_called_once()
     mock_gemini_call.assert_awaited_once()
     mock_gemini_call.assert_awaited_once_with(
-        content=PROMPT_DICT_HISTORY["prompt"][1],
-        generation_config=PROMPT_DICT_HISTORY["parameters"],
+        content=prompt_dict_history["prompt"][1],
+        generation_config=prompt_dict_history["parameters"],
         safety_settings=DEFAULT_SAFETY_SETTINGS,
         stream=False,
     )
 
     expected_log_message = (
-        f"Error with model Gemini ({PROMPT_DICT_HISTORY['model_name']}) "
+        f"Error with model Gemini ({prompt_dict_history['model_name']}) "
         "(i=0, id=gemini_id)\n"
-        f"Prompt: {PROMPT_DICT_HISTORY['prompt'][:50]}...\n"
+        f"Prompt: {prompt_dict_history['prompt'][:50]}...\n"
         "Error: Exception - Test error"
     )
     assert expected_log_message in caplog.text
+
+
+@pytest.mark.asyncio
+@patch("google.generativeai.ChatSession.send_message_async", new_callable=AsyncMock)
+async def test_gemini_query_history_index_error(
+    mock_gemini_call, prompt_dict_history, temporary_data_folders, monkeypatch, caplog
+):
+    caplog.set_level(logging.INFO)
+    settings = Settings(data_folder="data")
+    log_file = "log.txt"
+    monkeypatch.setenv("GEMINI_API_KEY_gemini_model_name", "DUMMY")
+    gemini_api = GeminiAPI(settings=settings, log_file=log_file)
+
+    # mock index error response from the API
+    mock_gemini_call.side_effect = IndexError("Test error")
+
+    # make sure that the input prompt_dict does not have a response key
+    assert "response" not in prompt_dict_history.keys()
+
+    # call the _query_history method
+    prompt_dict = await gemini_api._query_history(prompt_dict_history, index=0)
+
+    # assert that the response key is added to the prompt_dict
+    assert "response" in prompt_dict.keys()
+
+    mock_gemini_call.assert_called_once()
+    mock_gemini_call.assert_awaited_once()
+    mock_gemini_call.assert_awaited_once_with(
+        content=prompt_dict_history["prompt"][1],
+        generation_config=prompt_dict_history["parameters"],
+        safety_settings=DEFAULT_SAFETY_SETTINGS,
+        stream=False,
+    )
+
+    expected_log_message = (
+        f"Error with model Gemini ({prompt_dict_history['model_name']}) "
+        "(i=0, id=gemini_id)\n"
+        f"Prompt: {prompt_dict_history['prompt'][:50]}...\n"
+        "Error: Response is empty and blocked (IndexError - Test error)"
+    )
+    assert expected_log_message in caplog.text
+
+    # assert that the response value is empty string
+    assert prompt_dict["response"] == ""
 
 
 @pytest.mark.asyncio
@@ -137,6 +186,7 @@ async def test_gemini_query_history_error(
 async def test_gemini_query_history_check_chat_init(
     mock_obtain_model_inputs,
     mock_start_chat,
+    prompt_dict_history,
     temporary_data_folders,
     monkeypatch,
     caplog,
@@ -148,25 +198,25 @@ async def test_gemini_query_history_check_chat_init(
     gemini_api = GeminiAPI(settings=settings, log_file=log_file)
 
     mock_obtain_model_inputs.return_value = (
-        PROMPT_DICT_HISTORY["prompt"],
-        PROMPT_DICT_HISTORY["model_name"],
+        prompt_dict_history["prompt"],
+        prompt_dict_history["model_name"],
         GenerativeModel(
-            model_name=PROMPT_DICT_HISTORY["model_name"],
-            system_instruction=PROMPT_DICT_HISTORY["prompt"][0]["parts"],
+            model_name=prompt_dict_history["model_name"],
+            system_instruction=prompt_dict_history["prompt"][0]["parts"],
         ),
         DEFAULT_SAFETY_SETTINGS,
-        PROMPT_DICT_HISTORY["parameters"],
+        prompt_dict_history["parameters"],
         None,
     )
 
     # error will be raised as we've mocked the start_chat method
     # which leads to an error when the method is called on the mocked object
     with pytest.raises(Exception):
-        await gemini_api._query_history(PROMPT_DICT_HISTORY, index=0)
+        await gemini_api._query_history(prompt_dict_history, index=0)
 
     mock_obtain_model_inputs.assert_called_once_with(
-        prompt_dict=PROMPT_DICT_HISTORY,
-        system_instruction=PROMPT_DICT_HISTORY["prompt"][0]["parts"],
+        prompt_dict=prompt_dict_history,
+        system_instruction=prompt_dict_history["prompt"][0]["parts"],
     )
     mock_start_chat.assert_called_once_with(history=[])
 
@@ -179,6 +229,7 @@ async def test_gemini_query_history_no_system(
     mock_process_safety_attr,
     mock_process_response,
     mock_gemini_call,
+    prompt_dict_history_no_system,
     temporary_data_folders,
     monkeypatch,
     caplog,
@@ -199,11 +250,11 @@ async def test_gemini_query_history_no_system(
     mock_process_response.return_value = "response text"
 
     # make sure that the input prompt_dict does not have a response key
-    assert "response" not in PROMPT_DICT_HISTORY_NO_SYSTEM.keys()
+    assert "response" not in prompt_dict_history_no_system.keys()
 
     # call the _query_history method
     prompt_dict = await gemini_api._query_history(
-        PROMPT_DICT_HISTORY_NO_SYSTEM, index=0
+        prompt_dict_history_no_system, index=0
     )
 
     # assert that the response key is added to the prompt_dict
@@ -212,8 +263,8 @@ async def test_gemini_query_history_no_system(
     mock_gemini_call.assert_called_once()
     mock_gemini_call.assert_awaited_once()
     mock_gemini_call.assert_awaited_once_with(
-        content=PROMPT_DICT_HISTORY_NO_SYSTEM["prompt"][2],
-        generation_config=PROMPT_DICT_HISTORY_NO_SYSTEM["parameters"],
+        content=prompt_dict_history_no_system["prompt"][2],
+        generation_config=prompt_dict_history_no_system["parameters"],
         safety_settings=DEFAULT_SAFETY_SETTINGS,
         stream=False,
     )
@@ -225,9 +276,9 @@ async def test_gemini_query_history_no_system(
     assert prompt_dict["response"] == mock_process_response.return_value
 
     expected_log_message = (
-        f"Response received for model Gemini ({PROMPT_DICT_HISTORY_NO_SYSTEM['model_name']}) "
+        f"Response received for model Gemini ({prompt_dict_history_no_system['model_name']}) "
         "(i=0, id=gemini_id)\n"
-        f"Prompt: {PROMPT_DICT_HISTORY_NO_SYSTEM['prompt'][:50]}...\n"
+        f"Prompt: {prompt_dict_history_no_system['prompt'][:50]}...\n"
         f"Response: {mock_process_response.return_value[:50]}...\n"
     )
     assert expected_log_message in caplog.text
@@ -236,7 +287,11 @@ async def test_gemini_query_history_no_system(
 @pytest.mark.asyncio
 @patch("google.generativeai.ChatSession.send_message_async", new_callable=AsyncMock)
 async def test_gemini_query_history_error_no_system(
-    mock_gemini_call, temporary_data_folders, monkeypatch, caplog
+    mock_gemini_call,
+    prompt_dict_history_no_system,
+    temporary_data_folders,
+    monkeypatch,
+    caplog,
 ):
     caplog.set_level(logging.INFO)
     settings = Settings(data_folder="data")
@@ -249,24 +304,74 @@ async def test_gemini_query_history_error_no_system(
 
     # raise error if the API call fails
     with pytest.raises(Exception, match="Test error"):
-        await gemini_api._query_history(PROMPT_DICT_HISTORY_NO_SYSTEM, index=0)
+        await gemini_api._query_history(prompt_dict_history_no_system, index=0)
 
     mock_gemini_call.assert_called_once()
     mock_gemini_call.assert_awaited_once()
     mock_gemini_call.assert_awaited_once_with(
-        content=PROMPT_DICT_HISTORY_NO_SYSTEM["prompt"][2],
-        generation_config=PROMPT_DICT_HISTORY_NO_SYSTEM["parameters"],
+        content=prompt_dict_history_no_system["prompt"][2],
+        generation_config=prompt_dict_history_no_system["parameters"],
         safety_settings=DEFAULT_SAFETY_SETTINGS,
         stream=False,
     )
 
     expected_log_message = (
-        f"Error with model Gemini ({PROMPT_DICT_HISTORY_NO_SYSTEM['model_name']}) "
+        f"Error with model Gemini ({prompt_dict_history_no_system['model_name']}) "
         "(i=0, id=gemini_id)\n"
-        f"Prompt: {PROMPT_DICT_HISTORY_NO_SYSTEM['prompt'][:50]}...\n"
+        f"Prompt: {prompt_dict_history_no_system['prompt'][:50]}...\n"
         "Error: Exception - Test error"
     )
     assert expected_log_message in caplog.text
+
+
+@pytest.mark.asyncio
+@patch("google.generativeai.ChatSession.send_message_async", new_callable=AsyncMock)
+async def test_gemini_query_history_index_error_no_system(
+    mock_gemini_call,
+    prompt_dict_history_no_system,
+    temporary_data_folders,
+    monkeypatch,
+    caplog,
+):
+    caplog.set_level(logging.INFO)
+    settings = Settings(data_folder="data")
+    log_file = "log.txt"
+    monkeypatch.setenv("GEMINI_API_KEY_gemini_model_name", "DUMMY")
+    gemini_api = GeminiAPI(settings=settings, log_file=log_file)
+
+    # mock index error response from the API
+    mock_gemini_call.side_effect = IndexError("Test error")
+
+    # make sure that the input prompt_dict does not have a response key
+    assert "response" not in prompt_dict_history_no_system.keys()
+
+    # call the _query_history method
+    prompt_dict = await gemini_api._query_history(
+        prompt_dict_history_no_system, index=0
+    )
+
+    # assert that the response key is added to the prompt_dict
+    assert "response" in prompt_dict.keys()
+
+    mock_gemini_call.assert_called_once()
+    mock_gemini_call.assert_awaited_once()
+    mock_gemini_call.assert_awaited_once_with(
+        content=prompt_dict_history_no_system["prompt"][2],
+        generation_config=prompt_dict_history_no_system["parameters"],
+        safety_settings=DEFAULT_SAFETY_SETTINGS,
+        stream=False,
+    )
+
+    expected_log_message = (
+        f"Error with model Gemini ({prompt_dict_history_no_system['model_name']}) "
+        "(i=0, id=gemini_id)\n"
+        f"Prompt: {prompt_dict_history_no_system['prompt'][:50]}...\n"
+        "Error: Response is empty and blocked (IndexError - Test error)"
+    )
+    assert expected_log_message in caplog.text
+
+    # assert that the response value is empty string
+    assert prompt_dict["response"] == ""
 
 
 @pytest.mark.asyncio
@@ -277,6 +382,7 @@ async def test_gemini_query_history_error_no_system(
 async def test_gemini_query_history_no_system_check_chat_init(
     mock_obtain_model_inputs,
     mock_start_chat,
+    prompt_dict_history_no_system,
     temporary_data_folders,
     monkeypatch,
     caplog,
@@ -288,28 +394,28 @@ async def test_gemini_query_history_no_system_check_chat_init(
     gemini_api = GeminiAPI(settings=settings, log_file=log_file)
 
     mock_obtain_model_inputs.return_value = (
-        PROMPT_DICT_HISTORY_NO_SYSTEM["prompt"],
-        PROMPT_DICT_HISTORY_NO_SYSTEM["model_name"],
+        prompt_dict_history_no_system["prompt"],
+        prompt_dict_history_no_system["model_name"],
         GenerativeModel(
-            model_name=PROMPT_DICT_HISTORY_NO_SYSTEM["model_name"],
+            model_name=prompt_dict_history_no_system["model_name"],
             system_instruction=None,
         ),
         DEFAULT_SAFETY_SETTINGS,
-        PROMPT_DICT_HISTORY_NO_SYSTEM["parameters"],
+        prompt_dict_history_no_system["parameters"],
         None,
     )
 
     # error will be raised as we've mocked the start_chat method
     # which leads to an error when the method is called on the mocked object
     with pytest.raises(Exception):
-        await gemini_api._query_history(PROMPT_DICT_HISTORY_NO_SYSTEM, index=0)
+        await gemini_api._query_history(prompt_dict_history_no_system, index=0)
 
     mock_obtain_model_inputs.assert_called_once_with(
-        prompt_dict=PROMPT_DICT_HISTORY_NO_SYSTEM, system_instruction=None
+        prompt_dict=prompt_dict_history_no_system, system_instruction=None
     )
     mock_start_chat.assert_called_once_with(
         history=[
-            PROMPT_DICT_HISTORY_NO_SYSTEM["prompt"][0],
-            PROMPT_DICT_HISTORY_NO_SYSTEM["prompt"][1],
+            prompt_dict_history_no_system["prompt"][0],
+            prompt_dict_history_no_system["prompt"][1],
         ]
     )
