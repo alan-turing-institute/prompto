@@ -8,44 +8,57 @@ from prompto.settings import Settings
 
 pytest_plugins = ("pytest_asyncio",)
 
-PROMPT_DICT_STRING = {
-    "id": "vertexai_id",
-    "api": "vertexai",
-    "model_name": "vertexai_model_name",
-    "prompt": "test prompt",
-    "parameters": {"temperature": 1, "max_output_tokens": 100},
-}
 
-PROMPT_DICT_CHAT = {
-    "id": "vertexai_id",
-    "api": "vertexai",
-    "model_name": "vertexai_model_name",
-    "prompt": ["test chat 1", "test chat 2"],
-    "parameters": {"temperature": 1, "max_output_tokens": 100},
-}
+@pytest.fixture
+def prompt_dict_string():
+    return {
+        "id": "vertexai_id",
+        "api": "vertexai",
+        "model_name": "vertexai_model_name",
+        "prompt": "test prompt",
+        "parameters": {"temperature": 1, "max_output_tokens": 100},
+    }
 
-PROMPT_DICT_HISTORY = {
-    "id": "vertexai_id",
-    "api": "vertexai",
-    "model_name": "vertexai_model_name",
-    "prompt": [
-        {"role": "system", "parts": "test system prompt"},
-        {"role": "user", "parts": "user message"},
-    ],
-    "parameters": {"temperature": 1, "max_output_tokens": 100},
-}
 
-PROMPT_DICT_HISTORY_NO_SYSTEM = {
-    "id": "vertexai_id",
-    "api": "vertexai",
-    "model_name": "vertexai_model_name",
-    "prompt": [
-        {"role": "user", "parts": "user message 1"},
-        {"role": "model", "parts": "model message"},
-        {"role": "user", "parts": "user message 2"},
-    ],
-    "parameters": {"temperature": 1, "max_output_tokens": 100},
-}
+@pytest.fixture
+def prompt_dict_chat():
+    return {
+        "id": "vertexai_id",
+        "api": "vertexai",
+        "model_name": "vertexai_model_name",
+        "prompt": ["test chat 1", "test chat 2"],
+        "parameters": {"temperature": 1, "max_output_tokens": 100},
+    }
+
+
+@pytest.fixture
+def prompt_dict_history():
+    return {
+        "id": "vertexai_id",
+        "api": "vertexai",
+        "model_name": "vertexai_model_name",
+        "prompt": [
+            {"role": "system", "parts": "test system prompt"},
+            {"role": "user", "parts": "user message"},
+        ],
+        "parameters": {"temperature": 1, "max_output_tokens": 100},
+    }
+
+
+@pytest.fixture
+def prompt_dict_history_no_system():
+    return {
+        "id": "vertexai_id",
+        "api": "vertexai",
+        "model_name": "vertexai_model_name",
+        "prompt": [
+            {"role": "user", "parts": "user message 1"},
+            {"role": "model", "parts": "model message"},
+            {"role": "user", "parts": "user message 2"},
+        ],
+        "parameters": {"temperature": 1, "max_output_tokens": 100},
+    }
+
 
 TYPE_ERROR_MSG = (
     "if api == 'vertexai', then the prompt must be a str, list[str], or "
@@ -490,43 +503,43 @@ async def test_vertexai_obtain_model_inputs_safety_filters(
     new_callable=AsyncMock,
 )
 async def test_vertexai_query_string(
-    mock_query_string, temporary_data_folders, monkeypatch
+    mock_query_string, prompt_dict_string, temporary_data_folders, monkeypatch
 ):
     settings = Settings(data_folder="data")
     log_file = "log.txt"
     vertexai_api = VertexAIAPI(settings=settings, log_file=log_file)
 
     # mock the _query_string method to return a response
-    mock_query_string.return_value = {**PROMPT_DICT_STRING, "response": "response text"}
+    mock_query_string.return_value = {**prompt_dict_string, "response": "response text"}
 
-    prompt_dict = await vertexai_api.query(PROMPT_DICT_STRING)
+    prompt_dict = await vertexai_api.query(prompt_dict_string)
 
     assert prompt_dict == mock_query_string.return_value
     assert prompt_dict["response"] == "response text"
 
     mock_query_string.assert_called_once_with(
-        prompt_dict=PROMPT_DICT_STRING, index="NA"
+        prompt_dict=prompt_dict_string, index="NA"
     )
 
 
 @pytest.mark.asyncio
 @patch("prompto.apis.vertexai.vertexai.VertexAIAPI._query_chat", new_callable=AsyncMock)
 async def test_vertexai_query_chat(
-    mock_query_chat, temporary_data_folders, monkeypatch
+    mock_query_chat, prompt_dict_chat, temporary_data_folders, monkeypatch
 ):
     settings = Settings(data_folder="data")
     log_file = "log.txt"
     vertexai_api = VertexAIAPI(settings=settings, log_file=log_file)
 
     # mock the _query_string method to return a response
-    mock_query_chat.return_value = {**PROMPT_DICT_CHAT, "response": "response text"}
+    mock_query_chat.return_value = {**prompt_dict_chat, "response": "response text"}
 
-    prompt_dict = await vertexai_api.query(PROMPT_DICT_CHAT)
+    prompt_dict = await vertexai_api.query(prompt_dict_chat)
 
     assert prompt_dict == mock_query_chat.return_value
     assert prompt_dict["response"] == "response text"
 
-    mock_query_chat.assert_called_once_with(prompt_dict=PROMPT_DICT_CHAT, index="NA")
+    mock_query_chat.assert_called_once_with(prompt_dict=prompt_dict_chat, index="NA")
 
 
 @pytest.mark.asyncio
@@ -535,7 +548,7 @@ async def test_vertexai_query_chat(
     new_callable=AsyncMock,
 )
 async def test_vertexai_query_history(
-    mock_query_history, temporary_data_folders, monkeypatch
+    mock_query_history, prompt_dict_history, temporary_data_folders, monkeypatch
 ):
     settings = Settings(data_folder="data")
     log_file = "log.txt"
@@ -543,17 +556,48 @@ async def test_vertexai_query_history(
 
     # mock the _query_string method to return a response
     mock_query_history.return_value = {
-        **PROMPT_DICT_HISTORY,
+        **prompt_dict_history,
         "response": "response text",
     }
 
-    prompt_dict = await vertexai_api.query(PROMPT_DICT_HISTORY)
+    prompt_dict = await vertexai_api.query(prompt_dict_history)
 
     assert prompt_dict == mock_query_history.return_value
     assert prompt_dict["response"] == "response text"
 
     mock_query_history.assert_called_once_with(
-        prompt_dict=PROMPT_DICT_HISTORY, index="NA"
+        prompt_dict=prompt_dict_history, index="NA"
+    )
+
+
+@pytest.mark.asyncio
+@patch(
+    "prompto.apis.vertexai.vertexai.VertexAIAPI._query_history",
+    new_callable=AsyncMock,
+)
+async def test_vertexai_query_history_no_system(
+    mock_query_history,
+    prompt_dict_history_no_system,
+    temporary_data_folders,
+    monkeypatch,
+):
+    settings = Settings(data_folder="data")
+    log_file = "log.txt"
+    vertexai_api = VertexAIAPI(settings=settings, log_file=log_file)
+
+    # mock the _query_string method to return a response
+    mock_query_history.return_value = {
+        **prompt_dict_history_no_system,
+        "response": "response text",
+    }
+
+    prompt_dict = await vertexai_api.query(prompt_dict_history_no_system)
+
+    assert prompt_dict == mock_query_history.return_value
+    assert prompt_dict["response"] == "response text"
+
+    mock_query_history.assert_called_once_with(
+        prompt_dict=prompt_dict_history_no_system, index="NA"
     )
 
 
