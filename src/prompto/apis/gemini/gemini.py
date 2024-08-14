@@ -186,7 +186,10 @@ class GeminiAPI(AsyncAPI):
         Parameters
         ----------
         prompt_dict : dict
-            The prompt dictionary to use for querying the model
+            The prompt dictionary to use for querying the model]
+        system_instruction : str | None
+            The system instruction to use for querying the model if any,
+            defaults to None
 
         Returns
         -------
@@ -371,7 +374,6 @@ class GeminiAPI(AsyncAPI):
             )
         )
 
-        model = GenerativeModel(model_name)
         chat = model.start_chat(history=[])
 
         response_list = []

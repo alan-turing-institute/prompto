@@ -3,7 +3,7 @@ from unittest.mock import AsyncMock, patch
 import pytest
 import regex as re
 from google.generativeai import GenerativeModel
-from google.generativeai.types import HarmBlockThreshold, HarmCategory, content_types
+from google.generativeai.types import HarmBlockThreshold, HarmCategory
 
 from prompto.apis.gemini import GeminiAPI
 from prompto.settings import Settings
