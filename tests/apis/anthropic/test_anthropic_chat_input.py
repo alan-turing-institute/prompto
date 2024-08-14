@@ -7,13 +7,15 @@ from prompto.apis.anthropic import AnthropicAPI
 from prompto.settings import Settings
 
 from ...conftest import CopyingAsyncMock
-from .test_anthropic import PROMPT_DICT_CHAT
+from .test_anthropic import prompt_dict_chat
 
 pytest_plugins = ("pytest_asyncio",)
 
 
 @pytest.mark.asyncio
-async def test_anthropic_query_chat_no_env_var(temporary_data_folders, caplog):
+async def test_anthropic_query_chat_no_env_var(
+    prompt_dict_chat, temporary_data_folders, caplog
+):
     caplog.set_level(logging.INFO)
     settings = Settings(data_folder="data")
     log_file = "log.txt"
@@ -27,14 +29,19 @@ async def test_anthropic_query_chat_no_env_var(temporary_data_folders, caplog):
             "environment variable is set."
         ),
     ):
-        await anthropic_api._query_chat(PROMPT_DICT_CHAT, index=0)
+        await anthropic_api._query_chat(prompt_dict_chat, index=0)
 
 
 @pytest.mark.asyncio
 @patch("anthropic.resources.AsyncMessages.create", new_callable=CopyingAsyncMock)
 @patch("prompto.apis.anthropic.anthropic.process_response", new_callable=Mock)
 async def test_anthropic_query_chat(
-    mock_process_response, mock_anthropic, temporary_data_folders, monkeypatch, caplog
+    mock_process_response,
+    mock_anthropic,
+    prompt_dict_chat,
+    temporary_data_folders,
+    monkeypatch,
+    caplog,
 ):
     caplog.set_level(logging.INFO)
     settings = Settings(data_folder="data")
@@ -57,10 +64,10 @@ async def test_anthropic_query_chat(
     mock_process_response.side_effect = process_response_sequence_responses
 
     # make sure that the input prompt_dict does not have a response key
-    assert "response" not in PROMPT_DICT_CHAT.keys()
+    assert "response" not in prompt_dict_chat.keys()
 
     # call the _query_chat method
-    prompt_dict = await anthropic_api._query_chat(PROMPT_DICT_CHAT, index=0)
+    prompt_dict = await anthropic_api._query_chat(prompt_dict_chat, index=0)
 
     # assert that the response key is added to the prompt_dict
     assert "response" in prompt_dict.keys()
@@ -68,18 +75,18 @@ async def test_anthropic_query_chat(
     assert mock_anthropic.call_count == 2
     assert mock_anthropic.await_count == 2
     mock_anthropic.assert_any_await(
-        model=PROMPT_DICT_CHAT["model_name"],
-        messages=[{"role": "user", "content": PROMPT_DICT_CHAT["prompt"][0]}],
-        **PROMPT_DICT_CHAT["parameters"],
+        model=prompt_dict_chat["model_name"],
+        messages=[{"role": "user", "content": prompt_dict_chat["prompt"][0]}],
+        **prompt_dict_chat["parameters"],
     )
     mock_anthropic.assert_awaited_with(
-        model=PROMPT_DICT_CHAT["model_name"],
+        model=prompt_dict_chat["model_name"],
         messages=[
-            {"role": "user", "content": PROMPT_DICT_CHAT["prompt"][0]},
+            {"role": "user", "content": prompt_dict_chat["prompt"][0]},
             {"role": "assistant", "content": process_response_sequence_responses[0]},
-            {"role": "user", "content": PROMPT_DICT_CHAT["prompt"][1]},
+            {"role": "user", "content": prompt_dict_chat["prompt"][1]},
         ],
-        **PROMPT_DICT_CHAT["parameters"],
+        **prompt_dict_chat["parameters"],
     )
 
     assert mock_process_response.call_count == 2
@@ -90,17 +97,17 @@ async def test_anthropic_query_chat(
     assert prompt_dict["response"] == process_response_sequence_responses
 
     expected_log_message_1 = (
-        f"Response received for model Anthropic ({PROMPT_DICT_CHAT['model_name']}) "
+        f"Response received for model Anthropic ({prompt_dict_chat['model_name']}) "
         "(i=0, id=anthropic_id, message=1/2)\n"
-        f"Prompt: {PROMPT_DICT_CHAT['prompt'][0][:50]}...\n"
+        f"Prompt: {prompt_dict_chat['prompt'][0][:50]}...\n"
         f"Response: {process_response_sequence_responses[0][:50]}...\n"
     )
     assert expected_log_message_1 in caplog.text
 
     expected_log_message_2 = (
-        f"Response received for model Anthropic ({PROMPT_DICT_CHAT['model_name']}) "
+        f"Response received for model Anthropic ({prompt_dict_chat['model_name']}) "
         "(i=0, id=anthropic_id, message=2/2)\n"
-        f"Prompt: {PROMPT_DICT_CHAT['prompt'][1][:50]}...\n"
+        f"Prompt: {prompt_dict_chat['prompt'][1][:50]}...\n"
         f"Response: {process_response_sequence_responses[1][:50]}...\n"
     )
     assert expected_log_message_2 in caplog.text
@@ -112,7 +119,7 @@ async def test_anthropic_query_chat(
 @pytest.mark.asyncio
 @patch("anthropic.resources.AsyncMessages.create", new_callable=CopyingAsyncMock)
 async def test_anthropic_query_chat_error_1(
-    mock_anthropic, temporary_data_folders, monkeypatch, caplog
+    mock_anthropic, prompt_dict_chat, temporary_data_folders, monkeypatch, caplog
 ):
     caplog.set_level(logging.INFO)
     settings = Settings(data_folder="data")
@@ -125,20 +132,20 @@ async def test_anthropic_query_chat_error_1(
 
     # raise error if the API call fails
     with pytest.raises(Exception, match="Test error"):
-        await anthropic_api._query_chat(PROMPT_DICT_CHAT, index=0)
+        await anthropic_api._query_chat(prompt_dict_chat, index=0)
 
     mock_anthropic.assert_called_once()
     mock_anthropic.assert_awaited_once()
     mock_anthropic.assert_any_await(
-        model=PROMPT_DICT_CHAT["model_name"],
-        messages=[{"role": "user", "content": PROMPT_DICT_CHAT["prompt"][0]}],
-        **PROMPT_DICT_CHAT["parameters"],
+        model=prompt_dict_chat["model_name"],
+        messages=[{"role": "user", "content": prompt_dict_chat["prompt"][0]}],
+        **prompt_dict_chat["parameters"],
     )
 
     expected_log_message = (
-        f"Error with model Anthropic ({PROMPT_DICT_CHAT['model_name']}) "
+        f"Error with model Anthropic ({prompt_dict_chat['model_name']}) "
         "(i=0, id=anthropic_id, message=1/2)\n"
-        f"Prompt: {PROMPT_DICT_CHAT['prompt'][0][:50]}...\n"
+        f"Prompt: {prompt_dict_chat['prompt'][0][:50]}...\n"
         "Responses so far: []...\n"
         "Error: Exception - Test error"
     )
@@ -149,7 +156,12 @@ async def test_anthropic_query_chat_error_1(
 @patch("anthropic.resources.AsyncMessages.create", new_callable=CopyingAsyncMock)
 @patch("prompto.apis.anthropic.anthropic.process_response", new_callable=Mock)
 async def test_anthropic_query_chat_error_2(
-    mock_process_response, mock_anthropic, temporary_data_folders, monkeypatch, caplog
+    mock_process_response,
+    mock_anthropic,
+    prompt_dict_chat,
+    temporary_data_folders,
+    monkeypatch,
+    caplog,
 ):
     caplog.set_level(logging.INFO)
     settings = Settings(data_folder="data")
@@ -169,39 +181,39 @@ async def test_anthropic_query_chat_error_2(
 
     # raise error if the API call fails
     with pytest.raises(Exception, match="Test error"):
-        await anthropic_api._query_chat(PROMPT_DICT_CHAT, index=0)
+        await anthropic_api._query_chat(prompt_dict_chat, index=0)
 
     assert mock_anthropic.call_count == 2
     assert mock_anthropic.await_count == 2
     mock_anthropic.assert_any_await(
-        model=PROMPT_DICT_CHAT["model_name"],
-        messages=[{"role": "user", "content": PROMPT_DICT_CHAT["prompt"][0]}],
-        **PROMPT_DICT_CHAT["parameters"],
+        model=prompt_dict_chat["model_name"],
+        messages=[{"role": "user", "content": prompt_dict_chat["prompt"][0]}],
+        **prompt_dict_chat["parameters"],
     )
     mock_anthropic.assert_awaited_with(
-        model=PROMPT_DICT_CHAT["model_name"],
+        model=prompt_dict_chat["model_name"],
         messages=[
-            {"role": "user", "content": PROMPT_DICT_CHAT["prompt"][0]},
+            {"role": "user", "content": prompt_dict_chat["prompt"][0]},
             {"role": "assistant", "content": mock_process_response.return_value},
-            {"role": "user", "content": PROMPT_DICT_CHAT["prompt"][1]},
+            {"role": "user", "content": prompt_dict_chat["prompt"][1]},
         ],
-        **PROMPT_DICT_CHAT["parameters"],
+        **prompt_dict_chat["parameters"],
     )
 
     mock_process_response.assert_called_once_with(anthropic_api_sequence_responses[0])
 
     expected_log_message_1 = (
-        f"Response received for model Anthropic ({PROMPT_DICT_CHAT['model_name']}) "
+        f"Response received for model Anthropic ({prompt_dict_chat['model_name']}) "
         "(i=0, id=anthropic_id, message=1/2)\n"
-        f"Prompt: {PROMPT_DICT_CHAT['prompt'][0][:50]}...\n"
+        f"Prompt: {prompt_dict_chat['prompt'][0][:50]}...\n"
         f"Response: {mock_process_response.return_value[:50]}...\n"
     )
     assert expected_log_message_1 in caplog.text
 
     expected_log_message_2 = (
-        f"Error with model Anthropic ({PROMPT_DICT_CHAT['model_name']}) "
+        f"Error with model Anthropic ({prompt_dict_chat['model_name']}) "
         "(i=0, id=anthropic_id, message=2/2)\n"
-        f"Prompt: {PROMPT_DICT_CHAT['prompt'][1][:50]}...\n"
+        f"Prompt: {prompt_dict_chat['prompt'][1][:50]}...\n"
         f"Responses so far: {[mock_process_response.return_value]}...\n"
         "Error: Exception - Test error"
     )
