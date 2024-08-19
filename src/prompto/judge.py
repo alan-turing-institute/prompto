@@ -71,32 +71,33 @@ def parse_judge_location_arg(judge_location: str) -> tuple[str, dict]:
 
 
 class Judge:
+    """
+    Class to create judge inputs for a list of completed responses.
+
+    Parameters
+    ----------
+    completed_responses : list[dict]
+        A list of dictionaries containing the responses to judge.
+        Each dictionary should contain the keys "prompt",
+        and "response"
+    judge_settings : dict
+        A dictionary of judge settings with the keys "api",
+        "model_name", "parameters". Used to define the
+        judge LLMs to be used in the judging process
+    template_prompt : str
+        A string template to be used to format the prompt
+        for the judge LLMs. Often contains placeholders
+        for the input prompt (INPUT_PROMPT) and the
+        output response (OUTPUT_RESPONSE) which will be formatted
+        with the prompt and response from the completed prompt dict
+    """
+
     def __init__(
         self,
         completed_responses: list[dict],
         judge_settings: dict,
         template_prompt: str,
     ):
-        """
-        Class to create judge inputs for a list of completed responses.
-
-        Parameters
-        ----------
-        completed_responses : list[dict]
-            A list of dictionaries containing the responses to judge.
-            Each dictionary should contain the keys "prompt",
-            and "response"
-        judge_settings : dict
-            A dictionary of judge settings with the keys "api",
-            "model_name", "parameters". Used to define the
-            judge LLMs to be used in the judging process
-        template_prompt : str
-            A string template to be used to format the prompt
-            for the judge LLMs. Often contains placeholders
-            for the input prompt (INPUT_PROMPT) and the
-            output response (OUTPUT_RESPONSE) which will be formatted
-            with the prompt and response from the completed prompt dict
-        """
         self.check_judge_settings(judge_settings)
         self.completed_responses = completed_responses
         self.judge_settings = judge_settings
