@@ -176,7 +176,8 @@ class Experiment:
         # initialise some keys with the rate limits if provided
         if self.settings.max_queries_dict != {}:
             logging.info(
-                f"Grouping prompts using 'settings.max_queries_dict': {self.settings.max_queries_dict}..."
+                "Grouping prompts using 'settings.max_queries_dict': "
+                f"{self.settings.max_queries_dict}..."
             )
             for key, value in self.settings.max_queries_dict.items():
                 if isinstance(value, int):

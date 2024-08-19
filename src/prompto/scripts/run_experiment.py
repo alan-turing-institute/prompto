@@ -7,6 +7,7 @@ import os
 from dotenv import load_dotenv
 
 from prompto.experiment import Experiment
+from prompto.judge import Judge, parse_judge_arg, parse_judge_location_arg
 from prompto.settings import Settings
 from prompto.utils import copy_file, move_file
 
@@ -86,6 +87,26 @@ async def main():
         type=str,
         default=None,
     )
+    parser.add_argument(
+        "--judge-location",
+        "-l",
+        help=(
+            "Location of the judge folder storing the template.txt "
+            "and settings.json to be used"
+        ),
+        type=str,
+        default=None,
+    )
+    parser.add_argument(
+        "--judge",
+        "-j",
+        help=(
+            "Judge(s) to be used separated by commas. "
+            "These must be keys in the judge settings dictionary"
+        ),
+        type=str,
+        default=None,
+    )
     args = parser.parse_args()
 
     # initialise logging
@@ -116,6 +137,14 @@ async def main():
             max_queries_dict = json.load(f)
     else:
         max_queries_dict = {}
+
+    if args.judge_location is not None and args.judge is not None:
+        create_judge_file = True
+        # parse judge location and judge arguments
+        template_prompt, judge_settings = parse_judge_location_arg(args.judge_location)
+        judge = parse_judge_arg(args.judge)
+        # check if the judge is in the judge settings dictionary
+        Judge.check_judge_in_judge_settings(judge=judge, judge_settings=judge_settings)
 
     # initialise settings
     settings = Settings(
@@ -160,6 +189,25 @@ async def main():
     # process the experiment
     logging.info(f"Processing experiment {experiment.experiment_name}...")
     await experiment.process()
+
+    if create_judge_file:
+        # create judge object from the parsed arguments
+        judge = Judge(
+            completed_responses=experiment.completed_responses,
+            judge_settings=judge_settings,
+            template_prompt=template_prompt,
+        )
+
+        # create judge file
+        judge_file_path = f"judge-{experiment.experiment_name}.jsonl"
+        judge.create_judge_file(judge=judge, out_filepath=judge_file_path)
+
+        # create Experiment object
+        judge_experiment = Experiment(file_name=judge_file_path, settings=settings)
+
+        # process the experiment
+        logging.info(f"Processing experiment {judge_experiment.experiment_name}...")
+        await experiment.process()
 
 
 if __name__ == "__main__":
