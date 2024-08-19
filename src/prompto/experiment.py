@@ -260,7 +260,7 @@ class Experiment:
 
         return queries_and_rates_per_group
 
-    async def process(self) -> tuple[dict, float]:
+    async def process(self, evaluation_funcs=None) -> tuple[dict, float]:
         """
         Function to process the experiment.
 
@@ -274,6 +274,14 @@ class Experiment:
 
         All output files are timestamped with the time for when the experiment
         started to run.
+
+        Parameters
+        ----------
+        evaluation_funcs : list[callable], optional
+            List of evaluation functions to run on the completed responses.
+            Each function should take a prompt_dict as input and return a prompt dict
+            as output. The evaluation functions can use keys in the prompt_dict to
+            parameterise the functions, by default None.
 
         Returns
         -------
@@ -313,6 +321,7 @@ class Experiment:
                         prompt_dicts=values["prompt_dicts"],
                         group=group,
                         rate_limit=values["rate_limit"],
+                        evaluation_funcs=evaluation_funcs,
                     )
                 )
                 for group, values in self.grouped_experiment_prompts.items()
@@ -326,6 +335,7 @@ class Experiment:
                 prompt_dicts=self.experiment_prompts,
                 group=None,
                 rate_limit=self.settings.max_queries,
+                evaluation_funcs=evaluation_funcs,
             )
 
         # calculate average processing time per query for the experiment
@@ -356,6 +366,7 @@ class Experiment:
         attempt: int,
         rate_limit: int,
         group: str | None = None,
+        evaluation_funcs: list[callable] | None = None,
     ) -> tuple[list[dict], list[dict | Exception]]:
         """
         Send requests to the API asynchronously.
@@ -419,6 +430,7 @@ class Experiment:
                     prompt_dict=item,
                     index=index + 1,
                     attempt=attempt,
+                    evaluation_funcs=evaluation_funcs,
                 )
             )
             tasks.append(task)
@@ -437,6 +449,7 @@ class Experiment:
         prompt_dicts: list[dict],
         rate_limit: int,
         group: str | None = None,
+        evaluation_funcs: list[callable] | None = None,
     ) -> None:
         """
         Send requests to the API asynchronously and retry failed queries
@@ -466,6 +479,7 @@ class Experiment:
             attempt=attempt,
             rate_limit=rate_limit,
             group=group,
+            evaluation_funcs=evaluation_funcs,
         )
 
         while True:
@@ -492,6 +506,7 @@ class Experiment:
                         attempt=attempt,
                         rate_limit=rate_limit,
                         group=group,
+                        evaluation_funcs=evaluation_funcs,
                     )
                 else:
                     # if there are no failed queries, break out of the loop
@@ -505,6 +520,7 @@ class Experiment:
         prompt_dict: dict,
         index: int | str | None,
         attempt: int,
+        evaluation_funcs: list[callable] | None = None,
     ) -> dict | Exception:
         """
         Send request to generate response from a LLM and record the response in a jsonl file.
@@ -596,8 +612,10 @@ class Experiment:
                 return Exception(f"{type(err).__name__} - {err}\n")
 
         # Perform Evaluation if evaluation function is provided
-        if self.settings.evaluation_func is not None:
-            completed_prompt_dict = await self.evaluate_responses(completed_prompt_dict)
+        if evaluation_funcs is not None:
+            completed_prompt_dict = await self.evaluate_responses(
+                completed_prompt_dict, evaluation_funcs
+            )
 
         # record the response in a jsonl file asynchronously using FILE_WRITE_LOCK
         async with FILE_WRITE_LOCK:
@@ -657,8 +675,27 @@ class Experiment:
 
         return response
 
-    async def evaluate_responses(self, completed_responses) -> dict:
+    async def evaluate_responses(
+        self, prompt_dict, evaluation_funcs: list[callable]
+    ) -> dict:
         """
-        Runs evaluation functions set in the settings object on the completed responses.
+        Runs evaluation functions on a prompt dictionary. Note that the list of functions
+        is run in order on the same prompt_dict.
+
+        Parameters
+        ----------
+        prompt_dict : dict
+            Dictionary for the evaluation functions to run on. Note: in the process function,
+            this will be run on self.completed_responses.
+        evaluation_funcs : list[callable]
+            List of evaluation functions to run on the completed responses. Each function should
+            take a prompt_dict as input and return a prompt dict as output. The evaluation
+            functions can use keys in the prompt_dict to parameterise the functions.
         """
-        return self.settings.evaluation_func(completed_responses)
+        assert isinstance(
+            evaluation_funcs, list
+        ), "evaluation_funcs must be a list of functions"
+
+        for func in evaluation_funcs:
+            prompt_dict = func(prompt_dict)
+        return prompt_dict
