@@ -198,10 +198,14 @@ def check_judge_in_judge_settings():
         Judge.check_judge_in_judge_settings(["judge1", 2], {"judge1": {}, "judge2": {}})
 
     # passes
-    assert Judge.check_judge_in_judge_settings("judge1", {"judge1": {}, "judge2": {}})
-    assert Judge.check_judge_in_judge_settings(["judge1"], {"judge1": {}, "judge2": {}})
     assert Judge.check_judge_in_judge_settings(
-        ["judge1", "judge2"], {"judge1": {}, "judge2": {}}
+        judge="judge1", judge_settings={"judge1": {}, "judge2": {}}
+    )
+    assert Judge.check_judge_in_judge_settings(
+        judge=["judge1"], judge_settings={"judge1": {}, "judge2": {}}
+    )
+    assert Judge.check_judge_in_judge_settings(
+        judge=["judge1", "judge2"], judge_settings={"judge1": {}, "judge2": {}}
     )
 
 
@@ -290,6 +294,13 @@ def test_judge_create_judge_inputs():
         match="Judge 'judge' is not a key in judge_settings",
     ):
         judge.create_judge_inputs(["judge", "judge1"])
+
+    # raise error if judge is a list but some are not strings
+    with pytest.raises(
+        TypeError,
+        match="If judge is a list, each element must be a string",
+    ):
+        judge.create_judge_inputs(["judge1", 2])
 
     # "judge1" case
     judge_1_inputs = judge.create_judge_inputs("judge1")

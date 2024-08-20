@@ -1,4 +1,5 @@
 import argparse
+import json
 import os
 
 from prompto.judge import Judge, parse_judge_arg, parse_judge_location_arg
@@ -56,7 +57,7 @@ def main():
     input_filepath = args.input_file
     try:
         with open(input_filepath, "r", encoding="utf-8") as f:
-            responses = f.readlines()
+            responses = [dict(json.loads(line)) for line in f]
     except FileNotFoundError as exc:
         raise FileNotFoundError(
             f"Input file '{input_filepath}' does not exist"
