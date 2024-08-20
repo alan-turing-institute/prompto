@@ -1,4 +1,6 @@
+import json
 import logging
+import os
 
 import pytest
 
@@ -6,6 +8,7 @@ from prompto.judge import Judge, parse_judge_arg, parse_judge_location_arg
 
 
 def test_parse_judge_arg():
+    # test parser of judge argument
     assert parse_judge_arg("judge") == ["judge"]
     assert parse_judge_arg("judge1,judge2") == ["judge1", "judge2"]
     assert parse_judge_arg("judge1, judge2") == ["judge1", "judge2"]
@@ -21,6 +24,7 @@ def test_parse_judge_arg():
 
 
 def test_parse_judge_arg_logging(caplog):
+    # test logging information is correct
     caplog.set_level(logging.INFO)
 
     assert parse_judge_arg("judge1, judge2") == ["judge1", "judge2"]
@@ -31,6 +35,7 @@ def test_parse_judge_arg_logging(caplog):
 
 
 def test_parse_judge_location_arg(temporary_data_folder_judge):
+    # test the function reads template.txt and settings.json correctly
     template_prompt, judge_settings = parse_judge_location_arg("judge_loc")
     assert template_prompt == (
         "This is a template prompt where you have an input "
@@ -198,3 +203,258 @@ def check_judge_in_judge_settings():
     assert Judge.check_judge_in_judge_settings(
         ["judge1", "judge2"], {"judge1": {}, "judge2": {}}
     )
+
+
+def check_judge_init():
+    # raise error if nothing is provided
+    with pytest.raises(
+        TypeError,
+        match="missing 3 required positional arguments",
+    ):
+        Judge()
+
+    # raise error if judge_settings is not a valid dictionary
+    with pytest.raises(
+        TypeError,
+        match="judge_settings must be a dictionary",
+    ):
+        Judge(
+            completed_responses="completed_responses",
+            judge_settings="not_a_dict",
+            template_prompt="template_prompt",
+        )
+
+    # passes
+    cr = [
+        {"id": 0, "prompt": "test prompt 1", "response": "test response 1"},
+        {"id": 1, "prompt": "test prompt 2", "response": "test response 2"},
+    ]
+    js = {
+        "judge1": {
+            "api": "test",
+            "model_name": "model1",
+            "parameters": {"temperature": 0.5},
+        },
+        "judge2": {
+            "api": "test",
+            "model_name": "model2",
+            "parameters": {"temperature": 0.5},
+        },
+    }
+    judge = Judge(
+        completed_responses=cr, judge_settings=js, template_prompt="template_prompt"
+    )
+    assert judge.completed_responses == cr
+    assert judge.judge_settings == js
+    assert judge.template_prompt == "template_prompt"
+
+
+def test_judge_create_judge_inputs():
+    cr = [
+        {"id": 0, "prompt": "test prompt 1", "response": "test response 1"},
+        {"id": 1, "prompt": "test prompt 2", "response": "test response 2"},
+    ]
+    js = {
+        "judge1": {
+            "api": "test",
+            "model_name": "model1",
+            "parameters": {"temperature": 0.5},
+        },
+        "judge2": {
+            "api": "test",
+            "model_name": "model2",
+            "parameters": {"temperature": 0.2, "top_k": 0.9},
+        },
+    }
+    tp = "prompt: {INPUT_PROMPT} || response: {OUTPUT_RESPONSE}"
+
+    judge = Judge(completed_responses=cr, judge_settings=js, template_prompt=tp)
+
+    # raise error if judge not provided
+    with pytest.raises(
+        TypeError,
+        match="missing 1 required positional argument: 'judge'",
+    ):
+        judge.create_judge_inputs()
+
+    # raise error if judge is not in judge settings
+    with pytest.raises(
+        KeyError,
+        match="Judge 'judge' is not a key in judge_settings",
+    ):
+        judge.create_judge_inputs("judge")
+
+    # raise error if judge is not in judge settings (list case)
+    with pytest.raises(
+        KeyError,
+        match="Judge 'judge' is not a key in judge_settings",
+    ):
+        judge.create_judge_inputs(["judge", "judge1"])
+
+    # "judge1" case
+    judge_1_inputs = judge.create_judge_inputs("judge1")
+    assert len(judge_1_inputs) == 2
+    assert judge_1_inputs == [
+        {
+            "id": "judge-judge1-0",
+            "prompt": "prompt: test prompt 1 || response: test response 1",
+            "api": "test",
+            "model_name": "model1",
+            "parameters": {"temperature": 0.5},
+            "input-id": 0,
+            "input-prompt": "test prompt 1",
+            "input-response": "test response 1",
+        },
+        {
+            "id": "judge-judge1-1",
+            "prompt": "prompt: test prompt 2 || response: test response 2",
+            "api": "test",
+            "model_name": "model1",
+            "parameters": {"temperature": 0.5},
+            "input-id": 1,
+            "input-prompt": "test prompt 2",
+            "input-response": "test response 2",
+        },
+    ]
+
+    # "judge2" case
+    judge_2_inputs = judge.create_judge_inputs("judge2")
+    assert len(judge_2_inputs) == 2
+    assert judge_2_inputs == [
+        {
+            "id": "judge-judge2-0",
+            "prompt": "prompt: test prompt 1 || response: test response 1",
+            "api": "test",
+            "model_name": "model2",
+            "parameters": {"temperature": 0.2, "top_k": 0.9},
+            "input-id": 0,
+            "input-prompt": "test prompt 1",
+            "input-response": "test response 1",
+        },
+        {
+            "id": "judge-judge2-1",
+            "prompt": "prompt: test prompt 2 || response: test response 2",
+            "api": "test",
+            "model_name": "model2",
+            "parameters": {"temperature": 0.2, "top_k": 0.9},
+            "input-id": 1,
+            "input-prompt": "test prompt 2",
+            "input-response": "test response 2",
+        },
+    ]
+
+    # "judge1, judge2" case
+    judge_1_2_inputs = judge.create_judge_inputs(["judge1", "judge2"])
+    assert len(judge_1_2_inputs) == 4
+    assert judge_1_2_inputs == [
+        {
+            "id": "judge-judge1-0",
+            "prompt": "prompt: test prompt 1 || response: test response 1",
+            "api": "test",
+            "model_name": "model1",
+            "parameters": {"temperature": 0.5},
+            "input-id": 0,
+            "input-prompt": "test prompt 1",
+            "input-response": "test response 1",
+        },
+        {
+            "id": "judge-judge1-1",
+            "prompt": "prompt: test prompt 2 || response: test response 2",
+            "api": "test",
+            "model_name": "model1",
+            "parameters": {"temperature": 0.5},
+            "input-id": 1,
+            "input-prompt": "test prompt 2",
+            "input-response": "test response 2",
+        },
+        {
+            "id": "judge-judge2-0",
+            "prompt": "prompt: test prompt 1 || response: test response 1",
+            "api": "test",
+            "model_name": "model2",
+            "parameters": {"temperature": 0.2, "top_k": 0.9},
+            "input-id": 0,
+            "input-prompt": "test prompt 1",
+            "input-response": "test response 1",
+        },
+        {
+            "id": "judge-judge2-1",
+            "prompt": "prompt: test prompt 2 || response: test response 2",
+            "api": "test",
+            "model_name": "model2",
+            "parameters": {"temperature": 0.2, "top_k": 0.9},
+            "input-id": 1,
+            "input-prompt": "test prompt 2",
+            "input-response": "test response 2",
+        },
+    ]
+
+
+def test_judge_create_judge_file(temporary_data_folder_judge):
+    cr = [
+        {"id": 0, "prompt": "test prompt 1", "response": "test response 1"},
+        {"id": 1, "prompt": "test prompt 2", "response": "test response 2"},
+    ]
+    js = {
+        "judge1": {
+            "api": "test",
+            "model_name": "model1",
+            "parameters": {"temperature": 0.5},
+        },
+        "judge2": {
+            "api": "test",
+            "model_name": "model2",
+            "parameters": {"temperature": 0.2, "top_k": 0.9},
+        },
+    }
+    tp = "prompt: {INPUT_PROMPT} || response: {OUTPUT_RESPONSE}"
+
+    judge = Judge(completed_responses=cr, judge_settings=js, template_prompt=tp)
+
+    # raise error if nothing is provided
+    with pytest.raises(
+        TypeError,
+        match="missing 2 required positional arguments",
+    ):
+        judge.create_judge_file()
+
+    # raise error if out_filepath is not a string that ends with ".jsonl"
+    with pytest.raises(
+        ValueError,
+        match="out_filepath must end with '.jsonl'",
+    ):
+        judge.create_judge_file(judge="judge", out_filepath="judge_file")
+
+    # create judge file
+    judge.create_judge_file(judge="judge1", out_filepath="judge_file.jsonl")
+
+    # check the judge file was created
+    assert os.path.isfile("judge_file.jsonl")
+
+    # read and check the contents of the judge file
+    with open("judge_file.jsonl", "r") as f:
+        judge_inputs = [dict(json.loads(line)) for line in f]
+
+    assert len(judge_inputs) == 2
+    assert judge_inputs == [
+        {
+            "id": "judge-judge1-0",
+            "prompt": "prompt: test prompt 1 || response: test response 1",
+            "api": "test",
+            "model_name": "model1",
+            "parameters": {"temperature": 0.5},
+            "input-id": 0,
+            "input-prompt": "test prompt 1",
+            "input-response": "test response 1",
+        },
+        {
+            "id": "judge-judge1-1",
+            "prompt": "prompt: test prompt 2 || response: test response 2",
+            "api": "test",
+            "model_name": "model1",
+            "parameters": {"temperature": 0.5},
+            "input-id": 1,
+            "input-prompt": "test prompt 2",
+            "input-response": "test response 2",
+        },
+    ]

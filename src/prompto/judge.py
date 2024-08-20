@@ -193,21 +193,22 @@ class Judge:
         if isinstance(judge, str):
             judge = [judge]
 
-        self.check_judge_in_judge_settings(judge, self.judge_settings)
+        assert self.check_judge_in_judge_settings(judge, self.judge_settings)
 
         judge_inputs = []
         for j in judge:
             judge_inputs += [
                 {
-                    "id": f"judge-{str(response.get('id', 'NA'))}",
+                    "id": f"judge-{j}-{str(response.get('id', 'NA'))}",
                     "prompt": self.template_prompt.format(
                         INPUT_PROMPT=response["prompt"],
                         OUTPUT_RESPONSE=response["response"],
                     ),
-                    "api": self.judge_settings[judge]["api"],
-                    "model_name": self.judge_settings[judge]["model_name"],
-                    "parameters": self.judge_settings[judge]["parameters"],
+                    "api": self.judge_settings[j]["api"],
+                    "model_name": self.judge_settings[j]["model_name"],
+                    "parameters": self.judge_settings[j]["parameters"],
                 }
+                | {f"input-{k}": v for k, v in response.items()}
                 for response in tqdm(
                     self.completed_responses,
                     desc=f"Creating judge inputs for {j}",
@@ -235,9 +236,9 @@ class Judge:
             will be saved as a jsonl file
         """
         if not out_filepath.endswith(".jsonl"):
-            raise ValueError("Output file must be a jsonl file")
+            raise ValueError("out_filepath must end with '.jsonl'")
 
-        judge_inputs = self.create_judge_inputs(judge)
+        judge_inputs = self.create_judge_inputs(judge=judge)
         with open(out_filepath, "w", encoding="utf-8") as f:
             for j_input in judge_inputs:
                 json.dump(j_input, f)
