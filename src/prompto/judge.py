@@ -1,4 +1,5 @@
 import json
+import logging
 import os
 
 from tqdm import tqdm
@@ -14,14 +15,19 @@ def parse_judge_arg(argument: str) -> list[str]:
     ----------
     argument : str
         A string of judges separated with commas, e.g.
-        "judge1, judge2" or "judge1,judge2,judge1"
+        "judge1, judge2" or "judge1,judge2,judge1".
+        Whitespace will be removed.
 
     Returns
     -------
     list[str]
-        A list of judges with no duplicates, e.g. ["judge1", "judge2"]
+        A list of judges with no duplicates, e.g. ["judge1", "judge2"].
+
     """
-    return list(set([s.replace(" ", "") for s in argument.split(",")]))
+    x = argument.replace(" ", "").split(",")
+    judges = list(sorted(set(x), key=x.index))
+    logging.info(f"Judges to be used: {judges}")
+    return judges
 
 
 def parse_judge_location_arg(judge_location: str) -> tuple[str, dict]:
@@ -49,6 +55,11 @@ def parse_judge_location_arg(judge_location: str) -> tuple[str, dict]:
         A tuple containing the template prompt string and
         the judge settings dictionary
     """
+    if not os.path.isdir(judge_location):
+        raise ValueError(
+            f"Judge location '{judge_location}' must be a valid path to a folder"
+        )
+
     try:
         template_path = os.path.join(judge_location, "template.txt")
         with open(template_path, "r", encoding="utf-8") as f:
@@ -104,7 +115,7 @@ class Judge:
         self.template_prompt = template_prompt
 
     @staticmethod
-    def check_judge_settings(judge_settings: dict) -> bool:
+    def check_judge_settings(judge_settings: dict[str, dict]) -> bool:
         """
         Method to check if the judge settings dictionary is valid.
 
@@ -121,7 +132,12 @@ class Judge:
             True if the judge settings dictionary is valid.
             Errors will be raised if the dictionary is invalid
         """
+        if not isinstance(judge_settings, dict):
+            raise TypeError("judge_settings must be a dictionary")
+
         for judge, settings in judge_settings.items():
+            if not isinstance(settings, dict):
+                raise TypeError(f"Value for judge key '{judge}' must be a dictionary")
             if "api" not in settings:
                 raise KeyError(f"'api' key not found in settings for judge '{judge}'")
             if "model_name" not in settings:
@@ -130,24 +146,25 @@ class Judge:
                 )
             if "parameters" not in settings:
                 raise KeyError(
-                    f"'parameters' not found in settings for judge '{judge}'"
+                    f"'parameters' key not found in settings for judge '{judge}'"
                 )
-            else:
-                if not isinstance(settings["parameters"], dict):
-                    raise ValueError(
-                        f"'parameters' must be a dictionary for judge '{judge}'"
-                    )
+            if not isinstance(settings["parameters"], dict):
+                raise TypeError(
+                    f"Value for 'parameters' key must be a dictionary for judge '{judge}'"
+                )
 
         return True
 
     @staticmethod
     def check_judge_in_judge_settings(
-        judge: str | list[str], judge_settings: dict
+        judge: str | list[str], judge_settings: dict[str, dict]
     ) -> bool:
         if isinstance(judge, str):
             judge = [judge]
 
         for j in judge:
+            if not isinstance(j, str):
+                raise TypeError("If judge is a list, each element must be a string")
             if j not in judge_settings.keys():
                 raise KeyError(f"Judge '{j}' is not a key in judge_settings")
 

@@ -448,3 +448,96 @@ def temporary_data_folder_for_processing(tmp_path: Path):
 
     # change back to original directory
     os.chdir(cwd)
+
+
+@pytest.fixture()
+def temporary_data_folder_judge(tmp_path: Path):
+    """
+    Creates a temporary folder structure for testing judge files.
+
+    Has the following structure:
+    tmp_path
+    ├── data/
+        ├── input/
+        ├── output/
+            └── completed-test-experiment.jsonl
+        ├── media/
+    ├── judge_loc/
+        └── template.txt
+        └── settings.json
+    ├── judge_loc_no_template
+        └── settings.json
+    ├── judge_loc_no_settings/
+        └── template.txt
+    """
+    # create a folder for testing the experiment pipeline
+    data_dir = Path(tmp_path / "data").mkdir()
+    # create subfolders for the experiment pipeline
+    Path(tmp_path / "data" / "input").mkdir()
+    Path(tmp_path / "data" / "output").mkdir()
+    Path(tmp_path / "data" / "media").mkdir()
+
+    # create a completed experiment file with "response" key
+    with open(
+        Path(tmp_path / "data" / "output" / "completed-test-experiment.jsonl"), "w"
+    ) as f:
+        f.write('{"id": 0, "prompt": "test prompt 1", "response": "test response 1"}\n')
+        f.write('{"id": 1, "prompt": "test prompt 2", "response": "test response 2"}\n')
+        f.write('{"id": 2, "prompt": "test prompt 3", "response": "test response 3"}\n')
+        f.write(
+            '{"id": "3", "prompt": "test prompt 4", "response": "test response 4"}\n'
+        )
+        f.write('{"id": 4, "prompt": "test prompt 5", "response": "test response 5"}\n')
+        f.write(
+            '{"id": "5", "prompt": "test prompt 6", "response": "test response 6"}\n'
+        )
+
+    # create a judge location folder
+    judge_loc = Path(tmp_path / "judge_loc").mkdir()
+
+    # create a template.txt file
+    with open(Path(tmp_path / "judge_loc" / "template.txt"), "w") as f:
+        f.write(
+            "This is a template prompt where you have an input {INPUT_PROMPT} and {OUTPUT_RESPONSE}"
+        )
+
+    # create a settings.json file
+    with open(Path(tmp_path / "judge_loc" / "settings.json"), "w") as f:
+        f.write("{\n")
+        f.write(
+            '    "judge1": {"api": "test", "model_name": "model1", "parameters": {"temperature": 0.5}},\n'
+        )
+        f.write(
+            '    "judge2": {"api": "test", "model_name": "model2", "parameters": {"temperature": 0.2, "top_k": 0.9}}\n'
+        )
+        f.write("}")
+
+    # create a judge location folder without template.txt
+    judge_loc_no_template = Path(tmp_path / "judge_loc_no_template").mkdir()
+    with open(Path(tmp_path / "judge_loc_no_template" / "settings.json"), "w") as f:
+        f.write("{\n")
+        f.write(
+            '    "judge1": {"api": "test", "model_name": "model1", "parameters": {"temperature": 0.5}},\n'
+        )
+        f.write(
+            '    "judge2": {"api": "test", "model_name": "model2", "parameters": {"temperature": 0.2, "top_k": 0.9}}\n'
+        )
+        f.write("}")
+
+    # create a judge location folder without settings.json
+    judge_loc_no_settings = Path(tmp_path / "judge_loc_no_settings").mkdir()
+    with open(Path(tmp_path / "judge_loc_no_settings" / "template.txt"), "w") as f:
+        f.write(
+            "This is a template prompt where you have an input {INPUT_PROMPT} and {OUTPUT_RESPONSE}"
+        )
+
+    # store current working directory
+    cwd = os.getcwd()
+
+    # change to temporary directory
+    os.chdir(tmp_path)
+
+    yield data_dir
+
+    # change back to original directory
+    os.chdir(cwd)
