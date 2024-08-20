@@ -38,8 +38,7 @@ def test_parse_judge_location_arg(temporary_data_folder_judge):
     # test the function reads template.txt and settings.json correctly
     template_prompt, judge_settings = parse_judge_location_arg("judge_loc")
     assert template_prompt == (
-        "This is a template prompt where you have an input "
-        "{INPUT_PROMPT} and {OUTPUT_RESPONSE}"
+        "Template: input={INPUT_PROMPT}, output={OUTPUT_RESPONSE}"
     )
     assert judge_settings == {
         "judge1": {
@@ -73,7 +72,7 @@ def test_parse_location_arg_error(temporary_data_folder_judge):
     # raise error if settings file does not exist in the judge location
     with pytest.raises(
         FileNotFoundError,
-        match="Settings file 'judge_loc_no_settings/settings.json' does not exist",
+        match="Judge settings file 'judge_loc_no_settings/settings.json' does not exist",
     ):
         parse_judge_location_arg("judge_loc_no_settings")
 

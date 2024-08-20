@@ -5,6 +5,12 @@ import os
 from prompto.judge import Judge, parse_judge_arg, parse_judge_location_arg
 
 
+def obtain_output_filepath(input_filepath: str, output_folder: str) -> str:
+    input_filename = os.path.basename(input_filepath).replace("completed-", "")
+    out_filepath = os.path.join(output_folder, f"judge-{input_filename}")
+    return out_filepath
+
+
 def main():
     """
     Generate a file for the judge-llm experiment using the responses from a completed file.
@@ -47,39 +53,36 @@ def main():
     )
     args = parser.parse_args()
 
+    # parse input file
+    input_filepath = args.input_file
+    try:
+        with open(input_filepath, "r") as f:
+            responses = [dict(json.loads(line)) for line in f]
+    except FileNotFoundError as exc:
+        raise FileNotFoundError(
+            f"Input file '{input_filepath}' is not a valid input file"
+        ) from exc
+
     # parse judge location and judge arguments
     template_prompt, judge_settings = parse_judge_location_arg(args.judge_location)
     judge = parse_judge_arg(args.judge)
     # check if the judge is in the judge settings dictionary
     Judge.check_judge_in_judge_settings(judge=judge, judge_settings=judge_settings)
 
-    # parse input file
-    input_filepath = args.input_file
-    try:
-        with open(input_filepath, "r", encoding="utf-8") as f:
-            responses = [dict(json.loads(line)) for line in f]
-    except FileNotFoundError as exc:
-        raise FileNotFoundError(
-            f"Input file '{input_filepath}' does not exist"
-        ) from exc
-
     # create output file path name
-    input_filename = (
-        os.path.basename(input_filepath)
-        .removesuffix(".jsonl")
-        .replace("completed-", "")
+    out_filepath = obtain_output_filepath(
+        input_filepath=input_filepath, output_folder=args.output_folder
     )
-    out_filepath = os.path.join(args.output_folder, f"judge-{input_filename}.jsonl")
 
     # create judge object from the parsed arguments
-    judge = Judge(
+    j = Judge(
         completed_responses=responses,
         judge_settings=judge_settings,
         template_prompt=template_prompt,
     )
 
     # create judge file
-    judge.create_judge_file(judge=judge, out_filepath=out_filepath)
+    j.create_judge_file(judge=judge, out_filepath=out_filepath)
 
 
 if __name__ == "__main__":

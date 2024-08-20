@@ -192,7 +192,7 @@ async def main():
 
     if create_judge_file:
         # create judge object from the parsed arguments
-        judge = Judge(
+        j = Judge(
             completed_responses=experiment.completed_responses,
             judge_settings=judge_settings,
             template_prompt=template_prompt,
@@ -200,7 +200,7 @@ async def main():
 
         # create judge file
         judge_file_path = f"judge-{experiment.experiment_name}.jsonl"
-        judge.create_judge_file(judge=judge, out_filepath=judge_file_path)
+        j.create_judge_file(judge=judge, out_filepath=judge_file_path)
 
         # create Experiment object
         judge_experiment = Experiment(file_name=judge_file_path, settings=settings)

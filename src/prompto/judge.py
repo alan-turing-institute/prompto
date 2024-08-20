@@ -75,7 +75,7 @@ def parse_judge_location_arg(judge_location: str) -> tuple[str, dict]:
             judge_settings = json.load(f)
     except FileNotFoundError as exc:
         raise FileNotFoundError(
-            f"Settings file '{judge_settings_path}' does not exist"
+            f"Judge settings file '{judge_settings_path}' does not exist"
         ) from exc
 
     return template_prompt, judge_settings
