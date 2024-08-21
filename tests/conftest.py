@@ -42,6 +42,7 @@ def temporary_data_folders(tmp_path: Path):
             └── second.jsonl
         ├── output/
         ├── media/
+    ├── .env
     ├── test.txt
     └── test.jsonl
     """
@@ -49,26 +50,38 @@ def temporary_data_folders(tmp_path: Path):
     data_dir = Path(tmp_path / "data").mkdir()
     dummy_data_dir = Path(tmp_path / "dummy_data").mkdir()
 
+    # create a .env file in the folder
+    with open(Path(tmp_path / ".env"), "w") as f:
+        f.write("TEST_ENV_VAR=test")
+
     # create a txt file in the folder
     with open(Path(tmp_path / "test.txt"), "w") as f:
         f.write("test line")
 
     # create a jsonl file in the folder
     with open(Path(tmp_path / "test.jsonl"), "w") as f:
-        f.write('{"prompt": "test prompt", "api": "test"}\n')
+        f.write(
+            '{"prompt": "test prompt", "api": "test", "model_name": "test_model"}\n'
+        )
 
     # create utils folder which we use to test the sorting of files
     utils_dir = Path(tmp_path / "utils").mkdir()
     with open(Path(tmp_path / "utils" / "first.jsonl"), "w") as f:
-        f.write('{"prompt": "test prompt 1", "api": "test"}\n')
+        f.write(
+            '{"prompt": "test prompt 1", "api": "test", "model_name": "test_model"}\n'
+        )
 
     time.sleep(0.01)
     with open(Path(tmp_path / "utils" / "second.jsonl"), "w") as f:
-        f.write('{"prompt": "test prompt 2", "api": "test"}\n')
+        f.write(
+            '{"prompt": "test prompt 2", "api": "test", "model_name": "test_model"}\n'
+        )
 
     time.sleep(0.01)
     with open(Path(tmp_path / "utils" / "third.jsonl"), "w") as f:
-        f.write('{"prompt": "test prompt 3", "api": "test"}\n')
+        f.write(
+            '{"prompt": "test prompt 3", "api": "test", "model_name": "test_model"}\n'
+        )
 
     # create a folder for testing the experiment pipeline
     experiment_pipeline = Path(tmp_path / "experiment_pipeline").mkdir()
@@ -80,15 +93,23 @@ def temporary_data_folders(tmp_path: Path):
     with open(
         Path(tmp_path / "experiment_pipeline" / "input" / "first.jsonl"), "w"
     ) as f:
-        f.write('{"prompt": "test prompt 1", "api": "test"}\n')
-        f.write('{"prompt": "test prompt 2", "api": "test"}\n')
-        f.write('{"prompt": "test prompt 3", "api": "test"}\n')
+        f.write(
+            '{"prompt": "test prompt 1", "api": "test", "model_name": "test_model"}\n'
+        )
+        f.write(
+            '{"prompt": "test prompt 2", "api": "test", "model_name": "test_model"}\n'
+        )
+        f.write(
+            '{"prompt": "test prompt 3", "api": "test", "model_name": "test_model"}\n'
+        )
 
     time.sleep(0.01)
     with open(
         Path(tmp_path / "experiment_pipeline" / "input" / "second.jsonl"), "w"
     ) as f:
-        f.write('{"prompt": "test prompt 2", "api": "test"}\n')
+        f.write(
+            '{"prompt": "test prompt 2", "api": "test", "model_name": "test_model"}\n'
+        )
 
     # store current working directory
     cwd = os.getcwd()
@@ -126,13 +147,17 @@ def temporary_data_folder_for_grouping_prompts(tmp_path: Path):
     # create a file with larger number of prompts with different APIs, models (no groups)
     with open(Path(tmp_path / "data" / "input" / "larger_no_groups.jsonl"), "w") as f:
         f.write('{"prompt": "test prompt 1", "api": "test", "model_name": "model1"}\n')
-        f.write('{"prompt": "test prompt 2", "api": "test"}\n')
+        f.write(
+            '{"prompt": "test prompt 2", "api": "test", "model_name": "test_model"}\n'
+        )
         f.write('{"prompt": "test prompt 3", "api": "test", "model_name": "model1"}\n')
         f.write('{"prompt": "test prompt 4", "api": "test", "model_name": "model3"}\n')
         f.write('{"prompt": "test prompt 5", "api": "test", "model_name": "model2"}\n')
         f.write('{"prompt": "test prompt 6", "api": "test", "model_name": "model3"}\n')
         f.write('{"prompt": "test prompt 7", "api": "test", "model_name": "model3"}\n')
-        f.write('{"prompt": "test prompt 8", "api": "test"}\n')
+        f.write(
+            '{"prompt": "test prompt 8", "api": "test", "model_name": "test_model"}\n'
+        )
         f.write(
             '{"prompt": "gemini prompt 1", "api": "gemini", "model_name": "gemini-pro"}\n'
         )
@@ -173,7 +198,9 @@ def temporary_data_folder_for_grouping_prompts(tmp_path: Path):
         "w",
     ) as f:
         f.write('{"prompt": "test prompt 1", "api": "test", "model_name": "model1"}\n')
-        f.write('{"prompt": "test prompt 2", "api": "test"}\n')
+        f.write(
+            '{"prompt": "test prompt 2", "api": "test", "model_name": "test_model"}\n'
+        )
         f.write(
             '{"prompt": "test prompt 3", "api": "test", "model_name": "model1", "group": "group1"}\n'
         )
@@ -430,13 +457,17 @@ def temporary_data_folder_for_processing(tmp_path: Path):
     # create a file with larger number of prompts with different APIs, models (no groups)
     with open(Path(tmp_path / "data" / "input" / "test_experiment.jsonl"), "w") as f:
         f.write('{"prompt": "test prompt 1", "api": "test", "model_name": "model1"}\n')
-        f.write('{"prompt": "test prompt 2", "api": "test"}\n')
+        f.write(
+            '{"prompt": "test prompt 2", "api": "test", "model_name": "test_model"}\n'
+        )
         f.write('{"prompt": "test prompt 3", "api": "test", "model_name": "model1"}\n')
         f.write('{"prompt": "test prompt 4", "api": "test", "model_name": "model3"}\n')
         f.write('{"prompt": "test prompt 5", "api": "test", "model_name": "model2"}\n')
         f.write('{"prompt": "test prompt 6", "api": "test", "model_name": "model3"}\n')
         f.write('{"prompt": "test prompt 7", "api": "test", "model_name": "model3"}\n')
-        f.write('{"prompt": "test prompt 8", "api": "test"}\n')
+        f.write(
+            '{"prompt": "test prompt 8", "api": "test", "model_name": "test_model"}\n'
+        )
 
     # store current working directory
     cwd = os.getcwd()

@@ -1,5 +1,4 @@
 import logging
-import os
 
 import pytest
 
@@ -14,17 +13,14 @@ async def test_generate_text_success_no_index(
     temporary_data_folder_for_processing, caplog
 ):
     caplog.set_level(logging.INFO)
-
-    # create a settings object
     settings = Settings(data_folder="data")
-
-    # create an experiment object
     experiment = Experiment("test_experiment.jsonl", settings=settings)
 
     # await generate_text method on different inputs using "test" api
     result = await experiment.generate_text(
         prompt_dict={
             "api": "test",
+            "model_name": "test_model",
             "prompt": "test prompt",
             "parameters": {"raise_error": "False"},
         },
@@ -32,8 +28,11 @@ async def test_generate_text_success_no_index(
     )
 
     assert result["api"] == "test"
+    assert result["model_name"] == "test_model"
     assert result["prompt"] == "test prompt"
+    assert result["parameters"] == {"raise_error": "False"}
     assert result["response"] == "This is a test response"
+    assert "timestamp_sent" in result.keys()
 
     # check logs for success message
     log_msg = (
@@ -49,11 +48,7 @@ async def test_generate_text_success_no_index_with_id(
     temporary_data_folder_for_processing, caplog
 ):
     caplog.set_level(logging.INFO)
-
-    # create a settings object
     settings = Settings(data_folder="data")
-
-    # create an experiment object
     experiment = Experiment("test_experiment.jsonl", settings=settings)
 
     # await generate_text method on different inputs using "test" api
@@ -61,15 +56,20 @@ async def test_generate_text_success_no_index_with_id(
         prompt_dict={
             "id": "test_id",
             "api": "test",
+            "model_name": "test_model",
             "prompt": "test prompt",
             "parameters": {"raise_error": "False"},
         },
         index=None,
     )
 
+    assert result["id"] == "test_id"
     assert result["api"] == "test"
+    assert result["model_name"] == "test_model"
     assert result["prompt"] == "test prompt"
+    assert result["parameters"] == {"raise_error": "False"}
     assert result["response"] == "This is a test response"
+    assert "timestamp_sent" in result.keys()
 
     # check logs for success message
     log_msg = (
@@ -85,17 +85,14 @@ async def test_generate_text_success_with_index_str(
     temporary_data_folder_for_processing, caplog
 ):
     caplog.set_level(logging.INFO)
-
-    # create a settings object
     settings = Settings(data_folder="data")
-
-    # create an experiment object
     experiment = Experiment("test_experiment.jsonl", settings=settings)
 
     # await generate_text method on different inputs using "test" api
     result = await experiment.generate_text(
         prompt_dict={
             "api": "test",
+            "model_name": "test_model",
             "prompt": "test prompt",
             "parameters": {"raise_error": "False"},
         },
@@ -103,8 +100,11 @@ async def test_generate_text_success_with_index_str(
     )
 
     assert result["api"] == "test"
+    assert result["model_name"] == "test_model"
     assert result["prompt"] == "test prompt"
+    assert result["parameters"] == {"raise_error": "False"}
     assert result["response"] == "This is a test response"
+    assert "timestamp_sent" in result.keys()
 
     # check logs for success message
     log_msg = (
@@ -120,11 +120,7 @@ async def test_generate_text_success_with_index_str_with_id(
     temporary_data_folder_for_processing, caplog
 ):
     caplog.set_level(logging.INFO)
-
-    # create a settings object
     settings = Settings(data_folder="data")
-
-    # create an experiment object
     experiment = Experiment("test_experiment.jsonl", settings=settings)
 
     # await generate_text method on different inputs using "test" api
@@ -132,15 +128,20 @@ async def test_generate_text_success_with_index_str_with_id(
         prompt_dict={
             "id": "test_id",
             "api": "test",
+            "model_name": "test_model",
             "prompt": "test prompt",
             "parameters": {"raise_error": "False"},
         },
         index="index_test",
     )
 
+    assert result["id"] == "test_id"
     assert result["api"] == "test"
+    assert result["model_name"] == "test_model"
     assert result["prompt"] == "test prompt"
+    assert result["parameters"] == {"raise_error": "False"}
     assert result["response"] == "This is a test response"
+    assert "timestamp_sent" in result.keys()
 
     # check logs for success message
     log_msg = (
@@ -156,17 +157,14 @@ async def test_generate_text_success_with_index_int(
     temporary_data_folder_for_processing, caplog
 ):
     caplog.set_level(logging.INFO)
-
-    # create a settings object
     settings = Settings(data_folder="data")
-
-    # create an experiment object
     experiment = Experiment("test_experiment.jsonl", settings=settings)
 
     # await generate_text method on different inputs using "test" api
     result = await experiment.generate_text(
         prompt_dict={
             "api": "test",
+            "model_name": "test_model",
             "prompt": "test prompt",
             "parameters": {"raise_error": "False"},
         },
@@ -174,8 +172,11 @@ async def test_generate_text_success_with_index_int(
     )
 
     assert result["api"] == "test"
+    assert result["model_name"] == "test_model"
     assert result["prompt"] == "test prompt"
-    assert "response" in result
+    assert result["parameters"] == {"raise_error": "False"}
+    assert result["response"] == "This is a test response"
+    assert "timestamp_sent" in result.keys()
 
     # check logs for success message
     log_msg = (
@@ -191,11 +192,7 @@ async def test_generate_text_success_with_index_int_with_id(
     temporary_data_folder_for_processing, caplog
 ):
     caplog.set_level(logging.INFO)
-
-    # create a settings object
     settings = Settings(data_folder="data")
-
-    # create an experiment object
     experiment = Experiment("test_experiment.jsonl", settings=settings)
 
     # await generate_text method on different inputs using "test" api
@@ -203,15 +200,20 @@ async def test_generate_text_success_with_index_int_with_id(
         prompt_dict={
             "id": "test_id",
             "api": "test",
+            "model_name": "test_model",
             "prompt": "test prompt",
             "parameters": {"raise_error": "False"},
         },
         index=2,
     )
 
+    assert result["id"] == "test_id"
     assert result["api"] == "test"
+    assert result["model_name"] == "test_model"
     assert result["prompt"] == "test prompt"
-    assert "response" in result
+    assert result["parameters"] == {"raise_error": "False"}
+    assert result["response"] == "This is a test response"
+    assert "timestamp_sent" in result.keys()
 
     # check logs for success message
     log_msg = (
@@ -225,11 +227,7 @@ async def test_generate_text_success_with_index_int_with_id(
 @pytest.mark.asyncio
 async def test_generate_text_error(temporary_data_folder_for_processing, caplog):
     caplog.set_level(logging.INFO)
-
-    # create a settings object
     settings = Settings(data_folder="data")
-
-    # create an experiment object
     experiment = Experiment("test_experiment.jsonl", settings=settings)
 
     # check raises error from "test" model when we request one
@@ -237,6 +235,7 @@ async def test_generate_text_error(temporary_data_folder_for_processing, caplog)
         result = await experiment.generate_text(
             prompt_dict={
                 "api": "test",
+                "model_name": "test_model",
                 "prompt": "test prompt",
                 "parameters": {"raise_error": "True"},
             },
@@ -257,11 +256,7 @@ async def test_generate_text_error_with_id(
     temporary_data_folder_for_processing, caplog
 ):
     caplog.set_level(logging.INFO)
-
-    # create a settings object
     settings = Settings(data_folder="data")
-
-    # create an experiment object
     experiment = Experiment("test_experiment.jsonl", settings=settings)
 
     # check raises error from "test" model when we request one
@@ -270,6 +265,7 @@ async def test_generate_text_error_with_id(
             prompt_dict={
                 "id": "test_id",
                 "api": "test",
+                "model_name": "test_model",
                 "prompt": "test prompt",
                 "parameters": {"raise_error": "True"},
             },
@@ -289,10 +285,7 @@ async def test_generate_text_error_with_id(
 async def test_generate_text_not_implemented_error(
     temporary_data_folder_for_processing,
 ):
-    # create a settings object
     settings = Settings(data_folder="data")
-
-    # create an experiment object
     experiment = Experiment("test_experiment.jsonl", settings=settings)
 
     # check raises error if api is not found
@@ -303,6 +296,7 @@ async def test_generate_text_not_implemented_error(
         await experiment.generate_text(
             prompt_dict={
                 "api": "api-that-does-not-exist",
+                "model_name": "test_model",
                 "prompt": "test prompt",
             },
             index=None,
@@ -313,10 +307,7 @@ async def test_generate_text_not_implemented_error(
 async def test_generate_text_error_api_not_specified(
     temporary_data_folder_for_processing,
 ):
-    # create a settings object
     settings = Settings(data_folder="data")
-
-    # create an experiment object
     experiment = Experiment("test_experiment.jsonl", settings=settings)
 
     # check raises error if api is not found

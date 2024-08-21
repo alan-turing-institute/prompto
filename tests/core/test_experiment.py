@@ -37,8 +37,12 @@ def test_experiment_init(temporary_data_folders):
 
     # create a jsonl file in the input folder (which is created when initialising Settings object)
     with open("data/input/test_in_input.jsonl", "w") as f:
-        f.write('{"id": 0, "prompt": "test prompt 0", "api": "test"}\n')
-        f.write('{"id": 1, "prompt": "test prompt 1", "api": "test"}\n')
+        f.write(
+            '{"id": 0, "prompt": "test prompt 0", "api": "test", "model_name": "test_model"}\n'
+        )
+        f.write(
+            '{"id": 1, "prompt": "test prompt 1", "api": "test", "model_name": "test_model"}\n'
+        )
 
     # create an experiment object
     experiment = Experiment("test_in_input.jsonl", settings=settings)
@@ -60,13 +64,13 @@ def test_experiment_init(temporary_data_folders):
         == f"data/output/test_in_input/{experiment.start_time}-input-test_in_input.jsonl"
     )
     assert experiment._experiment_prompts == [
-        {"id": 0, "prompt": "test prompt 0", "api": "test"},
-        {"id": 1, "prompt": "test prompt 1", "api": "test"},
+        {"id": 0, "prompt": "test prompt 0", "api": "test", "model_name": "test_model"},
+        {"id": 1, "prompt": "test prompt 1", "api": "test", "model_name": "test_model"},
     ]
     # check property getter for experiment_prompts
     assert experiment.experiment_prompts == [
-        {"id": 0, "prompt": "test prompt 0", "api": "test"},
-        {"id": 1, "prompt": "test prompt 1", "api": "test"},
+        {"id": 0, "prompt": "test prompt 0", "api": "test", "model_name": "test_model"},
+        {"id": 1, "prompt": "test prompt 1", "api": "test", "model_name": "test_model"},
     ]
     assert experiment.number_queries == 2
     assert (
@@ -91,21 +95,25 @@ def test_experiment_grouped_prompts_simple(temporary_data_folders, caplog):
 
     # create a jsonl file in the input folder (which is created when initialising Settings object)
     with open("data/input/test_in_input.jsonl", "w") as f:
-        f.write('{"id": 0, "prompt": "test prompt 0", "api": "test"}\n')
-        f.write('{"id": 1, "prompt": "test prompt 1", "api": "test"}\n')
+        f.write(
+            '{"id": 0, "prompt": "test prompt 0", "api": "test", "model_name": "test_model"}\n'
+        )
+        f.write(
+            '{"id": 1, "prompt": "test prompt 1", "api": "test", "model_name": "test_model"}\n'
+        )
 
     # create an experiment object
     experiment = Experiment("test_in_input.jsonl", settings=settings)
 
     # check the experiment_prompts attribute is correct
     assert experiment._experiment_prompts == [
-        {"id": 0, "prompt": "test prompt 0", "api": "test"},
-        {"id": 1, "prompt": "test prompt 1", "api": "test"},
+        {"id": 0, "prompt": "test prompt 0", "api": "test", "model_name": "test_model"},
+        {"id": 1, "prompt": "test prompt 1", "api": "test", "model_name": "test_model"},
     ]
     # check property getter for experiment_prompts
     assert experiment.experiment_prompts == [
-        {"id": 0, "prompt": "test prompt 0", "api": "test"},
-        {"id": 1, "prompt": "test prompt 1", "api": "test"},
+        {"id": 0, "prompt": "test prompt 0", "api": "test", "model_name": "test_model"},
+        {"id": 1, "prompt": "test prompt 1", "api": "test", "model_name": "test_model"},
     ]
 
     # test that grouped experiments have not been created yet
@@ -139,14 +147,14 @@ def test_experiment_experiment_prompts_getter(temporary_data_folders):
     experiment = Experiment("first.jsonl", settings=settings)
 
     assert experiment._experiment_prompts == [
-        {"prompt": "test prompt 1", "api": "test"},
-        {"prompt": "test prompt 2", "api": "test"},
-        {"prompt": "test prompt 3", "api": "test"},
+        {"prompt": "test prompt 1", "api": "test", "model_name": "test_model"},
+        {"prompt": "test prompt 2", "api": "test", "model_name": "test_model"},
+        {"prompt": "test prompt 3", "api": "test", "model_name": "test_model"},
     ]
     assert experiment.experiment_prompts == [
-        {"prompt": "test prompt 1", "api": "test"},
-        {"prompt": "test prompt 2", "api": "test"},
-        {"prompt": "test prompt 3", "api": "test"},
+        {"prompt": "test prompt 1", "api": "test", "model_name": "test_model"},
+        {"prompt": "test prompt 2", "api": "test", "model_name": "test_model"},
+        {"prompt": "test prompt 3", "api": "test", "model_name": "test_model"},
     ]
 
     # set it to a different list
@@ -170,9 +178,9 @@ def test_experiment_experiment_prompts_setter(temporary_data_folders):
 
     # test that the experiment_prompts attribute is still the same after the error
     assert experiment.experiment_prompts == [
-        {"prompt": "test prompt 1", "api": "test"},
-        {"prompt": "test prompt 2", "api": "test"},
-        {"prompt": "test prompt 3", "api": "test"},
+        {"prompt": "test prompt 1", "api": "test", "model_name": "test_model"},
+        {"prompt": "test prompt 2", "api": "test", "model_name": "test_model"},
+        {"prompt": "test prompt 3", "api": "test", "model_name": "test_model"},
     ]
 
 
@@ -186,9 +194,9 @@ def test_experiment_grouped_prompts_getter(temporary_data_folders):
     # check only created when it's called (initially it's an empty dict)
     assert experiment._grouped_experiment_prompts == {}
     assert experiment.experiment_prompts == [
-        {"prompt": "test prompt 1", "api": "test"},
-        {"prompt": "test prompt 2", "api": "test"},
-        {"prompt": "test prompt 3", "api": "test"},
+        {"prompt": "test prompt 1", "api": "test", "model_name": "test_model"},
+        {"prompt": "test prompt 2", "api": "test", "model_name": "test_model"},
+        {"prompt": "test prompt 3", "api": "test", "model_name": "test_model"},
     ]
     assert experiment.grouped_experiment_prompts == {
         "test": {"prompt_dicts": experiment.experiment_prompts, "rate_limit": 10}
@@ -219,9 +227,9 @@ def test_experiment_grouped_prompts_setter(temporary_data_folders):
     # check only created when it's called and it's still an empty dict after error
     assert experiment._grouped_experiment_prompts == {}
     assert experiment.experiment_prompts == [
-        {"prompt": "test prompt 1", "api": "test"},
-        {"prompt": "test prompt 2", "api": "test"},
-        {"prompt": "test prompt 3", "api": "test"},
+        {"prompt": "test prompt 1", "api": "test", "model_name": "test_model"},
+        {"prompt": "test prompt 2", "api": "test", "model_name": "test_model"},
+        {"prompt": "test prompt 3", "api": "test", "model_name": "test_model"},
     ]
     assert experiment.grouped_experiment_prompts == {
         "test": {"prompt_dicts": experiment.experiment_prompts, "rate_limit": 10}
@@ -255,13 +263,13 @@ def test_experiment_grouped_prompts_default_no_groups(
         "test": {
             "prompt_dicts": [
                 {"prompt": "test prompt 1", "api": "test", "model_name": "model1"},
-                {"prompt": "test prompt 2", "api": "test"},
+                {"prompt": "test prompt 2", "api": "test", "model_name": "test_model"},
                 {"prompt": "test prompt 3", "api": "test", "model_name": "model1"},
                 {"prompt": "test prompt 4", "api": "test", "model_name": "model3"},
                 {"prompt": "test prompt 5", "api": "test", "model_name": "model2"},
                 {"prompt": "test prompt 6", "api": "test", "model_name": "model3"},
                 {"prompt": "test prompt 7", "api": "test", "model_name": "model3"},
-                {"prompt": "test prompt 8", "api": "test"},
+                {"prompt": "test prompt 8", "api": "test", "model_name": "test_model"},
             ],
             "rate_limit": 50,
         },
@@ -375,13 +383,13 @@ def test_experiment_grouped_prompts_apis_only_no_groups(
         "test": {
             "prompt_dicts": [
                 {"prompt": "test prompt 1", "api": "test", "model_name": "model1"},
-                {"prompt": "test prompt 2", "api": "test"},
+                {"prompt": "test prompt 2", "api": "test", "model_name": "test_model"},
                 {"prompt": "test prompt 3", "api": "test", "model_name": "model1"},
                 {"prompt": "test prompt 4", "api": "test", "model_name": "model3"},
                 {"prompt": "test prompt 5", "api": "test", "model_name": "model2"},
                 {"prompt": "test prompt 6", "api": "test", "model_name": "model3"},
                 {"prompt": "test prompt 7", "api": "test", "model_name": "model3"},
-                {"prompt": "test prompt 8", "api": "test"},
+                {"prompt": "test prompt 8", "api": "test", "model_name": "test_model"},
             ],
             "rate_limit": 100,
         },
@@ -502,11 +510,11 @@ def test_experiment_grouped_prompts_apis_and_models_no_groups_v1(
         },
         "test": {
             "prompt_dicts": [
-                {"prompt": "test prompt 2", "api": "test"},
+                {"prompt": "test prompt 2", "api": "test", "model_name": "test_model"},
                 {"prompt": "test prompt 4", "api": "test", "model_name": "model3"},
                 {"prompt": "test prompt 6", "api": "test", "model_name": "model3"},
                 {"prompt": "test prompt 7", "api": "test", "model_name": "model3"},
-                {"prompt": "test prompt 8", "api": "test"},
+                {"prompt": "test prompt 8", "api": "test", "model_name": "test_model"},
             ],
             "rate_limit": 50,
         },
@@ -651,11 +659,11 @@ def test_experiment_grouped_prompts_apis_and_models_no_groups_v2(
         },
         "test": {
             "prompt_dicts": [
-                {"prompt": "test prompt 2", "api": "test"},
+                {"prompt": "test prompt 2", "api": "test", "model_name": "test_model"},
                 {"prompt": "test prompt 4", "api": "test", "model_name": "model3"},
                 {"prompt": "test prompt 6", "api": "test", "model_name": "model3"},
                 {"prompt": "test prompt 7", "api": "test", "model_name": "model3"},
-                {"prompt": "test prompt 8", "api": "test"},
+                {"prompt": "test prompt 8", "api": "test", "model_name": "test_model"},
             ],
             "rate_limit": 50,
         },
@@ -783,7 +791,7 @@ def test_experiment_grouped_prompts_default_with_groups(
         "test": {
             "prompt_dicts": [
                 {"prompt": "test prompt 1", "api": "test", "model_name": "model1"},
-                {"prompt": "test prompt 2", "api": "test"},
+                {"prompt": "test prompt 2", "api": "test", "model_name": "test_model"},
                 {"prompt": "test prompt 4", "api": "test", "model_name": "model3"},
             ],
             "rate_limit": 50,
@@ -942,7 +950,7 @@ def test_experiment_grouped_prompts_apis_only_with_groups(
         "test": {
             "prompt_dicts": [
                 {"prompt": "test prompt 1", "api": "test", "model_name": "model1"},
-                {"prompt": "test prompt 2", "api": "test"},
+                {"prompt": "test prompt 2", "api": "test", "model_name": "test_model"},
                 {"prompt": "test prompt 4", "api": "test", "model_name": "model3"},
             ],
             "rate_limit": 100,
@@ -1093,7 +1101,7 @@ def test_experiment_grouped_prompts_groups_only_with_groups(
         "test": {
             "prompt_dicts": [
                 {"prompt": "test prompt 1", "api": "test", "model_name": "model1"},
-                {"prompt": "test prompt 2", "api": "test"},
+                {"prompt": "test prompt 2", "api": "test", "model_name": "test_model"},
                 {"prompt": "test prompt 4", "api": "test", "model_name": "model3"},
             ],
             "rate_limit": 50,
@@ -1251,7 +1259,7 @@ def test_experiment_grouped_prompts_apis_and_models_with_groups(
         },
         "test": {
             "prompt_dicts": [
-                {"prompt": "test prompt 2", "api": "test"},
+                {"prompt": "test prompt 2", "api": "test", "model_name": "test_model"},
                 {"prompt": "test prompt 4", "api": "test", "model_name": "model3"},
             ],
             "rate_limit": 50,
@@ -1445,7 +1453,7 @@ def test_experiment_grouped_prompts_groups_and_models_with_groups(
         "test": {
             "prompt_dicts": [
                 {"prompt": "test prompt 1", "api": "test", "model_name": "model1"},
-                {"prompt": "test prompt 2", "api": "test"},
+                {"prompt": "test prompt 2", "api": "test", "model_name": "test_model"},
                 {"prompt": "test prompt 4", "api": "test", "model_name": "model3"},
             ],
             "rate_limit": 50,
@@ -1620,7 +1628,7 @@ def test_experiment_grouped_prompts_all_with_groups_v1(
         },
         "test": {
             "prompt_dicts": [
-                {"prompt": "test prompt 2", "api": "test"},
+                {"prompt": "test prompt 2", "api": "test", "model_name": "test_model"},
                 {"prompt": "test prompt 4", "api": "test", "model_name": "model3"},
             ],
             "rate_limit": 50,
@@ -1827,7 +1835,7 @@ def test_experiment_grouped_prompts_all_with_groups_v2(
         },
         "test": {
             "prompt_dicts": [
-                {"prompt": "test prompt 2", "api": "test"},
+                {"prompt": "test prompt 2", "api": "test", "model_name": "test_model"},
                 {"prompt": "test prompt 4", "api": "test", "model_name": "model3"},
             ],
             "rate_limit": 50,
