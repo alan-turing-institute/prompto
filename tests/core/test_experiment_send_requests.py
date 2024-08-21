@@ -1,11 +1,8 @@
-import asyncio
 import json
 import logging
 import os
-from unittest.mock import AsyncMock, patch
 
 import pytest
-import regex as re
 
 from prompto.experiment import Experiment
 from prompto.settings import Settings
