@@ -461,6 +461,7 @@ class Experiment:
             Group name, by default None. If None, then the group is
             not specified in the logs
         """
+        for_group_string = f" for group '{group}'" if group is not None else ""
         # initialise the number of attempts
         attempt = 1
 
@@ -499,9 +500,11 @@ class Experiment:
                     )
                 else:
                     # if there are no failed queries, break out of the loop
+                    logging.info(f"No remaining failed queries{for_group_string}!")
                     break
             else:
                 # if the maximum number of attempts has been reached, break out of the loop
+                logging.info(f"Maximum attempts reached{for_group_string}. Exiting...")
                 break
 
     async def query_model_and_record_response(
