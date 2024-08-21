@@ -401,7 +401,7 @@ class Experiment:
         """
         request_interval = 60 / rate_limit
         tasks = []
-        for_group_string = f"for group {group} " if group is not None else ""
+        for_group_string = f"for group '{group}' " if group is not None else ""
         attempt_frac = f"{attempt}/{self.settings.max_attempts}"
 
         for index, item in enumerate(
@@ -409,7 +409,7 @@ class Experiment:
                 prompt_dicts,
                 desc=(
                     f"Sending {len(prompt_dicts)} queries at {rate_limit} QPM with RI of "
-                    f"{request_interval}s {for_group_string} (attempt {attempt_frac})"
+                    f"{request_interval}s {for_group_string}(attempt {attempt_frac})"
                 ),
                 unit="query",
             )
@@ -430,7 +430,7 @@ class Experiment:
         # wait for all tasks to complete before returning
         responses = await tqdm_asyncio.gather(
             *tasks,
-            desc=f"Waiting for responses {for_group_string} (attempt {attempt_frac})",
+            desc=f"Waiting for responses {for_group_string}(attempt {attempt_frac})",
             unit="query",
         )
 

@@ -126,79 +126,13 @@ async def test_query_model_and_record_response_max_attepts_error(
 
 
 @pytest.mark.asyncio
-@patch("prompto.experiment.Experiment.generate_text", new_callable=AsyncMock)
 async def test_query_model_and_record_response_not_implemented_error(
-    mock_generate_text, temporary_data_folder_for_processing, caplog
+    temporary_data_folder_for_processing, caplog
 ):
     caplog.set_level(logging.INFO)
     settings = Settings(data_folder="data")
     experiment = Experiment("test_experiment.jsonl", settings=settings)
     create_folder(experiment.output_folder)
-
-    # mock the generate_text method to raise a NotImplementedError
-    mock_generate_text.side_effect = NotImplementedError(
-        "API api-that-does-not-exist not recognised or implemented"
-    )
-
-    # we do not retry on NotImplementedError
-    result = await experiment.query_model_and_record_response(
-        prompt_dict={
-            "id": "test_id",
-            "api": "api-that-does-not-exist",
-            "model_name": "test_model",
-            "prompt": "test prompt",
-            "parameters": {"raise_error": "False"},
-        },
-        index=2,
-        attempt=1,
-    )
-
-    assert result["id"] == "test_id"
-    assert result["api"] == "api-that-does-not-exist"
-    assert result["model_name"] == "test_model"
-    assert result["prompt"] == "test prompt"
-    assert result["parameters"] == {"raise_error": "False"}
-    assert (
-        result["response"]
-        == "NotImplementedError - API api-that-does-not-exist not recognised or implemented"
-    )
-
-    # check that the response is saved to the output file
-    assert os.path.exists(experiment.output_completed_file_path)
-    with open(experiment.output_completed_file_path, "r") as f:
-        responses = [dict(json.loads(line)) for line in f]
-
-    assert len(responses) == 1
-    assert responses[0]["id"] == result["id"]
-    assert responses[0]["api"] == result["api"]
-    assert responses[0]["model_name"] == result["model_name"]
-    assert responses[0]["prompt"] == result["prompt"]
-    assert responses[0]["parameters"] == result["parameters"]
-    assert responses[0]["response"] == result["response"]
-
-    # check logs
-    log_msg = (
-        "Error (i=2, id=test_id): "
-        "NotImplementedError - API api-that-does-not-exist "
-        "not recognised or implemented"
-    )
-    assert log_msg in caplog.text
-
-
-@pytest.mark.asyncio
-@patch("prompto.experiment.Experiment.generate_text", new_callable=AsyncMock)
-async def test_query_model_and_record_response_not_implemented_error(
-    mock_generate_text, temporary_data_folder_for_processing, caplog
-):
-    caplog.set_level(logging.INFO)
-    settings = Settings(data_folder="data")
-    experiment = Experiment("test_experiment.jsonl", settings=settings)
-    create_folder(experiment.output_folder)
-
-    # mock the generate_text method to raise a NotImplementedError
-    mock_generate_text.side_effect = NotImplementedError(
-        "API api-that-does-not-exist not recognised or implemented"
-    )
 
     # we do not retry on NotImplementedError
     result = await experiment.query_model_and_record_response(
@@ -262,7 +196,7 @@ async def test_query_model_and_record_response_key_error(
     result = await experiment.query_model_and_record_response(
         prompt_dict={
             "id": "test_id",
-            "api": "api-that-does-not-exist",
+            "api": "test",
             "model_name": "test_model",
             "prompt": "test prompt",
             "parameters": {"raise_error": "False"},
@@ -272,7 +206,7 @@ async def test_query_model_and_record_response_key_error(
     )
 
     assert result["id"] == "test_id"
-    assert result["api"] == "api-that-does-not-exist"
+    assert result["api"] == "test"
     assert result["model_name"] == "test_model"
     assert result["prompt"] == "test prompt"
     assert result["parameters"] == {"raise_error": "False"}
@@ -313,7 +247,7 @@ async def test_query_model_and_record_response_value_error(
     result = await experiment.query_model_and_record_response(
         prompt_dict={
             "id": "test_id",
-            "api": "api-that-does-not-exist",
+            "api": "test",
             "model_name": "test_model",
             "prompt": "test prompt",
             "parameters": {"raise_error": "False"},
@@ -323,7 +257,7 @@ async def test_query_model_and_record_response_value_error(
     )
 
     assert result["id"] == "test_id"
-    assert result["api"] == "api-that-does-not-exist"
+    assert result["api"] == "test"
     assert result["model_name"] == "test_model"
     assert result["prompt"] == "test prompt"
     assert result["parameters"] == {"raise_error": "False"}
@@ -364,7 +298,7 @@ async def test_query_model_and_record_response_type_error(
     result = await experiment.query_model_and_record_response(
         prompt_dict={
             "id": "test_id",
-            "api": "api-that-does-not-exist",
+            "api": "test",
             "model_name": "test_model",
             "prompt": "test prompt",
             "parameters": {"raise_error": "False"},
@@ -374,7 +308,7 @@ async def test_query_model_and_record_response_type_error(
     )
 
     assert result["id"] == "test_id"
-    assert result["api"] == "api-that-does-not-exist"
+    assert result["api"] == "test"
     assert result["model_name"] == "test_model"
     assert result["prompt"] == "test prompt"
     assert result["parameters"] == {"raise_error": "False"}
@@ -415,7 +349,7 @@ async def test_query_model_and_record_response_exception_error(
     result = await experiment.query_model_and_record_response(
         prompt_dict={
             "id": "test_id",
-            "api": "api-that-does-not-exist",
+            "api": "test",
             "model_name": "test_model",
             "prompt": "test prompt",
             "parameters": {"raise_error": "False"},
@@ -454,7 +388,7 @@ async def test_query_model_and_record_response_exception_error_max(
     result = await experiment.query_model_and_record_response(
         prompt_dict={
             "id": "test_id",
-            "api": "api-that-does-not-exist",
+            "api": "test",
             "model_name": "test_model",
             "prompt": "test prompt",
             "parameters": {"raise_error": "False"},
@@ -464,14 +398,14 @@ async def test_query_model_and_record_response_exception_error_max(
     )
 
     assert result["id"] == "test_id"
-    assert result["api"] == "api-that-does-not-exist"
+    assert result["api"] == "test"
     assert result["model_name"] == "test_model"
     assert result["prompt"] == "test prompt"
     assert result["parameters"] == {"raise_error": "False"}
     assert result["response"] == (
         "An unexpected error occurred when querying the API: "
-        f"(Exception - some exception error) "
-        f"after maximum 2 attempts"
+        "(Exception - some exception error) "
+        "after maximum 2 attempts"
     )
 
     # check that the response is saved to the output file
@@ -514,7 +448,7 @@ async def test_query_model_and_record_response_cancelled_error(
     result = await experiment.query_model_and_record_response(
         prompt_dict={
             "id": "test_id",
-            "api": "api-that-does-not-exist",
+            "api": "test",
             "model_name": "test_model",
             "prompt": "test prompt",
             "parameters": {"raise_error": "False"},
@@ -556,7 +490,7 @@ async def test_query_model_and_record_response_timeout_error(
     result = await experiment.query_model_and_record_response(
         prompt_dict={
             "id": "test_id",
-            "api": "api-that-does-not-exist",
+            "api": "test",
             "model_name": "test_model",
             "prompt": "test prompt",
             "parameters": {"raise_error": "False"},
