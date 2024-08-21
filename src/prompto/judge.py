@@ -30,7 +30,7 @@ def parse_judge_arg(argument: str) -> list[str]:
     return judges
 
 
-def parse_judge_location_arg(judge_location: str) -> tuple[str, dict]:
+def parse_judge_location_arg(argument: str) -> tuple[str, dict]:
     """
     Parses the judge location argument to get the
     template prompt string and judge settings dictionary.
@@ -45,7 +45,7 @@ def parse_judge_location_arg(judge_location: str) -> tuple[str, dict]:
 
     Parameters
     ----------
-    judge_location : str
+    argument : str
         Path to the judge folder containing the template.txt
         and settings.json files
 
@@ -55,13 +55,13 @@ def parse_judge_location_arg(judge_location: str) -> tuple[str, dict]:
         A tuple containing the template prompt string and
         the judge settings dictionary
     """
-    if not os.path.isdir(judge_location):
+    if not os.path.isdir(argument):
         raise ValueError(
-            f"Judge location '{judge_location}' must be a valid path to a folder"
+            f"Judge location '{argument}' must be a valid path to a folder"
         )
 
     try:
-        template_path = os.path.join(judge_location, "template.txt")
+        template_path = os.path.join(argument, "template.txt")
         with open(template_path, "r", encoding="utf-8") as f:
             template_prompt = f.read()
     except FileNotFoundError as exc:
@@ -70,7 +70,7 @@ def parse_judge_location_arg(judge_location: str) -> tuple[str, dict]:
         ) from exc
 
     try:
-        judge_settings_path = os.path.join(judge_location, "settings.json")
+        judge_settings_path = os.path.join(argument, "settings.json")
         with open(judge_settings_path, "r", encoding="utf-8") as f:
             judge_settings = json.load(f)
     except FileNotFoundError as exc:

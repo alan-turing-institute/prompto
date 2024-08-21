@@ -7,6 +7,7 @@ from prompto.scripts.create_judge_file import obtain_output_filepath
 
 
 def test_obtain_output_filepath():
+    # prepend "judge-" to the base of the experiment file name
     assert (
         obtain_output_filepath("test-experiment.jsonl", "./")
         == "./judge-test-experiment.jsonl"
@@ -26,12 +27,16 @@ def test_obtain_output_filepath():
     )
     # if "completed-" is in the input file name, it gets removed
     assert (
-        obtain_output_filepath("some_directory/completed-test-experiment.jsonl", ".")
+        obtain_output_filepath(
+            input_filepath="some_directory/completed-test-experiment.jsonl",
+            output_folder=".",
+        )
         == "./judge-test-experiment.jsonl"
     )
     assert (
         obtain_output_filepath(
-            "some_directory/completed-test-experiment.jsonl", "data/output"
+            input_filepath="some_directory/completed-test-experiment.jsonl",
+            output_folder="data/output",
         )
         == "data/output/judge-test-experiment.jsonl"
     )
