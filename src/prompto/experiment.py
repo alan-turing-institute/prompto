@@ -336,7 +336,7 @@ class Experiment:
 
         # log completion of experiment
         log_message = (
-            f"Completed experiment {self.__str__()}! "
+            f"Completed experiment: {self.__str__()}! "
             f"Experiment processing time: {round(processing_time, 3)} seconds, "
             f"Average time per query: {round(avg_query_processing_time, 3)} seconds"
         )
@@ -487,7 +487,7 @@ class Experiment:
                 # if we still have failed queries, we will retry them
                 if len(remaining_prompt_dicts) > 0:
                     logging.info(
-                        f"Retrying {len(remaining_prompt_dicts)} failed queries - "
+                        f"Retrying {len(remaining_prompt_dicts)} failed queries{for_group_string} - "
                         f"attempt {attempt} of {self.settings.max_attempts}..."
                     )
 

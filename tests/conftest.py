@@ -443,9 +443,11 @@ def temporary_data_folder_for_processing(tmp_path: Path):
     tmp_path
     ├── data/
         ├── input/
-            └── test_experiment.jsonl
+            ├── test_experiment.jsonl
+            └── test_experiment_with_groups.jsonl
         ├── output/
         ├── media/
+    └── max_queries_dict.json
     """
     # create a folder for testing the experiment pipeline
     data_dir = Path(tmp_path / "data").mkdir()
@@ -454,20 +456,53 @@ def temporary_data_folder_for_processing(tmp_path: Path):
     Path(tmp_path / "data" / "output").mkdir()
     Path(tmp_path / "data" / "media").mkdir()
 
-    # create a file with larger number of prompts with different APIs, models (no groups)
+    # create a file with larger number of prompts with different APIs, models with no groups
     with open(Path(tmp_path / "data" / "input" / "test_experiment.jsonl"), "w") as f:
-        f.write('{"prompt": "test prompt 1", "api": "test", "model_name": "model1"}\n')
         f.write(
-            '{"prompt": "test prompt 2", "api": "test", "model_name": "test_model"}\n'
+            '{"id": 0, "prompt": "test prompt 1", "api": "test", "model_name": "model1", "parameters": {"raise_error": "False"}}\n'
         )
-        f.write('{"prompt": "test prompt 3", "api": "test", "model_name": "model1"}\n')
-        f.write('{"prompt": "test prompt 4", "api": "test", "model_name": "model3"}\n')
-        f.write('{"prompt": "test prompt 5", "api": "test", "model_name": "model2"}\n')
-        f.write('{"prompt": "test prompt 6", "api": "test", "model_name": "model3"}\n')
-        f.write('{"prompt": "test prompt 7", "api": "test", "model_name": "model3"}\n')
         f.write(
-            '{"prompt": "test prompt 8", "api": "test", "model_name": "test_model"}\n'
+            '{"prompt": "test prompt 2", "api": "test", "model_name": "model1", "parameters": {"raise_error": "True", "raise_error_type": "Exception"}}\n'
         )
+        f.write(
+            '{"id": 1, "prompt": "test prompt 3", "api": "test", "model_name": "model1", "parameters": {"raise_error": "True"}}\n'
+        )
+        f.write(
+            '{"id": 2, "prompt": "test prompt 4", "api": "test", "model_name": "model2", "parameters": {"raise_error": "False"}}\n'
+        )
+        f.write(
+            '{"id": 3, "prompt": "test prompt 5", "api": "test", "model_name": "model2", "parameters": {"raise_error": "False"}}\n'
+        )
+        f.write(
+            '{"id": 4, "prompt": "test prompt 6", "api": "test", "model_name": "model2", "parameters": {"raise_error": "False"}}\n'
+        )
+
+    # create a file with larger number of prompts with different APIs, models and groups
+    with open(
+        Path(tmp_path / "data" / "input" / "test_experiment_with_groups.jsonl"), "w"
+    ) as f:
+        f.write(
+            '{"id": 0, "prompt": "test prompt 1", "api": "test", "model_name": "model1", "parameters": {"raise_error": "False"}}\n'
+        )
+        f.write(
+            '{"prompt": "test prompt 2", "api": "test", "model_name": "model1", "parameters": {"raise_error": "True", "raise_error_type": "Exception"}}\n'
+        )
+        f.write(
+            '{"id": 1, "prompt": "test prompt 3", "api": "test", "model_name": "model1", "parameters": {"raise_error": "True"}, "group": "group1"}\n'
+        )
+        f.write(
+            '{"id": 2, "prompt": "test prompt 4", "api": "test", "model_name": "model2", "parameters": {"raise_error": "False"}}\n'
+        )
+        f.write(
+            '{"id": 3, "prompt": "test prompt 5", "api": "test", "model_name": "model2", "parameters": {"raise_error": "False"}}\n'
+        )
+        f.write(
+            '{"id": 4, "prompt": "test prompt 6", "api": "test", "model_name": "model2", "parameters": {"raise_error": "False"}, "group": "group1"}\n'
+        )
+
+    # create a file with max queries dictionary
+    with open(Path(tmp_path / "max_queries_dict.json"), "w") as f:
+        f.write('{"test": {"model1": 100, "model2": 120}, "group1": 200}')
 
     # store current working directory
     cwd = os.getcwd()
@@ -490,8 +525,8 @@ def temporary_data_folder_judge(tmp_path: Path):
     tmp_path
     ├── data/
         ├── input/
+            └── test-experiment.jsonl
         ├── output/
-            └── completed-test-experiment.jsonl
         ├── media/
     ├── judge_loc/
         └── template.txt
@@ -509,17 +544,12 @@ def temporary_data_folder_judge(tmp_path: Path):
     Path(tmp_path / "data" / "media").mkdir()
 
     # create a completed experiment file with "response" key
-    with open(
-        Path(tmp_path / "data" / "output" / "completed-test-experiment.jsonl"), "w"
-    ) as f:
+    with open(Path(tmp_path / "data" / "output" / "test-experiment.jsonl"), "w") as f:
         f.write(
-            '{"id": 0, "api": "test", "model": "test_model", "prompt": "test prompt 1", "response": "test response 1"}\n'
+            '{"id": 0, "api": "test", "model": "test_model", "prompt": "test prompt 1", "parameters": {"raise_error": "False"}}\n'
         )
         f.write(
-            '{"id": 1, "api": "test", "model": "test_model", "prompt": "test prompt 2", "response": "test response 2"}\n'
-        )
-        f.write(
-            '{"id": 2, "api": "test", "model": "test_model", "prompt": "test prompt 3", "response": "test response 3"}\n'
+            '{"id": 1, "api": "test", "model": "test_model", "prompt": "test prompt 2", "parameters": {"raise_error": "False"}}\n'
         )
 
     # create a judge location folder

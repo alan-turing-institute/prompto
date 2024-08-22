@@ -514,7 +514,7 @@ async def test_send_requests_retry_with_group(
         "Adding to the queue to try again later..."
     )
     assert log_msg in caplog.text
-    log_msg = "Retrying 1 failed queries - attempt 2 of 3..."
+    log_msg = "Retrying 1 failed queries for group 'test_group' - attempt 2 of 3..."
     assert log_msg in caplog.text
     log_msg = (
         "Error (i=1, id=test_id-3) on attempt 2 of 3: "
@@ -522,7 +522,7 @@ async def test_send_requests_retry_with_group(
         "Adding to the queue to try again later..."
     )
     assert log_msg in caplog.text
-    log_msg = "Retrying 1 failed queries - attempt 3 of 3..."
+    log_msg = "Retrying 1 failed queries for group 'test_group' - attempt 3 of 3..."
     assert log_msg in caplog.text
     log_msg = (
         "Error (i=1, id=test_id-3) after maximum 3 attempts: "
