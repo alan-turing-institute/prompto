@@ -117,14 +117,21 @@ def load_judge_args(
         judge = parse_judge_arg(argument=judge_arg)
         # check if the judge is in the judge settings dictionary
         Judge.check_judge_in_judge_settings(judge=judge, judge_settings=judge_settings)
+        logging.info(f"Judge location loaded from {judge_location_arg}")
+        logging.info(f"Judges to be used: {judge}")
     else:
+        logging.info(
+            "Not creating judge file as one of judge_location or judge is None"
+        )
         create_judge_file = False
         template_prompt, judge_settings, judge = None, None, None
 
     return create_judge_file, template_prompt, judge_settings, judge
 
 
-def parse_file_path(file_path: str, settings: Settings, move_to_input: bool) -> str:
+def parse_file_path_and_check_in_input(
+    file_path: str, settings: Settings, move_to_input: bool
+) -> str:
     """
     Parse the file path to get the experiment file name.
 
@@ -367,7 +374,7 @@ async def main():
     logging.info(settings)
 
     # parse the file path
-    experiment_file_name = parse_file_path(
+    experiment_file_name = parse_file_path_and_check_in_input(
         file_path=args.file, settings=settings, move_to_input=args.move_to_input
     )
 

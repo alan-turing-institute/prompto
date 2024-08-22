@@ -535,6 +535,8 @@ def temporary_data_folder_judge(tmp_path: Path):
         └── settings.json
     ├── judge_loc_no_settings/
         └── template.txt
+    ├── test-exp-not-in-input.jsonl
+    └── max_queries_dict.json
     """
     # create a folder for testing the experiment pipeline
     data_dir = Path(tmp_path / "data").mkdir()
@@ -543,16 +545,25 @@ def temporary_data_folder_judge(tmp_path: Path):
     Path(tmp_path / "data" / "output").mkdir()
     Path(tmp_path / "data" / "media").mkdir()
 
-    # create input experiment file
-    with open(Path(tmp_path / "data" / "input" / "test-experiment.jsonl"), "w") as f:
+    # create input experiment file not in input folder
+    with open(Path(tmp_path / "test-exp-not-in-input.jsonl"), "w") as f:
         f.write(
-            '{"id": 0, "api": "test", "model": "test_model", "prompt": "test prompt 1", "parameters": {"raise_error": "False"}}\n'
+            '{"id": 0, "api": "test", "model1": "test_model", "prompt": "test prompt 1", "parameters": {"raise_error": "False"}}\n'
         )
         f.write(
-            '{"id": 1, "api": "test", "model": "test_model", "prompt": "test prompt 2", "parameters": {"raise_error": "False"}}\n'
+            '{"id": 1, "api": "test", "model2": "test_model", "prompt": "test prompt 2", "parameters": {"raise_error": "False"}}\n'
         )
 
-    # create a completed experiment file with "response" key
+    # create input experiment file in input folder
+    with open(Path(tmp_path / "data" / "input" / "test-experiment.jsonl"), "w") as f:
+        f.write(
+            '{"id": 0, "api": "test", "model1": "test_model", "prompt": "test prompt 1", "parameters": {"raise_error": "False"}}\n'
+        )
+        f.write(
+            '{"id": 1, "api": "test", "model2": "test_model", "prompt": "test prompt 2", "parameters": {"raise_error": "False"}}\n'
+        )
+
+    # create a completed experiment file with "response" key in output folder
     with open(
         Path(tmp_path / "data" / "output" / "completed-test-experiment.jsonl"), "w"
     ) as f:
@@ -600,6 +611,10 @@ def temporary_data_folder_judge(tmp_path: Path):
     judge_loc_no_settings = Path(tmp_path / "judge_loc_no_settings").mkdir()
     with open(Path(tmp_path / "judge_loc_no_settings" / "template.txt"), "w") as f:
         f.write("Template: input={INPUT_PROMPT}, output={OUTPUT_RESPONSE}")
+
+    # create a file with max queries dictionary
+    with open(Path(tmp_path / "max_queries_dict.json"), "w") as f:
+        f.write('{"test": {"model1": 100, "model2": 120}}')
 
     # store current working directory
     cwd = os.getcwd()
