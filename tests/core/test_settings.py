@@ -33,6 +33,24 @@ def test_settings_default_init(temporary_data_folders):
     )
 
 
+def test_settings_init_errors(temporary_data_folders):
+    # raise an error if max_queries is not an integer
+    with pytest.raises(TypeError, match="max_queries must be a positive integer"):
+        Settings(max_queries="not_an_int")
+
+    # raise an error if max_queries is a negative integer
+    with pytest.raises(ValueError, match="max_queries must be a positive integer"):
+        Settings(max_queries=0)
+
+    # raise an error if max_attempts is not an integer
+    with pytest.raises(TypeError, match="max_attempts must be a positive integer"):
+        Settings(max_attempts="not_an_int")
+
+    # raise an error if max_attempts is a negative integer
+    with pytest.raises(ValueError, match="max_attempts must be a positive integer"):
+        Settings(max_attempts=0)
+
+
 def test_settings_custom_init(temporary_data_folders):
     settings = Settings(
         data_folder="dummy_data", max_queries=20, max_attempts=5, parallel=True
@@ -424,6 +442,18 @@ def test_max_queries_setter(temporary_data_folders):
     settings.max_queries = 20
     assert settings.max_queries == 20
 
+    # raise an error if setting it to a negative integer
+    with pytest.raises(ValueError, match="max_queries must be a positive integer"):
+        settings.max_queries = -10
+
+    # raise an error if setting it to 0
+    with pytest.raises(ValueError, match="max_queries must be a positive integer"):
+        settings.max_queries = 0
+
+    # raise an error if setting it to a non-integer
+    with pytest.raises(ValueError, match="max_queries must be a positive integer"):
+        settings.max_queries = "not_an_int"
+
 
 def test_max_attempts_getter(temporary_data_folders):
     settings = Settings()
@@ -442,6 +472,18 @@ def test_max_attempts_setter(temporary_data_folders):
     # set it to a different value
     settings.max_attempts = 5
     assert settings.max_attempts == 5
+
+    # raise an error if setting it to a negative integer
+    with pytest.raises(ValueError, match="max_attempts must be a positive integer"):
+        settings.max_attempts = -10
+
+    # raise an error if setting it to 0
+    with pytest.raises(ValueError, match="max_attempts must be a positive integer"):
+        settings.max_attempts = 0
+
+    # raise an error if setting it to a non-integer
+    with pytest.raises(ValueError, match="max_attempts must be a positive integer"):
+        settings.max_attempts = "not_an_int"
 
 
 def test_parallel_getter_and_setter(temporary_data_folders):
