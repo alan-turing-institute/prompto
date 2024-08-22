@@ -543,13 +543,27 @@ def temporary_data_folder_judge(tmp_path: Path):
     Path(tmp_path / "data" / "output").mkdir()
     Path(tmp_path / "data" / "media").mkdir()
 
-    # create a completed experiment file with "response" key
-    with open(Path(tmp_path / "data" / "output" / "test-experiment.jsonl"), "w") as f:
+    # create input experiment file
+    with open(Path(tmp_path / "data" / "input" / "test-experiment.jsonl"), "w") as f:
         f.write(
             '{"id": 0, "api": "test", "model": "test_model", "prompt": "test prompt 1", "parameters": {"raise_error": "False"}}\n'
         )
         f.write(
             '{"id": 1, "api": "test", "model": "test_model", "prompt": "test prompt 2", "parameters": {"raise_error": "False"}}\n'
+        )
+
+    # create a completed experiment file with "response" key
+    with open(
+        Path(tmp_path / "data" / "output" / "completed-test-experiment.jsonl"), "w"
+    ) as f:
+        f.write(
+            '{"id": 0, "api": "test", "model": "test_model", "prompt": "test prompt 1", "response": "test response 1"}\n'
+        )
+        f.write(
+            '{"id": 1, "api": "test", "model": "test_model", "prompt": "test prompt 2", "response": "test response 2"}\n'
+        )
+        f.write(
+            '{"id": 2, "api": "test", "model": "test_model", "prompt": "test prompt 3", "response": "test response 3"}\n'
         )
 
     # create a judge location folder

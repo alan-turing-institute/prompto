@@ -69,7 +69,12 @@ async def test_process(
     # check log messages
     log_msg = "Processing experiment: test_experiment.jsonl.."
     assert log_msg in caplog.text
-    log_msg = f"Moving data/input/test_experiment.jsonl to data/output/test_experiment as data/output/test_experiment/{experiment.start_time}-input-test_experiment.jsonl"
+    log_msg = (
+        "Moving data/input/test_experiment.jsonl to "
+        "data/output/test_experiment as "
+        "data/output/test_experiment/"
+        f"{experiment.start_time}-input-test_experiment.jsonl"
+    )
     log_msg = "Sending 6 queries..."
     assert log_msg in caplog.text
     log_msg = (
@@ -204,7 +209,12 @@ async def test_process_with_max_queries_dict(
     # check log messages
     log_msg = "Processing experiment: test_experiment.jsonl.."
     assert log_msg in caplog.text
-    log_msg = f"Moving data/input/test_experiment.jsonl to data/output/test_experiment as data/output/test_experiment/{experiment.start_time}-input-test_experiment.jsonl"
+    log_msg = (
+        "Moving data/input/test_experiment.jsonl to "
+        "data/output/test_experiment as "
+        "data/output/test_experiment/"
+        f"{experiment.start_time}-input-test_experiment.jsonl"
+    )
     log_msg = "Sending 6 queries in parallel by grouping prompts..."
     assert log_msg in caplog.text
     log_msg = f"Queries per group: {experiment.grouped_experiment_prompts_summary()}"
@@ -331,7 +341,12 @@ async def test_process_with_groups(
     # check log messages
     log_msg = "Processing experiment: test_experiment_with_groups.jsonl.."
     assert log_msg in caplog.text
-    log_msg = f"Moving data/input/test_experiment_with_groups.jsonl to data/output/test_experiment_with_groups as data/output/test_experiment_with_groups/{experiment.start_time}-input-test_experiment_with_groups.jsonl"
+    log_msg = (
+        "Moving data/input/test_experiment_with_groups.jsonl to "
+        "data/output/test_experiment_with_groups as "
+        "data/output/test_experiment_with_groups/"
+        f"{experiment.start_time}-input-test_experiment_with_groups.jsonl"
+    )
     log_msg = "Sending 6 queries..."
     assert log_msg in caplog.text
     log_msg = (
@@ -471,7 +486,12 @@ async def test_process_with_max_queries_dict_and_groups(
     # check log messages
     log_msg = "Processing experiment: test_experiment_with_groups.jsonl.."
     assert log_msg in caplog.text
-    log_msg = f"Moving data/input/test_experiment_with_groups.jsonl to data/output/test_experiment_with_groups as data/output/test_experiment_with_groups/{experiment.start_time}-input-test_experiment_with_groups.jsonl"
+    log_msg = (
+        "Moving data/input/test_experiment_with_groups.jsonl to "
+        "data/output/test_experiment_with_groups as "
+        "data/output/test_experiment_with_groups/"
+        f"{experiment.start_time}-input-test_experiment_with_groups.jsonl"
+    )
     log_msg = "Sending 6 queries in parallel by grouping prompts..."
     assert log_msg in caplog.text
     log_msg = f"Queries per group: {experiment.grouped_experiment_prompts_summary()}"
