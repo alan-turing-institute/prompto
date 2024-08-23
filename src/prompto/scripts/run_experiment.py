@@ -130,7 +130,7 @@ def load_judge_args(
 
 
 def parse_file_path_and_check_in_input(
-    file_path: str, settings: Settings, move_to_input: bool
+    file_path: str, settings: Settings, move_to_input: bool = False
 ) -> str:
     """
     Parse the file path to get the experiment file name.
@@ -149,21 +149,19 @@ def parse_file_path_and_check_in_input(
     settings : Settings
         Settings object for the experiment which contains
         the input folder path
-    move_to_input : bool
+    move_to_input : bool, optional
         Flag to indicate if the file should be moved to the input
         folder. If False, the file is copied to the input folder.
         If the file is already in the input folder, this flag has
         no effect but the file will still be processed which would
-        lead it to be moved to the output folder in the end
+        lead it to be moved to the output folder in the end.
+        Default is False
 
     Returns
     -------
     str
         Experiment file name (without the full directories in the path)
     """
-    # get experiment file name (without the path)
-    experiment_file_name = os.path.basename(file_path)
-
     # check if file exists
     if not os.path.exists(file_path):
         raise FileNotFoundError(f"File {file_path} not found")
@@ -171,6 +169,9 @@ def parse_file_path_and_check_in_input(
     # check if file is a jsonl file
     if not file_path.endswith(".jsonl"):
         raise ValueError("Experiment file must be a jsonl file")
+
+    # get experiment file name (without the path)
+    experiment_file_name = os.path.basename(file_path)
 
     # if the experiment file is not in the input folder, move it there
     if experiment_file_name not in os.listdir(settings.input_folder):
@@ -194,13 +195,16 @@ def parse_file_path_and_check_in_input(
 def create_judge_experiment(
     create_judge_file: bool,
     experiment: Experiment,
-    settings: Settings,
-    template_prompt: str,
-    judge_settings: dict,
-    judge: list[str],
+    template_prompt: str | None,
+    judge_settings: dict | None,
+    judge: list[str] | str | None,
 ) -> Experiment | None:
     """
     Create a judge experiment if the create_judge_file flag is True.
+
+    This experiment object should have been processed before,
+    so that the completed responses are available.
+    If the experiment has not been processed, an error is raised.
 
     Parameters
     ----------
@@ -209,14 +213,12 @@ def create_judge_experiment(
     experiment : Experiment
         The experiment object to create the judge experiment from.
         This is used to obtain the list of completed responses
-        and to create the judge experiment and file name
-    settings : Settings
-        Settings object for the experiment
-    template_prompt : str
+        and to create the judge experiment and file name.
+    template_prompt : str | None
         The template prompt string to be used for the judge
-    judge_settings : dict
+    judge_settings : dict | None
         The judge settings dictionary to be used for the judge
-    judge : list[str]
+    judge : list[str] | str | None
         The judge(s) to be used for the judge experiment. These
         must be keys in the judge settings dictionary
 
@@ -227,6 +229,26 @@ def create_judge_experiment(
         otherwise None
     """
     if create_judge_file:
+        # if completed_responses is empty, raise an error
+        if experiment.completed_responses == []:
+            raise ValueError(
+                f"Cannot create judge file for experiment {experiment.experiment_name} "
+                "as completed_responses is empty"
+            )
+
+        if not isinstance(template_prompt, str):
+            raise TypeError(
+                "If create_judge_file is True, template_prompt must be a string"
+            )
+        if not isinstance(judge_settings, dict):
+            raise TypeError(
+                "If create_judge_file is True, judge_settings must be a dictionary"
+            )
+        if not isinstance(judge, list) and not isinstance(judge, str):
+            raise TypeError(
+                "If create_judge_file is True, judge must be a list of strings or a string"
+            )
+
         # create judge object from the parsed arguments
         j = Judge(
             completed_responses=experiment.completed_responses,
@@ -236,10 +258,15 @@ def create_judge_experiment(
 
         # create judge file
         judge_file_path = f"judge-{experiment.experiment_name}.jsonl"
-        j.create_judge_file(judge=judge, out_filepath=judge_file_path)
+        j.create_judge_file(
+            judge=judge,
+            out_filepath=f"{experiment.settings.input_folder}/{judge_file_path}",
+        )
 
         # create Experiment object
-        judge_experiment = Experiment(file_name=judge_file_path, settings=settings)
+        judge_experiment = Experiment(
+            file_name=judge_file_path, settings=experiment.settings
+        )
     else:
         judge_experiment = None
 
@@ -389,7 +416,6 @@ async def main():
     judge_experiment = create_judge_experiment(
         create_judge_file=create_judge_file,
         experiment=experiment,
-        settings=settings,
         template_prompt=template_prompt,
         judge_settings=judge_settings,
         judge=judge,
