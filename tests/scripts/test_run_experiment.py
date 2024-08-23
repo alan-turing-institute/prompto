@@ -2,6 +2,7 @@ import logging
 import os
 
 import pytest
+from cli_test_helpers import shell
 
 from prompto.experiment import Experiment
 from prompto.scripts.run_experiment import (
@@ -139,7 +140,6 @@ def test_parse_file_path_and_check_in_input_not_in_input_copy(
     caplog.set_level(logging.INFO)
     settings = Settings()
 
-    # should not exist in the input folder yet
     assert not os.path.isfile("data/input/test-exp-not-in-input.jsonl")
 
     # move_to_input is by default False
@@ -157,9 +157,7 @@ def test_parse_file_path_and_check_in_input_not_in_input_copy(
         in caplog.text
     )
 
-    # should still exist in the original location
     assert os.path.isfile("test-exp-not-in-input.jsonl")
-    # should be copied to the input folder
     assert os.path.isfile("data/input/test-exp-not-in-input.jsonl")
 
 
@@ -170,7 +168,6 @@ def test_parse_file_path_and_check_in_input_not_in_input_move(
     caplog.set_level(logging.INFO)
     settings = Settings()
 
-    # should not exist in the input folder yet
     assert not os.path.isfile("data/input/test-exp-not-in-input.jsonl")
 
     result = parse_file_path_and_check_in_input(
@@ -188,9 +185,7 @@ def test_parse_file_path_and_check_in_input_not_in_input_move(
         in caplog.text
     )
 
-    # should no longer exist in the original location
     assert not os.path.isfile("test-exp-not-in-input.jsonl")
-    # should be copied to the input folder
     assert os.path.isfile("data/input/test-exp-not-in-input.jsonl")
 
 
@@ -413,3 +408,182 @@ def test_create_judge_experiment_empty_completed_responses(temporary_data_folder
             judge_settings={},
             judge=["judge1"],
         )
+
+
+def test_run_experiment_entrypoint():
+    result = shell("prompto_run_experiment --help")
+    assert result.exit_code == 0
+
+
+def test_run_experiment_no_inputs():
+    result = shell("prompto_run_experiment")
+    assert result.exit_code != 0
+    assert "usage:" in result.stderr
+
+
+def test_run_experiment_no_judge_in_input(temporary_data_folder_judge):
+    result = shell(
+        "prompto_run_experiment "
+        "--file data/input/test-experiment.jsonl "
+        "--max-queries=200"
+    )
+    assert result.exit_code == 0
+    assert "No environment file found at .env" in result.stderr
+    assert (
+        "Not creating judge file as one of judge_location or judge is None"
+        in result.stderr
+    )
+    assert (
+        "Settings: "
+        "data_folder=data, "
+        "max_queries=200, "
+        "max_attempts=5, "
+        "parallel=False\n"
+        "Subfolders: "
+        "input_folder=data/input, "
+        "output_folder=data/output, "
+        "media_folder=data/media"
+    ) in result.stderr
+    assert (
+        "Starting processing experiment: data/input/test-experiment.jsonl..."
+        in result.stderr
+    )
+    assert "Experiment processed successfully!" in result.stderr
+    assert os.path.isdir("data/output/test-experiment")
+
+
+def test_run_experiment_no_judge_not_in_input_move(temporary_data_folder_judge):
+    result = shell(
+        "prompto_run_experiment "
+        "--file test-exp-not-in-input.jsonl "
+        "--env-file some_file.env "
+        "--data-folder pipeline_data "
+        "--move-to-input "
+        "--max-queries 500 "
+        "--max-attempts 10 "
+        "--parallel "
+        "--max-queries-json max_queries_dict.json"
+    )
+    assert result.exit_code == 0
+
+    assert not os.path.isfile("test-exp-not-in-input.jsonl")
+
+    assert "No environment file found at some_file.env" in result.stderr
+    assert (
+        "Not creating judge file as one of judge_location or judge is None"
+        in result.stderr
+    )
+    assert (
+        "File test-exp-not-in-input.jsonl is not in the input folder pipeline_data/input"
+        in result.stderr
+    )
+    assert (
+        "Moving file from test-exp-not-in-input.jsonl to pipeline_data/input/test-exp-not-in-input.jsonl"
+        in result.stderr
+    )
+    assert (
+        "Settings: "
+        "data_folder=pipeline_data, "
+        "max_queries=500, "
+        "max_attempts=10, "
+        "parallel=True, "
+        "max_queries_dict={'test': {'model1': 100, 'model2': 120}}\n"
+        "Subfolders: "
+        "input_folder=pipeline_data/input, "
+        "output_folder=pipeline_data/output, "
+        "media_folder=pipeline_data/media"
+    ) in result.stderr
+    assert (
+        "Starting processing experiment: test-exp-not-in-input.jsonl..."
+        in result.stderr
+    )
+    assert "Experiment processed successfully!" in result.stderr
+    assert os.path.isdir("pipeline_data/output/test-exp-not-in-input")
+
+
+def test_run_experiment_judge_not_in_input_copy(temporary_data_folder_judge):
+    result = shell(
+        "prompto_run_experiment "
+        "--file test-exp-not-in-input.jsonl "
+        "--data-folder pipeline_data "
+        "--max-queries=200 "
+        "--judge-location judge_loc "
+        "--judge judge1"
+    )
+    assert result.exit_code == 0
+
+    assert os.path.isfile("test-exp-not-in-input.jsonl")
+
+    assert "No environment file found at .env" in result.stderr
+    assert "Judge location loaded from judge_loc" in result.stderr
+    assert "Judges to be used: ['judge1']" in result.stderr
+    assert (
+        "File test-exp-not-in-input.jsonl is not in the input folder pipeline_data/input"
+        in result.stderr
+    )
+    assert (
+        "Copying file from test-exp-not-in-input.jsonl to pipeline_data/input/test-exp-not-in-input.jsonl"
+        in result.stderr
+    )
+    assert (
+        "Settings: "
+        "data_folder=pipeline_data, "
+        "max_queries=200, "
+        "max_attempts=5, "
+        "parallel=False\n"
+        "Subfolders: "
+        "input_folder=pipeline_data/input, "
+        "output_folder=pipeline_data/output, "
+        "media_folder=pipeline_data/media"
+    ) in result.stderr
+    assert (
+        "Starting processing experiment: test-exp-not-in-input.jsonl..."
+        in result.stderr
+    )
+    assert "Completed experiment: test-exp-not-in-input.jsonl" in result.stderr
+    assert (
+        "Starting processing judge of experiment: judge-test-exp-not-in-input.jsonl..."
+        in result.stderr
+    )
+    assert "Completed experiment: judge-test-exp-not-in-input.jsonl" in result.stderr
+    assert "Experiment processed successfully!" in result.stderr
+    assert os.path.isdir("pipeline_data/output/test-exp-not-in-input")
+    assert os.path.isdir("pipeline_data/output/judge-test-exp-not-in-input")
+
+
+def test_run_experiment_judge(temporary_data_folder_judge):
+    result = shell(
+        "prompto_run_experiment "
+        "--file data/input/test-experiment.jsonl "
+        "--max-queries=200 "
+        "--judge-location judge_loc "
+        "--judge judge1,judge2"
+    )
+    assert result.exit_code == 0
+    assert "No environment file found at .env" in result.stderr
+    assert "Judge location loaded from judge_loc" in result.stderr
+    assert "Judges to be used: ['judge1', 'judge2']" in result.stderr
+    assert (
+        "Settings: "
+        "data_folder=data, "
+        "max_queries=200, "
+        "max_attempts=5, "
+        "parallel=False\n"
+        "Subfolders: "
+        "input_folder=data/input, "
+        "output_folder=data/output, "
+        "media_folder=data/media"
+    ) in result.stderr
+    assert (
+        "Starting processing experiment: data/input/test-experiment.jsonl..."
+        in result.stderr
+    )
+    assert "Completed experiment: test-experiment.jsonl" in result.stderr
+    assert (
+        "Starting processing judge of experiment: judge-test-experiment.jsonl..."
+        in result.stderr
+    )
+    assert "Completed experiment: judge-test-experiment.jsonl" in result.stderr
+    assert "Experiment processed successfully!" in result.stderr
+    assert os.path.isdir("data/output/test-experiment")
+    assert os.path.isdir("data/output/judge-test-experiment")

@@ -24,14 +24,8 @@ def test_parse_judge_arg():
 
 
 def test_parse_judge_arg_logging(caplog):
-    # test logging information is correct
-    caplog.set_level(logging.INFO)
-
     assert parse_judge_arg("judge1, judge2") == ["judge1", "judge2"]
-    assert "Judges to be used: ['judge1', 'judge2']" in caplog.text
-
     assert parse_judge_arg("judge_3,judge_4,judge5") == ["judge_3", "judge_4", "judge5"]
-    assert "Judges to be used: ['judge_3', 'judge_4', 'judge5']" in caplog.text
 
 
 def test_parse_judge_location_arg(temporary_data_folder_judge):
@@ -164,7 +158,7 @@ def test_judge_check_judge_settings():
     )
 
 
-def check_judge_in_judge_settings():
+def test_check_judge_in_judge_settings():
     # raise error if judge is not a key in judge settings
     # judge is a string case
     with pytest.raises(
@@ -208,7 +202,7 @@ def check_judge_in_judge_settings():
     )
 
 
-def check_judge_init():
+def test_check_judge_init():
     # raise error if nothing is provided
     with pytest.raises(
         TypeError,

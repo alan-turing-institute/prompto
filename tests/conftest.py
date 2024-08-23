@@ -528,6 +528,7 @@ def temporary_data_folder_judge(tmp_path: Path):
             └── test-experiment.jsonl
         ├── output/
         ├── media/
+    ├── pipeline_data/
     ├── judge_loc/
         └── template.txt
         └── settings.json
@@ -544,6 +545,9 @@ def temporary_data_folder_judge(tmp_path: Path):
     Path(tmp_path / "data" / "input").mkdir()
     Path(tmp_path / "data" / "output").mkdir()
     Path(tmp_path / "data" / "media").mkdir()
+
+    # create another empty folder for pipeline data
+    pipeline_data_folder = Path(tmp_path / "pipeline_data").mkdir()
 
     # create input experiment file not in input folder
     with open(Path(tmp_path / "test-exp-not-in-input.jsonl"), "w") as f:
@@ -622,7 +626,7 @@ def temporary_data_folder_judge(tmp_path: Path):
     # change to temporary directory
     os.chdir(tmp_path)
 
-    yield data_dir, judge_loc, judge_loc_no_template, judge_loc_no_settings
+    yield data_dir, pipeline_data_folder, judge_loc, judge_loc_no_template, judge_loc_no_settings
 
     # change back to original directory
     os.chdir(cwd)

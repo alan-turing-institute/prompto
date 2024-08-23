@@ -1,5 +1,4 @@
 import json
-import logging
 import os
 
 from tqdm import tqdm
@@ -26,7 +25,6 @@ def parse_judge_arg(argument: str) -> list[str]:
     """
     x = argument.replace(" ", "").split(",")
     judges = list(sorted(set(x), key=x.index))
-    logging.info(f"Judges to be used: {judges}")
     return judges
 
 

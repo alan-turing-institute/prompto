@@ -409,7 +409,7 @@ async def main():
     experiment = Experiment(file_name=experiment_file_name, settings=settings)
 
     # process the experiment
-    logging.info(f"Processing experiment {experiment.experiment_name}...")
+    logging.info(f"Starting processing experiment: {args.file}...")
     await experiment.process()
 
     # create judge experiment
@@ -423,8 +423,12 @@ async def main():
 
     if judge_experiment is not None:
         # process the experiment
-        logging.info(f"Processing experiment {judge_experiment.experiment_name}...")
-        await experiment.process()
+        logging.info(
+            f"Starting processing judge of experiment: {judge_experiment.file_name}..."
+        )
+        await judge_experiment.process()
+
+    logging.info("Experiment processed successfully!")
 
 
 if __name__ == "__main__":
