@@ -1,2 +1,0 @@
-{"id": 0, "api": "anthropic", "model_name": "claude-3-haiku-20240307", "prompt": "What is 10 + 5?", "parameters": {"temperature": 1, "max_tokens": 100}}
-{"id": 1, "api": "anthropic", "model_name": "claude-3-5-sonnet-20240620", "prompt": "What is 10 + 6?", "parameters": {"temperature": 1, "max_tokens": 100}}
