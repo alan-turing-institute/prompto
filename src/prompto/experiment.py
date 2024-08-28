@@ -567,6 +567,7 @@ class Experiment:
                 completed_prompt_dict = await self.generate_text(
                     prompt_dict=prompt_dict,
                     index=index,
+                    evaluation_funcs=evaluation_funcs,
                 )
         except (NotImplementedError, KeyError, ValueError, TypeError) as err:
             # don't retry for selected errors, log the error and save an error response
@@ -611,12 +612,6 @@ class Experiment:
                 # return Execption to indicate that we should try this prompt again later
                 return Exception(f"{type(err).__name__} - {err}\n")
 
-        # Perform Evaluation if evaluation function is provided
-        if evaluation_funcs is not None:
-            completed_prompt_dict = await self.evaluate_responses(
-                completed_prompt_dict, evaluation_funcs
-            )
-
         # record the response in a jsonl file asynchronously using FILE_WRITE_LOCK
         async with FILE_WRITE_LOCK:
             with open(self.output_completed_file_path, "a") as f:
@@ -629,6 +624,7 @@ class Experiment:
         self,
         prompt_dict: dict,
         index: int | None,
+        evaluation_funcs: list[callable] | None = None,
     ) -> dict:
         """
         Generate text by querying an LLM.
@@ -672,6 +668,10 @@ class Experiment:
 
         # query the model
         response = await api.query(prompt_dict=prompt_dict, index=index)
+
+        # Perform Evaluation if evaluation function is provided
+        if evaluation_funcs is not None:
+            response = await self.evaluate_responses(response, evaluation_funcs)
 
         return response
 
