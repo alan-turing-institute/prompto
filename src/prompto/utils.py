@@ -543,3 +543,27 @@ def check_max_queries_dict(max_queries_dict: dict[str, int | dict[str, int]]) ->
             )
 
     return True
+
+
+def parse_list_arg(argument: str) -> list[str]:
+    """
+    Splits a string into a list by separating on commas.
+    Will remove any whitespace and removes duplicates.
+    Used to parsing argument which is a list in CLI commands.
+
+    Parameters
+    ----------
+    argument : str
+        A string separated with commas, e.g.
+        "judge1, judge2" or "judge1,judge2,judge1".
+        Whitespace will be removed.
+
+    Returns
+    -------
+    list[str]
+        A list of the comma separated items in the input string,
+        with no duplicates and whitespaces, e.g. ["judge1", "judge2"].
+
+    """
+    x = argument.replace(" ", "").split(",")
+    return list(sorted(set(x), key=x.index))

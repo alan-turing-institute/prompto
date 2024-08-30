@@ -7,9 +7,10 @@ import os
 from dotenv import load_dotenv
 
 from prompto.experiment import Experiment
-from prompto.judge import Judge, parse_judge_arg, parse_judge_location_arg
+from prompto.judge import Judge, parse_judge_location_arg
+from prompto.scorer import SCORING_FUNCTIONS, obtain_scoring_functions
 from prompto.settings import Settings
-from prompto.utils import copy_file, move_file
+from prompto.utils import copy_file, move_file, parse_list_arg
 
 
 def load_env_file(env_file: str) -> bool:
@@ -114,7 +115,7 @@ def load_judge_args(
         template_prompt, judge_settings = parse_judge_location_arg(
             argument=judge_location_arg
         )
-        judge = parse_judge_arg(argument=judge_arg)
+        judge = parse_list_arg(argument=judge_arg)
         # check if the judge is in the judge settings dictionary
         Judge.check_judge_in_judge_settings(judge=judge, judge_settings=judge_settings)
         logging.info(f"Judge location loaded from {judge_location_arg}")
@@ -368,6 +369,16 @@ async def main():
         type=str,
         default=None,
     )
+    parser.add_argument(
+        "--scorer",
+        "-s",
+        help=(
+            "Scorer(s) to be used separated by commas. "
+            "These must be keys in the scorer settings dictionary"
+        ),
+        type=str,
+        default=None,
+    )
     args = parser.parse_args()
 
     # initialise logging
@@ -388,6 +399,14 @@ async def main():
         judge_location_arg=args.judge_location,
         judge_arg=args.judge,
     )
+
+    # check if scorer is provided, and if it is in the SCORING_FUNCTIONS dictionary
+    if args.scorer is not None:
+        scoring_functions = obtain_scoring_functions(
+            scorer=args.scorer, scoring_functions=SCORING_FUNCTIONS
+        )
+    else:
+        scoring_functions = None
 
     # initialise settings
     settings = Settings(
@@ -426,7 +445,7 @@ async def main():
         logging.info(
             f"Starting processing judge of experiment: {judge_experiment.file_name}..."
         )
-        await judge_experiment.process()
+        await judge_experiment.process(evaluation_funcs=scoring_functions)
 
     logging.info("Experiment processed successfully!")
 

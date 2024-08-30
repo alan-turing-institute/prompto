@@ -261,7 +261,9 @@ class Experiment:
 
         return queries_and_rates_per_group
 
-    async def process(self, evaluation_funcs: callable = None) -> tuple[dict, float]:
+    async def process(
+        self, evaluation_funcs: list[callable] | None = None
+    ) -> tuple[dict, float]:
         """
         Function to process the experiment.
 
