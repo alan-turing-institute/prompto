@@ -4,28 +4,7 @@ import os
 
 import pytest
 
-from prompto.judge import Judge, parse_judge_arg, parse_judge_location_arg
-
-
-def test_parse_judge_arg():
-    # test parser of judge argument
-    assert parse_judge_arg("judge") == ["judge"]
-    assert parse_judge_arg("judge1,judge2") == ["judge1", "judge2"]
-    assert parse_judge_arg("judge1, judge2") == ["judge1", "judge2"]
-    assert parse_judge_arg(" judge1 , judge2") == ["judge1", "judge2"]
-    assert parse_judge_arg("judge1,judge2,judge1") == ["judge1", "judge2"]
-    assert parse_judge_arg("judge1,judge2 , judge1") == ["judge1", "judge2"]
-    assert parse_judge_arg("judge1,judge2,judge2") == ["judge1", "judge2"]
-    assert parse_judge_arg("judge2,judge2,judge1,judge3") == [
-        "judge2",
-        "judge1",
-        "judge3",
-    ]
-
-
-def test_parse_judge_arg_logging(caplog):
-    assert parse_judge_arg("judge1, judge2") == ["judge1", "judge2"]
-    assert parse_judge_arg("judge_3,judge_4,judge5") == ["judge_3", "judge_4", "judge5"]
+from prompto.judge import Judge, parse_judge_location_arg
 
 
 def test_parse_judge_location_arg(temporary_data_folder_judge):

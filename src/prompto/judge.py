@@ -4,30 +4,6 @@ import os
 from tqdm import tqdm
 
 
-def parse_judge_arg(argument: str) -> list[str]:
-    """
-    Splits a string into a list by separating on commas.
-    Will remove any whitespace and removes duplicates.
-    Used to parsing judge argument in CLI commands.
-
-    Parameters
-    ----------
-    argument : str
-        A string of judges separated with commas, e.g.
-        "judge1, judge2" or "judge1,judge2,judge1".
-        Whitespace will be removed.
-
-    Returns
-    -------
-    list[str]
-        A list of judges with no duplicates, e.g. ["judge1", "judge2"].
-
-    """
-    x = argument.replace(" ", "").split(",")
-    judges = list(sorted(set(x), key=x.index))
-    return judges
-
-
 def parse_judge_location_arg(argument: str) -> tuple[str, dict]:
     """
     Parses the judge location argument to get the
@@ -157,6 +133,25 @@ class Judge:
     def check_judge_in_judge_settings(
         judge: str | list[str], judge_settings: dict[str, dict]
     ) -> bool:
+        """
+        Method to check if the judge(s) are in the judge settings dictionary.
+
+        Parameters
+        ----------
+        judge : str | list[str]
+            A single judge or a list of judges to check if they
+            are keys in the judge_settings dictionary
+        judge_settings : dict[str, dict]
+            A dictionary of judge settings with the keys "api",
+            "model_name", "parameters". Used to define the
+            judge LLMs to be used in the judging process
+
+        Returns
+        -------
+        bool
+            True if the judge(s) are in the judge settings dictionary.
+            Errors will be raised if the judge(s) are not in the dictionary
+        """
         if isinstance(judge, str):
             judge = [judge]
 

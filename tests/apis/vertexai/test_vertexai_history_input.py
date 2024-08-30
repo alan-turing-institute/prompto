@@ -74,7 +74,7 @@ async def test_vertexai_query_history(
         "safety_settings" in await_kwargs.keys()
         and await_kwargs["safety_settings"] == DEFAULT_SAFETY_SETTINGS
     )
-    assert "stream" in await_kwargs.keys() and await_kwargs["stream"] == False
+    assert "stream" in await_kwargs.keys() and await_kwargs["stream"] is False
 
     mock_process_response.assert_called_once_with(mock_vertexai_call.return_value)
     mock_process_safety_attr.assert_called_once_with(mock_vertexai_call.return_value)
@@ -129,7 +129,7 @@ async def test_vertexai_query_history_error(
         "safety_settings" in await_kwargs.keys()
         and await_kwargs["safety_settings"] == DEFAULT_SAFETY_SETTINGS
     )
-    assert "stream" in await_kwargs.keys() and await_kwargs["stream"] == False
+    assert "stream" in await_kwargs.keys() and await_kwargs["stream"] is False
 
     expected_log_message = (
         f"Error with model VertexAI ({prompt_dict_history['model_name']}) "
@@ -183,7 +183,7 @@ async def test_vertexai_query_history_index_error(
         "safety_settings" in await_kwargs.keys()
         and await_kwargs["safety_settings"] == DEFAULT_SAFETY_SETTINGS
     )
-    assert "stream" in await_kwargs.keys() and await_kwargs["stream"] == False
+    assert "stream" in await_kwargs.keys() and await_kwargs["stream"] is False
 
     expected_log_message = (
         f"Error with model VertexAI ({prompt_dict_history['model_name']}) "
@@ -302,7 +302,7 @@ async def test_vertexai_query_history_no_system(
         "safety_settings" in await_kwargs.keys()
         and await_kwargs["safety_settings"] == DEFAULT_SAFETY_SETTINGS
     )
-    assert "stream" in await_kwargs.keys() and await_kwargs["stream"] == False
+    assert "stream" in await_kwargs.keys() and await_kwargs["stream"] is False
 
     mock_process_response.assert_called_once_with(mock_vertexai_call.return_value)
     mock_process_safety_attr.assert_called_once_with(mock_vertexai_call.return_value)
@@ -362,7 +362,7 @@ async def test_vertexai_query_history_error_no_system(
         "safety_settings" in await_kwargs.keys()
         and await_kwargs["safety_settings"] == DEFAULT_SAFETY_SETTINGS
     )
-    assert "stream" in await_kwargs.keys() and await_kwargs["stream"] == False
+    assert "stream" in await_kwargs.keys() and await_kwargs["stream"] is False
 
     expected_log_message = (
         f"Error with model VertexAI ({prompt_dict_history_no_system['model_name']}) "
@@ -423,7 +423,7 @@ async def test_vertexai_query_history_index_error_no_system(
         "safety_settings" in await_kwargs.keys()
         and await_kwargs["safety_settings"] == DEFAULT_SAFETY_SETTINGS
     )
-    assert "stream" in await_kwargs.keys() and await_kwargs["stream"] == False
+    assert "stream" in await_kwargs.keys() and await_kwargs["stream"] is False
 
     expected_log_message = (
         f"Error with model VertexAI ({prompt_dict_history_no_system['model_name']}) "

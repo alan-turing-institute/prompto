@@ -74,7 +74,7 @@ async def test_vertexai_query_string(
         "safety_settings" in await_kwargs.keys()
         and await_kwargs["safety_settings"] == DEFAULT_SAFETY_SETTINGS
     )
-    assert "stream" in await_kwargs.keys() and await_kwargs["stream"] == False
+    assert "stream" in await_kwargs.keys() and await_kwargs["stream"] is False
 
     mock_process_response.assert_called_once_with(mock_vertexai_call.return_value)
     mock_process_safety_attr.assert_called_once_with(mock_vertexai_call.return_value)
@@ -138,7 +138,7 @@ async def test_vertexai_query_string__index_error(
         "safety_settings" in await_kwargs.keys()
         and await_kwargs["safety_settings"] == DEFAULT_SAFETY_SETTINGS
     )
-    assert "stream" in await_kwargs.keys() and await_kwargs["stream"] == False
+    assert "stream" in await_kwargs.keys() and await_kwargs["stream"] is False
 
     expected_log_message = (
         f"Error with model VertexAI ({prompt_dict_string['model_name']}) "
@@ -194,7 +194,7 @@ async def test_vertexai_query_string_error(
         "safety_settings" in await_kwargs.keys()
         and await_kwargs["safety_settings"] == DEFAULT_SAFETY_SETTINGS
     )
-    assert "stream" in await_kwargs.keys() and await_kwargs["stream"] == False
+    assert "stream" in await_kwargs.keys() and await_kwargs["stream"] is False
 
     expected_log_message = (
         f"Error with model VertexAI ({prompt_dict_string['model_name']}) "

@@ -2,7 +2,8 @@ import argparse
 import json
 import os
 
-from prompto.judge import Judge, parse_judge_arg, parse_judge_location_arg
+from prompto.judge import Judge, parse_judge_location_arg
+from prompto.utils import parse_list_arg
 
 
 def obtain_output_filepath(input_filepath: str, output_folder: str) -> str:
@@ -65,7 +66,7 @@ def main():
 
     # parse judge location and judge arguments
     template_prompt, judge_settings = parse_judge_location_arg(args.judge_location)
-    judge = parse_judge_arg(args.judge)
+    judge = parse_list_arg(args.judge)
     # check if the judge is in the judge settings dictionary
     Judge.check_judge_in_judge_settings(judge=judge, judge_settings=judge_settings)
 

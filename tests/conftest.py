@@ -444,7 +444,8 @@ def temporary_data_folder_for_processing(tmp_path: Path):
     ├── data/
         ├── input/
             ├── test_experiment.jsonl
-            └── test_experiment_with_groups.jsonl
+            ├── test_experiment_with_groups.jsonl
+            └── test_experiment_eval.jsonl
         ├── output/
         ├── media/
     └── max_queries_dict.json
@@ -498,6 +499,16 @@ def temporary_data_folder_for_processing(tmp_path: Path):
         )
         f.write(
             '{"id": 4, "prompt": "test prompt 6", "api": "test", "model_name": "model2", "parameters": {"raise_error": "False"}, "group": "group1"}\n'
+        )
+
+    with open(
+        Path(tmp_path / "data" / "input" / "test_experiment_eval.jsonl"), "w"
+    ) as f:
+        f.write(
+            '{"id": 0, "api": "test", "model1": "test_model", "prompt": "test prompt 1", "parameters": {"raise_error": "False"}}\n'
+        )
+        f.write(
+            '{"id": 1, "api": "test", "model2": "test_model", "prompt": "test prompt 2", "parameters": {"raise_error": "False"}}\n'
         )
 
     # create a file with max queries dictionary
@@ -561,10 +572,10 @@ def temporary_data_folder_judge(tmp_path: Path):
     # create input experiment file in input folder
     with open(Path(tmp_path / "data" / "input" / "test-experiment.jsonl"), "w") as f:
         f.write(
-            '{"id": 0, "api": "test", "model1": "test_model", "prompt": "test prompt 1", "parameters": {"raise_error": "False"}}\n'
+            '{"id": 0, "api": "test", "model1": "test_model", "prompt": "test prompt 1", "parameters": {"raise_error": "False"}, "expected_response": "This is a test response"}\n'
         )
         f.write(
-            '{"id": 1, "api": "test", "model2": "test_model", "prompt": "test prompt 2", "parameters": {"raise_error": "False"}}\n'
+            '{"id": 1, "api": "test", "model2": "test_model", "prompt": "test prompt 2", "parameters": {"raise_error": "False"}, "expected_response": "something else"}\n'
         )
 
     # create a completed experiment file with "response" key in output folder

@@ -261,7 +261,9 @@ class Experiment:
 
         return queries_and_rates_per_group
 
-    async def process(self, evaluation_funcs: callable = None) -> tuple[dict, float]:
+    async def process(
+        self, evaluation_funcs: list[callable] | None = None
+    ) -> tuple[dict, float]:
         """
         Function to process the experiment.
 
@@ -705,9 +707,8 @@ class Experiment:
             take a prompt_dict as input and return a prompt dict as output. The evaluation
             functions can use keys in the prompt_dict to parameterise the functions.
         """
-        assert isinstance(
-            evaluation_funcs, list
-        ), "evaluation_funcs must be a list of functions"
+        if not isinstance(evaluation_funcs, list):
+            raise TypeError("evaluation_funcs must be a list of functions")
 
         for func in evaluation_funcs:
             prompt_dict = func(prompt_dict)

@@ -18,6 +18,7 @@ from prompto.utils import (
     log_success_response_chat,
     log_success_response_query,
     move_file,
+    parse_list_arg,
     sort_jsonl_files_by_creation_time,
     sort_prompts_by_model_for_api,
     write_log_message,
@@ -698,3 +699,24 @@ def test_check_max_queries_dict():
     assert check_max_queries_dict(
         max_queries_dict={"test": {"test_sub_key": 1, "test_sub_key_2": 2}, "test_2": 2}
     )
+
+
+def test_parse_list_arg():
+    # test parser of argument that is a comma-separated string
+    assert parse_list_arg("judge") == ["judge"]
+    assert parse_list_arg("judge1,judge2") == ["judge1", "judge2"]
+    assert parse_list_arg("judge1, judge2") == ["judge1", "judge2"]
+    assert parse_list_arg(" judge1 , judge2") == ["judge1", "judge2"]
+    assert parse_list_arg("judge1,judge2,judge1") == ["judge1", "judge2"]
+    assert parse_list_arg("judge1,judge2 , judge1") == ["judge1", "judge2"]
+    assert parse_list_arg("judge1,judge2,judge2") == ["judge1", "judge2"]
+    assert parse_list_arg("judge2,judge2,judge1,judge3") == [
+        "judge2",
+        "judge1",
+        "judge3",
+    ]
+
+
+def test_parse_list_arg_logging(caplog):
+    assert parse_list_arg("judge1, judge2") == ["judge1", "judge2"]
+    assert parse_list_arg("judge_3,judge_4,judge5") == ["judge_3", "judge_4", "judge5"]
