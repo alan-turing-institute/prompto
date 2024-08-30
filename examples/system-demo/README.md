@@ -1,6 +1,6 @@
 # System Demonstration examples
 
-We provide some illustrative examples of how to use `prompto` and compare it against traditional a synchronous approach to querying LLM endpoints.
+We provide some illustrative examples of how to use `prompto` and compare it against traditional a synchronous approach to querying LLM endpoints. These experiments are analysed in our systems demonstration paper currently available as a pre-print on [arXiv](https://arxiv.org/abs/2408.11847).
 
 We sample prompts from the instruction-following data following the Self-Instruct approach of [1] and [2]. We take a sample of 100 prompts from the [instruction-following data](https://github.com/tatsu-lab/stanford_alpaca/blob/main/alpaca_data.json) from [2] and apply the same prompt template. We then use these as prompt inputs to different models using `prompto`. See the [Generating the prompts for experiments](./alpaca_sample_generation.ipynb) notebook for more details.
 

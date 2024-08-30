@@ -46,6 +46,15 @@ class Settings:
     ):
         # check the data folder exists
         self.check_folder_exists(data_folder)
+        # check max_queries and max_attempts are positive integers
+        if not isinstance(max_queries, int):
+            raise TypeError("max_queries must be a positive integer")
+        if max_queries <= 0:
+            raise ValueError("max_queries must be a positive integer")
+        if not isinstance(max_attempts, int):
+            raise TypeError("max_attempts must be a positive integer")
+        if max_attempts <= 0:
+            raise ValueError("max_attempts must be a positive integer")
         # check form of max_queries_dict
         check_max_queries_dict(max_queries_dict)
 
@@ -200,7 +209,10 @@ class Settings:
 
     @max_queries.setter
     def max_queries(self, value: int):
-        self._max_queries = value
+        if isinstance(value, int) and value > 0:
+            self._max_queries = value
+        else:
+            raise ValueError("max_queries must be a positive integer")
 
     # ---- max attempts ----
 
@@ -210,4 +222,7 @@ class Settings:
 
     @max_attempts.setter
     def max_attempts(self, value: int):
-        self._max_attempts = value
+        if isinstance(value, int) and value > 0:
+            self._max_attempts = value
+        else:
+            raise ValueError("max_attempts must be a positive integer")

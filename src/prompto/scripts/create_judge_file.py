@@ -2,6 +2,14 @@ import argparse
 import json
 import os
 
+from prompto.judge import Judge, parse_judge_arg, parse_judge_location_arg
+
+
+def obtain_output_filepath(input_filepath: str, output_folder: str) -> str:
+    input_filename = os.path.basename(input_filepath).replace("completed-", "")
+    out_filepath = os.path.join(output_folder, f"judge-{input_filename}")
+    return out_filepath
+
 
 def main():
     """
@@ -19,12 +27,22 @@ def main():
     parser.add_argument(
         "--judge-location",
         "-l",
-        help="`Location of the judge template and settings to be used",
+        help=(
+            "Location of the judge folder storing the template.txt "
+            "and settings.json to be used"
+        ),
         type=str,
         required=True,
     )
     parser.add_argument(
-        "--judge", "-j", help="Judge to be used", type=str, required=True
+        "--judge",
+        "-j",
+        help=(
+            "Judge(s) to be used separated by commas. "
+            "These must be keys in the judge settings dictionary"
+        ),
+        type=str,
+        required=True,
     )
     parser.add_argument(
         "--output-folder",
@@ -35,68 +53,36 @@ def main():
     )
     args = parser.parse_args()
 
+    # parse input file
     input_filepath = args.input_file
-    judge_location = args.judge_location
-    judge = args.judge
-    output_folder = args.output_folder
-
     try:
-        with open(input_filepath, "r", encoding="utf-8") as f:
-            responses = f.readlines()
+        with open(input_filepath, "r") as f:
+            responses = [dict(json.loads(line)) for line in f]
     except FileNotFoundError as exc:
         raise FileNotFoundError(
-            f"Input file '{input_filepath}' does not exist"
+            f"Input file '{input_filepath}' is not a valid input file"
         ) from exc
 
-    try:
-        template_path = os.path.join(judge_location, "template.txt")
-        with open(template_path, "r", encoding="utf-8") as f:
-            template_prompt = f.read()
-    except FileNotFoundError as exc:
-        raise FileNotFoundError(
-            f"Template file '{template_path}' does not exist"
-        ) from exc
+    # parse judge location and judge arguments
+    template_prompt, judge_settings = parse_judge_location_arg(args.judge_location)
+    judge = parse_judge_arg(args.judge)
+    # check if the judge is in the judge settings dictionary
+    Judge.check_judge_in_judge_settings(judge=judge, judge_settings=judge_settings)
 
-    try:
-        judge__settings_path = os.path.join(judge_location, "settings.json")
-        with open(judge__settings_path, "r", encoding="utf-8") as f:
-            judge_settings = json.load(f)
-    except FileNotFoundError as exc:
-        raise FileNotFoundError(
-            f"Settings file '{judge__settings_path}' does not exist"
-        ) from exc
-
-    if judge not in judge_settings:
-        raise ValueError(f"Judge '{judge}' not in judge settings")
-
-    input_filename = (
-        os.path.basename(input_filepath)
-        .removesuffix(".jsonl")
-        .replace("completed-", "")
+    # create output file path name
+    out_filepath = obtain_output_filepath(
+        input_filepath=input_filepath, output_folder=args.output_folder
     )
-    out_filepath = os.path.join(output_folder, f"judge-{judge}-{input_filename}.jsonl")
 
-    with open(out_filepath, "w", encoding="utf-8") as f:
-        for _, response in enumerate(responses):
-            response = json.loads(response)
-            prompt_id = "judge-" + str(response["id"])
-            input_prompt = response["prompt"]
-            output_response = response["response"]
-            judge_prompt = template_prompt.format(
-                INPUT_PROMPT=input_prompt, OUTPUT_RESPONSE=output_response
-            )
-            f.write(
-                json.dumps(
-                    {
-                        "id": prompt_id,
-                        "prompt": judge_prompt,
-                        "api": judge_settings[judge]["api"],
-                        "model_name": judge_settings[judge]["model_name"],
-                        "parameters": judge_settings[judge]["parameters"],
-                    }
-                )
-            )
-            f.write("\n")
+    # create judge object from the parsed arguments
+    j = Judge(
+        completed_responses=responses,
+        judge_settings=judge_settings,
+        template_prompt=template_prompt,
+    )
+
+    # create judge file
+    j.create_judge_file(judge=judge, out_filepath=out_filepath)
 
 
 if __name__ == "__main__":

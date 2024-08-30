@@ -41,6 +41,7 @@ nav:
       - Running experiments and the pipeline: docs/pipeline.md
       - prompto commands: docs/commands.md
       - Specifying rate limits: docs/rate_limits.md
+      - Using prompto for evaluation: docs/evaluation.md
   - Implemented APIs:
       - APIs overview: docs/models.md
       - Azure OpenAI: docs/azure_openai.md

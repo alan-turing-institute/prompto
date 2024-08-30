@@ -31,6 +31,7 @@ class TestAPI(AsyncAPI):
         # if not either "True" or "False", we error 1/5 times
         generation_config = prompt_dict.get("parameters", {})
         raise_error_option = generation_config.get("raise_error", "")
+        raise_error_type = generation_config.get("raise_error_type", "")
 
         if raise_error_option == "True":
             raise_error = True
@@ -48,7 +49,10 @@ class TestAPI(AsyncAPI):
                 error_as_string=error_msg,
                 id=prompt_dict.get("id", "NA"),
             )
-            raise ValueError(error_msg)
+            if raise_error_type == "Exception":
+                raise Exception(error_msg)
+            else:
+                raise ValueError(error_msg)
         else:
             await asyncio.sleep(1)
 

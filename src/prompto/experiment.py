@@ -176,7 +176,8 @@ class Experiment:
         # initialise some keys with the rate limits if provided
         if self.settings.max_queries_dict != {}:
             logging.info(
-                f"Grouping prompts using 'settings.max_queries_dict': {self.settings.max_queries_dict}..."
+                "Grouping prompts using 'settings.max_queries_dict': "
+                f"{self.settings.max_queries_dict}..."
             )
             for key, value in self.settings.max_queries_dict.items():
                 if isinstance(value, int):
@@ -351,7 +352,7 @@ class Experiment:
 
         # log completion of experiment
         log_message = (
-            f"Completed experiment {self.__str__()}! "
+            f"Completed experiment: {self.__str__()}! "
             f"Experiment processing time: {round(processing_time, 3)} seconds, "
             f"Average time per query: {round(avg_query_processing_time, 3)} seconds"
         )
@@ -411,13 +412,16 @@ class Experiment:
         """
         request_interval = 60 / rate_limit
         tasks = []
-        for_group_string = f"for group {group} " if group is not None else ""
+        for_group_string = f"for group '{group}' " if group is not None else ""
         attempt_frac = f"{attempt}/{self.settings.max_attempts}"
 
         for index, item in enumerate(
             tqdm(
                 prompt_dicts,
-                desc=f"Sending {len(prompt_dicts)} queries at {rate_limit} QPM with RI of {request_interval}s {for_group_string} (attempt {attempt_frac})",
+                desc=(
+                    f"Sending {len(prompt_dicts)} queries at {rate_limit} QPM with RI of "
+                    f"{request_interval}s {for_group_string}(attempt {attempt_frac})"
+                ),
                 unit="query",
             )
         ):
@@ -438,7 +442,7 @@ class Experiment:
         # wait for all tasks to complete before returning
         responses = await tqdm_asyncio.gather(
             *tasks,
-            desc=f"Waiting for responses {for_group_string} (attempt {attempt_frac})",
+            desc=f"Waiting for responses {for_group_string}(attempt {attempt_frac})",
             unit="query",
         )
 
@@ -470,6 +474,7 @@ class Experiment:
             Group name, by default None. If None, then the group is
             not specified in the logs
         """
+        for_group_string = f" for group '{group}'" if group is not None else ""
         # initialise the number of attempts
         attempt = 1
 
@@ -496,8 +501,8 @@ class Experiment:
                 # if we still have failed queries, we will retry them
                 if len(remaining_prompt_dicts) > 0:
                     logging.info(
-                        f"Retrying {len(remaining_prompt_dicts)} failed queries - attempt {attempt} of "
-                        f"{self.settings.max_attempts}..."
+                        f"Retrying {len(remaining_prompt_dicts)} failed queries{for_group_string} - "
+                        f"attempt {attempt} of {self.settings.max_attempts}..."
                     )
 
                     # send off the failed queries
@@ -510,9 +515,11 @@ class Experiment:
                     )
                 else:
                     # if there are no failed queries, break out of the loop
+                    logging.info(f"No remaining failed queries{for_group_string}!")
                     break
             else:
                 # if the maximum number of attempts has been reached, break out of the loop
+                logging.info(f"Maximum attempts reached{for_group_string}. Exiting...")
                 break
 
     async def query_model_and_record_response(
@@ -553,7 +560,8 @@ class Experiment:
         """
         if attempt > self.settings.max_attempts:
             raise ValueError(
-                f"Number of attempts ({attempt}) cannot be greater than max_attempts ({self.settings.max_attempts})"
+                f"Attempt number ({attempt}) cannot be greater than "
+                f"settings.max_attempts ({self.settings.max_attempts})"
             )
         if index is None:
             index = "NA"
@@ -572,7 +580,7 @@ class Experiment:
         except (NotImplementedError, KeyError, ValueError, TypeError) as err:
             # don't retry for selected errors, log the error and save an error response
             log_message = (
-                f"Error (i={index}, id={prompt_dict.get('id', 'NA')}). "
+                f"Error (i={index}, id={prompt_dict.get('id', 'NA')}): "
                 f"{type(err).__name__} - {err}"
             )
             async with FILE_WRITE_LOCK:
@@ -586,7 +594,8 @@ class Experiment:
             if attempt == self.settings.max_attempts:
                 # we've already tried max_attempts times, so log the error and save an error response
                 log_message = (
-                    f"Error (i={index}, id={prompt_dict.get('id', 'NA')}) after maximum {self.settings.max_attempts} attempts: "
+                    f"Error (i={index}, id={prompt_dict.get('id', 'NA')}) "
+                    f"after maximum {self.settings.max_attempts} attempts: "
                     f"{type(err).__name__} - {err}"
                 )
                 async with FILE_WRITE_LOCK:
@@ -596,14 +605,16 @@ class Experiment:
                 # fill in response with error message and note that we've tried max_attempts times
                 completed_prompt_dict = prompt_dict
                 completed_prompt_dict["response"] = (
-                    f"An unexpected error occurred when querying the API: {type(err).__name__} - {err} "
+                    "An unexpected error occurred when querying the API: "
+                    f"({type(err).__name__} - {err}) "
                     f"after maximum {self.settings.max_attempts} attempts"
                 )
             else:
                 # we haven't tried max_attempts times yet, so log the error and return an Exception
                 log_message = (
-                    f"Error (i={index}, id={prompt_dict.get('id', 'NA')}) on attempt {attempt} of {self.settings.max_attempts}: "
-                    f"{type(err).__name__} - {err} - adding to the queue to try again later"
+                    f"Error (i={index}, id={prompt_dict.get('id', 'NA')}) on attempt "
+                    f"{attempt} of {self.settings.max_attempts}: "
+                    f"{type(err).__name__} - {err}. Adding to the queue to try again later..."
                 )
                 async with FILE_WRITE_LOCK:
                     write_log_message(
@@ -669,9 +680,11 @@ class Experiment:
         # query the model
         response = await api.query(prompt_dict=prompt_dict, index=index)
 
-        # Perform Evaluation if evaluation function is provided
+        # perform Evaluation if evaluation function is provided
         if evaluation_funcs is not None:
-            response = await self.evaluate_responses(response, evaluation_funcs)
+            response = await self.evaluate_responses(
+                prompt_dict=response, evaluation_funcs=evaluation_funcs
+            )
 
         return response
 
@@ -698,4 +711,5 @@ class Experiment:
 
         for func in evaluation_funcs:
             prompt_dict = func(prompt_dict)
+
         return prompt_dict
