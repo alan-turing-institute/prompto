@@ -21,7 +21,7 @@
 
 # prompto
 
-<img align="right" width="200" height="200" src="./docs/prompto.png">
+<img align="right" width="210" height="210" src="./docs/prompto.png">
 
 `prompto` is a Python library which facilitates processing of experiments of Large Language Models (LLMs) stored as jsonl files. It automates _asynchronous querying of LLM API endpoints_ and logs progress.
 
