@@ -90,7 +90,7 @@ In `judge`, you must have two files:
 * `template.txt`: this is the template file which contains the prompts and the responses to be scored. The responses should be replaced with the placeholders `{INPUT_PROMPT}` and `{OUTPUT_RESPONSE}`.
 * `settings.json`: this is the settings json file which contains the settings for the judge(s). The keys are judge identifiers and the values are the "api", "model_name", "parameters" to specify the LLM to use as a judge (see the [experiment file documentation](experiment_file.md) for more details on these keys).
 
-See for example [this judge example](./../examples/judge/) which contains example template and settings files.
+See for example [this judge example](./../examples/evaluation/judge/) which contains example template and settings files.
 
 The judge specified with the `--judge` flag should be a key in the `settings.json` file in the judge location. You can create different judge files using different LLMs as judge by specifying a different judge identifier from the keys in the `settings.json` file.
 

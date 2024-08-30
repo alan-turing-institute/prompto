@@ -26,6 +26,8 @@
 
 `prompto` derives from the Italian word "_pronto_" which means "_ready_". It could also mean "_I prompt_" in Italian (if "_promptare_" was a verb meaning "_to prompt_").
 
+A pre-print for this work is available on [arXiv](https://arxiv.org/abs/2408.11847). If you use this library, please see the [citation](#citation) below. For the experiments in the pre-print, see the [system demonstration examples](./examples/system-demo/README.md).
+
 ## Why `prompto`?
 
 The benefit of  _asynchronous querying_ is that it allows for multiple requests to be sent to an API _without_ having to wait for the LLM's response, which is particularly useful to fully utilise the rate limits of an API. This is especially useful when an experiment file contains a large number of prompts and/or has several models to query. [_Asynchronous programming_](https://docs.python.org/3/library/asyncio.html) is simply a way for programs to avoid getting stuck on long tasks (like waiting for an LLM response from an API) and instead keep running other things at the same time (to send other queries).
@@ -201,3 +203,14 @@ The library has a few key classes:
 * [`AsyncAPI`](https://github.com/alan-turing-institute/prompto/blob/main/src/prompto/apis/base.py): this is the base class for querying all APIs. Each API/model should inherit from this class and implement the `query` method which will (asynchronously) query the model's API and return the response. When running an experiment, the `Experiment` class will call this method for each experiment to send requests asynchronously.
 
 When a new model is added, you must add it to the [`API`](https://github.com/alan-turing-institute/prompto/blob/main/src/prompto/apis/base.py) dictionary which is in the `apis` module. This dictionary should map the model name to the class of the model. For details on how to add a new model, see the [guide on adding new APIs and models](./docs/add_new_api.md).
+
+## Citation
+
+```
+@article{chan2024prompto,
+  title={Prompto: An open source library for asynchronous querying of LLM endpoints},
+  author={Chan, Ryan Sze-Yin and Nanni, Federico and Brown, Edwin and Chapman, Ed and Williams, Angus R and Bright, Jonathan and Gabasova, Evelina},
+  journal={arXiv preprint arXiv:2408.11847},
+  year={2024}
+}
+```
