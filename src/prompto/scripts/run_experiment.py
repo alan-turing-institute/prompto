@@ -403,7 +403,7 @@ async def main():
     # check if scorer is provided, and if it is in the SCORING_FUNCTIONS dictionary
     if args.scorer is not None:
         scoring_functions = obtain_scoring_functions(
-            scorer=args.scorer, scoring_functions=SCORING_FUNCTIONS
+            scorer=parse_list_arg(args.scorer), scoring_functions_dict=SCORING_FUNCTIONS
         )
     else:
         scoring_functions = None
@@ -429,7 +429,7 @@ async def main():
 
     # process the experiment
     logging.info(f"Starting processing experiment: {args.file}...")
-    await experiment.process()
+    await experiment.process(evaluation_funcs=scoring_functions)
 
     # create judge experiment
     judge_experiment = create_judge_experiment(
@@ -445,7 +445,7 @@ async def main():
         logging.info(
             f"Starting processing judge of experiment: {judge_experiment.file_name}..."
         )
-        await judge_experiment.process(evaluation_funcs=scoring_functions)
+        await judge_experiment.process()
 
     logging.info("Experiment processed successfully!")
 

@@ -1,3 +1,4 @@
+import json
 import logging
 import os
 
@@ -587,3 +588,140 @@ def test_run_experiment_judge(temporary_data_folder_judge):
     assert "Experiment processed successfully!" in result.stderr
     assert os.path.isdir("data/output/test-experiment")
     assert os.path.isdir("data/output/judge-test-experiment")
+
+
+def test_run_experiment_scorer_not_in_dict(temporary_data_folder_judge):
+    result = shell(
+        "prompto_run_experiment "
+        "--file data/input/test-experiment.jsonl "
+        "--max-queries=200 "
+        "--scorer not_a_scorer"
+    )
+    assert result.exit_code != 0
+    assert (
+        "Scorer 'not_a_scorer' is not a key in scoring_functions_dict. "
+        "Available scorers are: "
+    ) in result.stderr
+
+
+def test_run_experiment_scorer(temporary_data_folder_judge):
+    result = shell(
+        "prompto_run_experiment "
+        "--file data/input/test-experiment.jsonl "
+        "--max-queries=200 "
+        "--scorer match,includes"
+    )
+    assert result.exit_code == 0
+    assert "No environment file found at .env" in result.stderr
+    assert (
+        "Not creating judge file as one of judge_location or judge is None"
+        in result.stderr
+    )
+    assert "Scoring functions to be used: ['match', 'includes']" in result.stderr
+    assert (
+        "Settings: "
+        "data_folder=data, "
+        "max_queries=200, "
+        "max_attempts=5, "
+        "parallel=False\n"
+        "Subfolders: "
+        "input_folder=data/input, "
+        "output_folder=data/output, "
+        "media_folder=data/media"
+    ) in result.stderr
+    assert (
+        "Starting processing experiment: data/input/test-experiment.jsonl..."
+        in result.stderr
+    )
+    assert "Experiment processed successfully!" in result.stderr
+    assert os.path.isdir("data/output/test-experiment")
+
+    completed_files = [
+        x for x in os.listdir("data/output/test-experiment") if "completed" in x
+    ]
+    assert len(completed_files) == 1
+    completed_file = completed_files[0]
+
+    # load the output to check the scores have been added
+    with open(f"data/output/test-experiment/{completed_file}", "r") as f:
+        responses = [dict(json.loads(line)) for line in f]
+
+    assert len(responses) == 2
+    assert responses[0]["match"] is True
+    assert responses[1]["match"] is False
+    assert responses[0]["includes"] is True
+    assert responses[1]["includes"] is False
+
+
+def test_run_experiment_judge_and_scorer(temporary_data_folder_judge):
+    result = shell(
+        "prompto_run_experiment "
+        "--file data/input/test-experiment.jsonl "
+        "--max-queries=200 "
+        "--judge-location judge_loc "
+        "--judge judge2 "
+        "--scorer 'match, includes'"
+    )
+    assert result.exit_code == 0
+    assert "No environment file found at .env" in result.stderr
+    assert "Judge location loaded from judge_loc" in result.stderr
+    assert "Judges to be used: ['judge2']" in result.stderr
+    assert "Scoring functions to be used: ['match', 'includes']" in result.stderr
+    assert (
+        "Settings: "
+        "data_folder=data, "
+        "max_queries=200, "
+        "max_attempts=5, "
+        "parallel=False\n"
+        "Subfolders: "
+        "input_folder=data/input, "
+        "output_folder=data/output, "
+        "media_folder=data/media"
+    ) in result.stderr
+    assert (
+        "Starting processing experiment: data/input/test-experiment.jsonl..."
+        in result.stderr
+    )
+    assert "Completed experiment: test-experiment.jsonl" in result.stderr
+    assert (
+        "Starting processing judge of experiment: judge-test-experiment.jsonl..."
+        in result.stderr
+    )
+    assert "Completed experiment: judge-test-experiment.jsonl" in result.stderr
+    assert "Experiment processed successfully!" in result.stderr
+    assert os.path.isdir("data/output/test-experiment")
+    assert os.path.isdir("data/output/judge-test-experiment")
+
+    # check the output files for the test-experiment
+    completed_files = [
+        x for x in os.listdir("data/output/test-experiment") if "completed" in x
+    ]
+    assert len(completed_files) == 1
+    completed_file = completed_files[0]
+
+    # load the output to check the scores have been added
+    with open(f"data/output/test-experiment/{completed_file}", "r") as f:
+        responses = [dict(json.loads(line)) for line in f]
+
+    assert len(responses) == 2
+    assert responses[0]["match"] is True
+    assert responses[1]["match"] is False
+    assert responses[0]["includes"] is True
+    assert responses[1]["includes"] is False
+
+    # check the output files for the judge-test-experiment
+    completed_files = [
+        x for x in os.listdir("data/output/judge-test-experiment") if "completed" in x
+    ]
+    assert len(completed_files) == 1
+    completed_file = completed_files[0]
+
+    # load the output to check the scores have been added
+    with open(f"data/output/judge-test-experiment/{completed_file}", "r") as f:
+        responses = [dict(json.loads(line)) for line in f]
+
+    assert len(responses) == 2
+    assert responses[0]["input-match"] is True
+    assert responses[1]["input-match"] is False
+    assert responses[0]["input-includes"] is True
+    assert responses[1]["input-includes"] is False

@@ -1,3 +1,6 @@
+import logging
+
+
 def obtain_scoring_functions(
     scorer: str | list[str], scoring_functions_dict: dict[str, callable]
 ) -> list[callable]:
@@ -33,10 +36,11 @@ def obtain_scoring_functions(
 
         functions.append(scoring_functions_dict[s])
 
+    logging.info(f"Scoring functions to be used: {scorer}")
     return functions
 
 
-def match(prompt_dict: dict):
+def match(prompt_dict: dict) -> dict:
     """
     Returns a True if the prompt_dict["response"]
     is equal to the prompt_dict["expected_response"].
@@ -45,12 +49,20 @@ def match(prompt_dict: dict):
     ----------
     prompt_dict : dict
         A dictionary containing a "response" and
-        "expected_response" key.
+        "expected_response" key
+
+    Returns
+    -------
+    dict
+        A dictionary containing the "match" key with
+        a boolean value of the comparison between the
+        "response" and "expected_response" keys.
     """
-    return prompt_dict["response"] == prompt_dict["expected_response"]
+    prompt_dict["match"] = prompt_dict["response"] == prompt_dict["expected_response"]
+    return prompt_dict
 
 
-def includes(prompt_dict: dict):
+def includes(prompt_dict: dict) -> dict:
     """
     Returns a True if the prompt_dict["response"]
     includes the prompt_dict["expected_response"].
@@ -59,12 +71,22 @@ def includes(prompt_dict: dict):
     ----------
     prompt_dict : dict
         A dictionary containing a "response" and
-        "expected_response" key.
+        "expected_response" key
+
+    Returns
+    -------
+    dict
+        A dictionary containing the "includes" key with
+        a boolean value of the comparison between the
+        "response" and "expected_response" keys.
     """
-    return prompt_dict["expected_response"] in prompt_dict["response"]
+    prompt_dict["includes"] = (
+        prompt_dict["expected_response"] in prompt_dict["response"]
+    )
+    return prompt_dict
 
 
 SCORING_FUNCTIONS = {
-    "includes": includes,
     "match": match,
+    "includes": includes,
 }

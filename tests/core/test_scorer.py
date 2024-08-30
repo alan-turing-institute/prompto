@@ -1,10 +1,14 @@
+import logging
+
 import pytest
 import regex as re
 
 from prompto.scorer import includes, match, obtain_scoring_functions
 
 
-def test_obtain_scoring_functions():
+def test_obtain_scoring_functions(caplog):
+    caplog.set_level(logging.INFO)
+
     scoring_functions_dict = {"match": match, "includes": includes}
 
     # raise error if scorer is not a key in scoring_functions_dict
@@ -54,18 +58,22 @@ def test_obtain_scoring_functions():
     assert obtain_scoring_functions(
         scorer=["match"], scoring_functions_dict=scoring_functions_dict
     ) == [match]
+    assert "Scoring functions to be used: ['match']" in caplog.text
     assert obtain_scoring_functions(
         scorer="match", scoring_functions_dict=scoring_functions_dict
     ) == [match]
+    assert "Scoring functions to be used: ['match']" in caplog.text
     assert obtain_scoring_functions(
         scorer=["match", "includes"], scoring_functions_dict=scoring_functions_dict
     ) == [match, includes]
+    assert "Scoring functions to be used: ['match', 'includes']" in caplog.text
     assert (
         obtain_scoring_functions(
             scorer=[], scoring_functions_dict=scoring_functions_dict
         )
         == []
     )
+    assert "Scoring functions to be used: []" in caplog.text
 
 
 def test_match():
@@ -75,8 +83,16 @@ def test_match():
     with pytest.raises(KeyError, match="'expected_response'"):
         match({"response": "hello"})
 
-    assert match({"response": "hello", "expected_response": "hello"}) == True
-    assert match({"response": "hello", "expected_response": "world"}) == False
+    assert match({"response": "hello", "expected_response": "hello"}) == {
+        "response": "hello",
+        "expected_response": "hello",
+        "match": True,
+    }
+    assert match({"response": "hello", "expected_response": "world"}) == {
+        "response": "hello",
+        "expected_response": "world",
+        "match": False,
+    }
 
 
 def test_includes():
@@ -86,10 +102,25 @@ def test_includes():
     with pytest.raises(KeyError, match="'expected_response'"):
         includes({"response": "hello"})
 
-    assert includes({"response": "hello world", "expected_response": "hello"}) == True
-    assert includes({"response": "hello world", "expected_response": "world"}) == True
-    assert includes({"response": "hello world", "expected_response": "hi"}) == False
-    assert (
-        includes({"response": "hello world", "expected_response": "hello world!"})
-        == False
-    )
+    assert includes({"response": "hello world", "expected_response": "hello"}) == {
+        "response": "hello world",
+        "expected_response": "hello",
+        "includes": True,
+    }
+    assert includes({"response": "hello world", "expected_response": "world"}) == {
+        "response": "hello world",
+        "expected_response": "world",
+        "includes": True,
+    }
+    assert includes({"response": "hello world", "expected_response": "hi"}) == {
+        "response": "hello world",
+        "expected_response": "hi",
+        "includes": False,
+    }
+    assert includes(
+        {"response": "hello world", "expected_response": "hello world!"}
+    ) == {
+        "response": "hello world",
+        "expected_response": "hello world!",
+        "includes": False,
+    }
