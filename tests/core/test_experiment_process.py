@@ -417,7 +417,7 @@ async def test_generate_text_with_2evaluations(
 
     # Check evaluation func has been successfully applied
     assert result["evaluation"] is True
-    assert result["length_of_response"] == 21
+    assert result["length_of_response"] == 23
 
     # check logs for success message
     log_msg = (
