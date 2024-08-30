@@ -1,22 +1,22 @@
 def obtain_scoring_functions(
-    scorer: str | list[str], scoring_functions: dict[str, callable]
+    scorer: str | list[str], scoring_functions_dict: dict[str, callable]
 ) -> list[callable]:
     """
-    Check if the scorer(s) provided are in the SCORING_FUNCTIONS.
+    Check if the scorer(s) provided are in the scoring_functions_dict.
 
     Parameters
     ----------
     scorer : str | list[str]
         A single scorer or a list of scorers to check if they
-        are keys in the SCORING_FUNCTIONS dictionary
-    scoring_functions : dict[str, callable]
+        are keys in the scoring_functions_dict dictionary
+    scoring_functions_dict : dict[str, callable]
         A dictionary of scoring functions with the keys as the
         scorer names and the values as the scoring functions
 
     Returns
     -------
-    bool
-        True if the scorer(s) are in the scoring_functions dictionary
+    list[callable]
+        List of scoring functions that correspond to the scorers
     """
     if isinstance(scorer, str):
         scorer = [scorer]
@@ -25,15 +25,15 @@ def obtain_scoring_functions(
     for s in scorer:
         if not isinstance(s, str):
             raise TypeError("If scorer is a list, each element must be a string")
-        if s not in scoring_functions.keys():
+        if s not in scoring_functions_dict.keys():
             raise KeyError(
-                f"Scorer '{s}' is not a key in scoring_functions. "
-                f"Available scorers are: {list(scoring_functions.keys())}"
+                f"Scorer '{s}' is not a key in scoring_functions_dict. "
+                f"Available scorers are: {list(scoring_functions_dict.keys())}"
             )
 
-        functions.append(scoring_functions[s])
+        functions.append(scoring_functions_dict[s])
 
-    return function
+    return functions
 
 
 def match(prompt_dict: dict):
