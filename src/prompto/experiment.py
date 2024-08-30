@@ -260,7 +260,7 @@ class Experiment:
 
         return queries_and_rates_per_group
 
-    async def process(self) -> tuple[dict, float]:
+    async def process(self, evaluation_funcs: callable = None) -> tuple[dict, float]:
         """
         Function to process the experiment.
 
@@ -274,6 +274,14 @@ class Experiment:
 
         All output files are timestamped with the time for when the experiment
         started to run.
+
+        Parameters
+        ----------
+        evaluation_funcs : list[callable], optional
+            List of evaluation functions to run on the completed responses.
+            Each function should take a prompt_dict as input and return a prompt dict
+            as output. The evaluation functions can use keys in the prompt_dict to
+            parameterise the functions, by default None.
 
         Returns
         -------
@@ -313,6 +321,7 @@ class Experiment:
                         prompt_dicts=values["prompt_dicts"],
                         group=group,
                         rate_limit=values["rate_limit"],
+                        evaluation_funcs=evaluation_funcs,
                     )
                 )
                 for group, values in self.grouped_experiment_prompts.items()
@@ -326,12 +335,19 @@ class Experiment:
                 prompt_dicts=self.experiment_prompts,
                 group=None,
                 rate_limit=self.settings.max_queries,
+                evaluation_funcs=evaluation_funcs,
             )
 
         # calculate average processing time per query for the experiment
         end_time = time.time()
         processing_time = end_time - start_time
         avg_query_processing_time = processing_time / self.number_queries
+
+        # read the output file
+        with open(self.output_completed_file_path, "r") as f:
+            self.completed_responses: list[dict] = [
+                dict(json.loads(line)) for line in f
+            ]
 
         # log completion of experiment
         log_message = (
@@ -342,12 +358,6 @@ class Experiment:
         async with FILE_WRITE_LOCK:
             write_log_message(log_file=self.log_file, log_message=log_message, log=True)
 
-        # read the output file
-        with open(self.output_completed_file_path, "r") as f:
-            self.completed_responses: list[dict] = [
-                dict(json.loads(line)) for line in f
-            ]
-
         return self.completed_responses, avg_query_processing_time
 
     async def send_requests(
@@ -356,6 +366,7 @@ class Experiment:
         attempt: int,
         rate_limit: int,
         group: str | None = None,
+        evaluation_funcs: list[callable] | None = None,
     ) -> tuple[list[dict], list[dict | Exception]]:
         """
         Send requests to the API asynchronously.
@@ -419,6 +430,7 @@ class Experiment:
                     prompt_dict=item,
                     index=index + 1,
                     attempt=attempt,
+                    evaluation_funcs=evaluation_funcs,
                 )
             )
             tasks.append(task)
@@ -437,6 +449,7 @@ class Experiment:
         prompt_dicts: list[dict],
         rate_limit: int,
         group: str | None = None,
+        evaluation_funcs: list[callable] | None = None,
     ) -> None:
         """
         Send requests to the API asynchronously and retry failed queries
@@ -466,6 +479,7 @@ class Experiment:
             attempt=attempt,
             rate_limit=rate_limit,
             group=group,
+            evaluation_funcs=evaluation_funcs,
         )
 
         while True:
@@ -492,6 +506,7 @@ class Experiment:
                         attempt=attempt,
                         rate_limit=rate_limit,
                         group=group,
+                        evaluation_funcs=evaluation_funcs,
                     )
                 else:
                     # if there are no failed queries, break out of the loop
@@ -505,6 +520,7 @@ class Experiment:
         prompt_dict: dict,
         index: int | str | None,
         attempt: int,
+        evaluation_funcs: list[callable] | None = None,
     ) -> dict | Exception:
         """
         Send request to generate response from a LLM and record the response in a jsonl file.
@@ -551,6 +567,7 @@ class Experiment:
                 completed_prompt_dict = await self.generate_text(
                     prompt_dict=prompt_dict,
                     index=index,
+                    evaluation_funcs=evaluation_funcs,
                 )
         except (NotImplementedError, KeyError, ValueError, TypeError) as err:
             # don't retry for selected errors, log the error and save an error response
@@ -607,6 +624,7 @@ class Experiment:
         self,
         prompt_dict: dict,
         index: int | None,
+        evaluation_funcs: list[callable] | None = None,
     ) -> dict:
         """
         Generate text by querying an LLM.
@@ -651,4 +669,33 @@ class Experiment:
         # query the model
         response = await api.query(prompt_dict=prompt_dict, index=index)
 
+        # Perform Evaluation if evaluation function is provided
+        if evaluation_funcs is not None:
+            response = await self.evaluate_responses(response, evaluation_funcs)
+
         return response
+
+    async def evaluate_responses(
+        self, prompt_dict, evaluation_funcs: list[callable]
+    ) -> dict:
+        """
+        Runs evaluation functions on a prompt dictionary. Note that the list of functions
+        is run in order on the same prompt_dict.
+
+        Parameters
+        ----------
+        prompt_dict : dict
+            Dictionary for the evaluation functions to run on. Note: in the process function,
+            this will be run on self.completed_responses.
+        evaluation_funcs : list[callable]
+            List of evaluation functions to run on the completed responses. Each function should
+            take a prompt_dict as input and return a prompt dict as output. The evaluation
+            functions can use keys in the prompt_dict to parameterise the functions.
+        """
+        assert isinstance(
+            evaluation_funcs, list
+        ), "evaluation_funcs must be a list of functions"
+
+        for func in evaluation_funcs:
+            prompt_dict = func(prompt_dict)
+        return prompt_dict
