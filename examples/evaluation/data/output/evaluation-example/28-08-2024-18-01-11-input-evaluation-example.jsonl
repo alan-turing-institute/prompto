@@ -1,0 +1,2 @@
+{"id": 0, "api": "anthropic", "model_name": "claude-3-haiku-20240307", "prompt": "How does technology impact us?", "parameters": {"temperature": 1, "max_tokens": 100}}
+{"id": 1, "api": "anthropic", "model_name": "claude-3-5-sonnet-20240620", "prompt": "How does technology impact us? Keep the response to less than 10 words.", "parameters": {"temperature": 1, "max_tokens": 100}}
