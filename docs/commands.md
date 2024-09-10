@@ -31,14 +31,14 @@ Note that if the experiment file is already in the input folder, we will not mak
 
 ### Automatic evaluation using an LLM-as-judge
 
-It is possible to automatically run a LLM-as-judge evaluation of the responses by using the `--judge-location` and `--judge` arguments of the CLI. See the [Create judge file](#create-judge-file) section for more details on these arguments.
+It is possible to automatically run a LLM-as-judge evaluation of the responses by using the `--judge-folder` and `--judge` arguments of the CLI. See the [Create judge file](#create-judge-file) section for more details on these arguments.
 
 For instance, to run an experiment file with automatic evaluation using a judge, you can use the following command:
 ```
 prompto_run_experiment \
     --file path/to/experiment.jsonl \
     --data-folder data \
-    --judge-location judge \
+    --judge-folder judge \
     --judge gemini-1.0-pro
 ```
 
@@ -75,13 +75,13 @@ prompto_check_experiment \
 
 ## Create judge file
 
-Once an experiment has been ran and responses to prompts have been obtained, it is possible to use another LLM as a "judge" to score the responses. This is useful for evaluating the quality of the responses obtained from the model. To create a judge file, you can use the `prompto_create_judge` command passing in the file containing the completed experiment and to a folder (i.e. judge location) containing the judge template and settings to use. To see all arguments of this command, run `prompto_create_judge --help`.
+Once an experiment has been ran and responses to prompts have been obtained, it is possible to use another LLM as a "judge" to score the responses. This is useful for evaluating the quality of the responses obtained from the model. To create a judge file, you can use the `prompto_create_judge` command passing in the file containing the completed experiment and to a folder (i.e. judge folder) containing the judge template and settings to use. To see all arguments of this command, run `prompto_create_judge --help`.
 
-To create a judge file for a particular experiment file with a judge-location as `./judge` and using judge `gemini-1.0-pro` you can use the following command:
+To create a judge file for a particular experiment file with a judge-folder as `./judge` and using judge `gemini-1.0-pro` you can use the following command:
 ```
 prompto_create_judge \
     --experiment-file path/to/experiment.jsonl \
-    --judge-location judge \
+    --judge-folder judge \
     --judge gemini-1.0-pro
 ```
 
@@ -92,7 +92,7 @@ In `judge`, you must have two files:
 
 See for example [this judge example](./../examples/evaluation/judge/) which contains example template and settings files.
 
-The judge specified with the `--judge` flag should be a key in the `settings.json` file in the judge location. You can create different judge files using different LLMs as judge by specifying a different judge identifier from the keys in the `settings.json` file.
+The judge specified with the `--judge` flag should be a key in the `settings.json` file in the judge folder. You can create different judge files using different LLMs as judge by specifying a different judge identifier from the keys in the `settings.json` file.
 
 ## Obtain missing results jsonl file
 

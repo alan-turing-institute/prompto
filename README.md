@@ -25,7 +25,7 @@
 
 `prompto` is a Python library which facilitates processing of experiments of Large Language Models (LLMs) stored as jsonl files. It automates _asynchronous querying of LLM API endpoints_ and logs progress.
 
-`prompto` derives from the Italian word "_pronto_" which means "_ready_". It could also mean "_I prompt_" in Italian (if "_promptare_" was a verb meaning "_to prompt_").
+`prompto` derives from the Italian word "_pronto_" which means "_ready_" (or "hello" when answering the phone). It could also mean "_I prompt_" in Italian (if "_promptare_" was a verb meaning "_to prompt_").
 
 A pre-print for this work is available on [arXiv](https://arxiv.org/abs/2408.11847). If you use this library, please see the [citation](#citation) below. For the experiments in the pre-print, see the [system demonstration examples](./examples/system-demo/README.md).
 
@@ -40,6 +40,10 @@ The library is designed to be extensible and can be used to query different mode
 For more details on the library, see the [documentation](./docs/README.md) where you can find information on [how to set up an experiment file](./docs/experiment_file.md), [how to run experiments](./docs/pipeline.md), [how to configure environment variables](./docs/environment_variables.md), [how to specify rate limits for APIs and to use parallel processing](./docs/rate_limits.md) and much more.
 
 See below for [installation instructions](#installation) and [quickstarts for getting started](#getting-started) with `prompto`.
+
+## `prompto` for Evaluation
+
+`prompto` can also be used as an evaluation tool for LLMs. For details on how to use `prompto` for evaluation, see the [evaluation docs](./docs/evaluation.md).
 
 ## Available APIs and Models
 
