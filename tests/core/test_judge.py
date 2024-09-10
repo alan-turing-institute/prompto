@@ -4,12 +4,12 @@ import os
 
 import pytest
 
-from prompto.judge import Judge, parse_judge_location_arg
+from prompto.judge import Judge, load_judge_folder
 
 
-def test_parse_judge_location_arg(temporary_data_folder_judge):
+def test_load_judge_folder(temporary_data_folder_judge):
     # test the function reads template.txt and settings.json correctly
-    template_prompt, judge_settings = parse_judge_location_arg("judge_loc")
+    template_prompt, judge_settings = load_judge_folder("judge_loc")
     assert template_prompt == (
         "Template: input={INPUT_PROMPT}, output={OUTPUT_RESPONSE}"
     )
@@ -27,27 +27,27 @@ def test_parse_judge_location_arg(temporary_data_folder_judge):
     }
 
 
-def test_parse_location_arg_error(temporary_data_folder_judge):
-    # raise error if judge location is not a valid path to a directory
+def test_load_judge_folder_arg_error(temporary_data_folder_judge):
+    # raise error if judge folder is not a valid path to a directory
     with pytest.raises(
         ValueError,
-        match="Judge location 'non_existent_folder' must be a valid path to a folder",
+        match="judge folder 'non_existent_folder' must be a valid path to a folder",
     ):
-        parse_judge_location_arg("non_existent_folder")
+        load_judge_folder("non_existent_folder")
 
-    # raise error if template file does not exist in the judge location
+    # raise error if template file does not exist in the judge folder
     with pytest.raises(
         FileNotFoundError,
         match="Template file 'judge_loc_no_template/template.txt' does not exist",
     ):
-        parse_judge_location_arg("judge_loc_no_template")
+        load_judge_folder("judge_loc_no_template")
 
-    # raise error if settings file does not exist in the judge location
+    # raise error if settings file does not exist in the judge folder
     with pytest.raises(
         FileNotFoundError,
         match="Judge settings file 'judge_loc_no_settings/settings.json' does not exist",
     ):
-        parse_judge_location_arg("judge_loc_no_settings")
+        load_judge_folder("judge_loc_no_settings")
 
 
 def test_judge_check_judge_settings():

@@ -7,7 +7,7 @@ import os
 from dotenv import load_dotenv
 
 from prompto.experiment import Experiment
-from prompto.judge import Judge, parse_judge_location_arg
+from prompto.judge import Judge, load_judge_folder
 from prompto.scorer import SCORING_FUNCTIONS, obtain_scoring_functions
 from prompto.settings import Settings
 from prompto.utils import copy_file, move_file, parse_list_arg
@@ -83,7 +83,7 @@ def load_max_queries_json(max_queries_json: str | None) -> dict:
 
 
 def load_judge_args(
-    judge_location_arg: str | None,
+    judge_folder_arg: str | None,
     judge_arg: str | None,
 ) -> tuple[bool, str, dict, list[str]]:
     """
@@ -95,8 +95,8 @@ def load_judge_args(
 
     Parameters
     ----------
-    judge_location_arg : str | None
-        Path to judge location folder containing the template.txt
+    judge_folder_arg : str | None
+        Path to judge folder containing the template.txt
         and settings.json files
     judge_arg : str | None
         Judge(s) to be used separated by commas. These must be keys
@@ -109,21 +109,19 @@ def load_judge_args(
         should be created, the template prompt string, the judge
         settings dictionary and the judge list
     """
-    if judge_location_arg is not None and judge_arg is not None:
+    if judge_folder_arg is not None and judge_arg is not None:
         create_judge_file = True
-        # parse judge location and judge arguments
-        template_prompt, judge_settings = parse_judge_location_arg(
-            argument=judge_location_arg
+        # parse judge folder and judge arguments
+        template_prompt, judge_settings = load_judge_folder(
+            judge_folder=judge_folder_arg
         )
         judge = parse_list_arg(argument=judge_arg)
         # check if the judge is in the judge settings dictionary
         Judge.check_judge_in_judge_settings(judge=judge, judge_settings=judge_settings)
-        logging.info(f"Judge location loaded from {judge_location_arg}")
+        logging.info(f"judge folder loaded from {judge_folder_arg}")
         logging.info(f"Judges to be used: {judge}")
     else:
-        logging.info(
-            "Not creating judge file as one of judge_location or judge is None"
-        )
+        logging.info("Not creating judge file as one of judge_folder or judge is None")
         create_judge_file = False
         template_prompt, judge_settings, judge = None, None, None
 
@@ -350,7 +348,7 @@ async def main():
         default=None,
     )
     parser.add_argument(
-        "--judge-location",
+        "--judge-folder",
         "-l",
         help=(
             "Location of the judge folder storing the template.txt "
@@ -396,7 +394,7 @@ async def main():
 
     # check if judge arguments are provided
     create_judge_file, template_prompt, judge_settings, judge = load_judge_args(
-        judge_location_arg=args.judge_location,
+        judge_folder_arg=args.judge_folder,
         judge_arg=args.judge,
     )
 

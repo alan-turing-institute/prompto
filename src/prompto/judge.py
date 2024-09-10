@@ -4,22 +4,22 @@ import os
 from tqdm import tqdm
 
 
-def parse_judge_location_arg(argument: str) -> tuple[str, dict]:
+def load_judge_folder(judge_folder: str) -> tuple[str, dict]:
     """
-    Parses the judge location argument to get the
-    template prompt string and judge settings dictionary.
+    Parses the judge_folder to load the template prompt
+    string and judge settings dictionary.
 
-    The judge_location argument should be a path to the judge
+    ≈ should be a path to the judge
     folder containing the template.txt and settings.json files.
 
-    We read the template from judge_location/template.txt
-    and the settings from judge_location/settings.json. If
+    We read the template from judge_folder/template.txt
+    and the settings from judge_folder/settings.json. If
     either of these files do not exist, a FileNotFoundError
     will be raised.
 
     Parameters
     ----------
-    argument : str
+    judge_folder : str
         Path to the judge folder containing the template.txt
         and settings.json files
 
@@ -29,13 +29,13 @@ def parse_judge_location_arg(argument: str) -> tuple[str, dict]:
         A tuple containing the template prompt string and
         the judge settings dictionary
     """
-    if not os.path.isdir(argument):
+    if not os.path.isdir(judge_folder):
         raise ValueError(
-            f"Judge location '{argument}' must be a valid path to a folder"
+            f"judge folder '{judge_folder}' must be a valid path to a folder"
         )
 
     try:
-        template_path = os.path.join(argument, "template.txt")
+        template_path = os.path.join(judge_folder, "template.txt")
         with open(template_path, "r", encoding="utf-8") as f:
             template_prompt = f.read()
     except FileNotFoundError as exc:
@@ -44,7 +44,7 @@ def parse_judge_location_arg(argument: str) -> tuple[str, dict]:
         ) from exc
 
     try:
-        judge_settings_path = os.path.join(argument, "settings.json")
+        judge_settings_path = os.path.join(judge_folder, "settings.json")
         with open(judge_settings_path, "r", encoding="utf-8") as f:
             judge_settings = json.load(f)
     except FileNotFoundError as exc:

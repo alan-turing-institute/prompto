@@ -57,7 +57,7 @@ def test_create_judge_file_input_file_not_exist(temporary_data_folder_judge):
     result = shell(
         "prompto_create_judge_file "
         "--input-file not-exist.jsonl "
-        "--judge-location judge_loc "
+        "--judge-folder judge_loc "
         "--judge judge1"
     )
     assert result.exit_code != 0
@@ -67,16 +67,16 @@ def test_create_judge_file_input_file_not_exist(temporary_data_folder_judge):
     )
 
 
-def test_create_judge_file_judge_location_not_exist(temporary_data_folder_judge):
+def test_create_judge_file_judge_folder_not_exist(temporary_data_folder_judge):
     result = shell(
         "prompto_create_judge_file "
         "--input-file data/output/completed-test-experiment.jsonl "
-        "--judge-location not-exist-folder "
+        "--judge-folder not-exist-folder "
         "--judge judge1"
     )
     assert result.exit_code != 0
     assert (
-        "ValueError: Judge location 'not-exist-folder' must be a valid path to a folder"
+        "ValueError: judge folder 'not-exist-folder' must be a valid path to a folder"
         in result.stderr
     )
 
@@ -85,7 +85,7 @@ def test_create_judge_file_judge_template_not_exist(temporary_data_folder_judge)
     result = shell(
         "prompto_create_judge_file "
         "--input-file data/output/completed-test-experiment.jsonl "
-        "--judge-location judge_loc_no_template "
+        "--judge-folder judge_loc_no_template "
         "--judge judge1"
     )
     assert result.exit_code != 0
@@ -99,7 +99,7 @@ def test_create_judge_file_judge_settings_not_exist(temporary_data_folder_judge)
     result = shell(
         "prompto_create_judge_file "
         "--input-file data/output/completed-test-experiment.jsonl "
-        "--judge-location judge_loc_no_settings "
+        "--judge-folder judge_loc_no_settings "
         "--judge judge1"
     )
     assert result.exit_code != 0
@@ -114,7 +114,7 @@ def test_create_judge_file_judge_not_in_judge_settings(temporary_data_folder_jud
     result = shell(
         "prompto_create_judge_file "
         "--input-file data/output/completed-test-experiment.jsonl "
-        "--judge-location judge_loc "
+        "--judge-folder judge_loc "
         "--judge judge_not_in_settings"
     )
     assert result.exit_code != 0
@@ -127,7 +127,7 @@ def test_create_judge_file_judge_not_in_judge_settings(temporary_data_folder_jud
     result = shell(
         "prompto_create_judge_file "
         "--input-file data/output/completed-test-experiment.jsonl "
-        "--judge-location judge_loc "
+        "--judge-folder judge_loc "
         "--judge judge1,judge_not_in_settings"
     )
     assert result.exit_code != 0
@@ -141,7 +141,7 @@ def test_create_judge_file_full(temporary_data_folder_judge):
     result = shell(
         "prompto_create_judge_file "
         "--input-file data/output/completed-test-experiment.jsonl "
-        "--judge-location judge_loc "
+        "--judge-folder judge_loc "
         "--judge judge1 "
         "--output-folder ."
     )

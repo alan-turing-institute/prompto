@@ -54,40 +54,37 @@ def test_load_max_queries_json(temporary_data_folder_judge):
 def test_load_judge_args_both_none(temporary_data_folder_judge, caplog):
     caplog.set_level(logging.INFO)
     # if either argument is None, return (False, None, None, None)
-    result = load_judge_args(judge_location_arg=None, judge_arg=None)
+    result = load_judge_args(judge_folder_arg=None, judge_arg=None)
     assert result == (False, None, None, None)
     assert (
-        "Not creating judge file as one of judge_location or judge is None"
-        in caplog.text
+        "Not creating judge file as one of judge_folder or judge is None" in caplog.text
     )
 
 
 def test_load_judge_args_judge_arg_none(temporary_data_folder_judge, caplog):
     caplog.set_level(logging.INFO)
     # if either argument is None, return (False, None, None, None)
-    result = load_judge_args(judge_location_arg="judge_loc", judge_arg=None)
+    result = load_judge_args(judge_folder_arg="judge_loc", judge_arg=None)
     assert result == (False, None, None, None)
     assert (
-        "Not creating judge file as one of judge_location or judge is None"
-        in caplog.text
+        "Not creating judge file as one of judge_folder or judge is None" in caplog.text
     )
 
 
-def test_load_judge_args_judge_location_arg_none(temporary_data_folder_judge, caplog):
+def test_load_judge_args_judge_folder_arg_none(temporary_data_folder_judge, caplog):
     caplog.set_level(logging.INFO)
     # if either argument is None, return (False, None, None, None)
-    result = load_judge_args(judge_location_arg=None, judge_arg="judge1")
+    result = load_judge_args(judge_folder_arg=None, judge_arg="judge1")
     assert result == (False, None, None, None)
     assert (
-        "Not creating judge file as one of judge_location or judge is None"
-        in caplog.text
+        "Not creating judge file as one of judge_folder or judge is None" in caplog.text
     )
 
 
 def test_load_judge_args(temporary_data_folder_judge, caplog):
     caplog.set_level(logging.INFO)
     # if both arguments are not None, return (True, templaate, judge_settings, judge
-    result = load_judge_args(judge_location_arg="judge_loc", judge_arg="judge1,judge2")
+    result = load_judge_args(judge_folder_arg="judge_loc", judge_arg="judge1,judge2")
     assert result == (
         True,
         "Template: input={INPUT_PROMPT}, output={OUTPUT_RESPONSE}",
@@ -431,7 +428,7 @@ def test_run_experiment_no_judge_in_input(temporary_data_folder_judge):
     assert result.exit_code == 0
     assert "No environment file found at .env" in result.stderr
     assert (
-        "Not creating judge file as one of judge_location or judge is None"
+        "Not creating judge file as one of judge_folder or judge is None"
         in result.stderr
     )
     assert (
@@ -471,7 +468,7 @@ def test_run_experiment_no_judge_not_in_input_move(temporary_data_folder_judge):
 
     assert "No environment file found at some_file.env" in result.stderr
     assert (
-        "Not creating judge file as one of judge_location or judge is None"
+        "Not creating judge file as one of judge_folder or judge is None"
         in result.stderr
     )
     assert (
@@ -508,7 +505,7 @@ def test_run_experiment_judge_not_in_input_copy(temporary_data_folder_judge):
         "--file test-exp-not-in-input.jsonl "
         "--data-folder pipeline_data "
         "--max-queries=200 "
-        "--judge-location judge_loc "
+        "--judge-folder judge_loc "
         "--judge judge1"
     )
     assert result.exit_code == 0
@@ -516,7 +513,7 @@ def test_run_experiment_judge_not_in_input_copy(temporary_data_folder_judge):
     assert os.path.isfile("test-exp-not-in-input.jsonl")
 
     assert "No environment file found at .env" in result.stderr
-    assert "Judge location loaded from judge_loc" in result.stderr
+    assert "judge folder loaded from judge_loc" in result.stderr
     assert "Judges to be used: ['judge1']" in result.stderr
     assert (
         "File test-exp-not-in-input.jsonl is not in the input folder pipeline_data/input"
@@ -557,12 +554,12 @@ def test_run_experiment_judge(temporary_data_folder_judge):
         "prompto_run_experiment "
         "--file data/input/test-experiment.jsonl "
         "--max-queries=200 "
-        "--judge-location judge_loc "
+        "--judge-folder judge_loc "
         "--judge judge1,judge2"
     )
     assert result.exit_code == 0
     assert "No environment file found at .env" in result.stderr
-    assert "Judge location loaded from judge_loc" in result.stderr
+    assert "judge folder loaded from judge_loc" in result.stderr
     assert "Judges to be used: ['judge1', 'judge2']" in result.stderr
     assert (
         "Settings: "
@@ -614,7 +611,7 @@ def test_run_experiment_scorer(temporary_data_folder_judge):
     assert result.exit_code == 0
     assert "No environment file found at .env" in result.stderr
     assert (
-        "Not creating judge file as one of judge_location or judge is None"
+        "Not creating judge file as one of judge_folder or judge is None"
         in result.stderr
     )
     assert "Scoring functions to be used: ['match', 'includes']" in result.stderr
@@ -658,13 +655,13 @@ def test_run_experiment_judge_and_scorer(temporary_data_folder_judge):
         "prompto_run_experiment "
         "--file data/input/test-experiment.jsonl "
         "--max-queries=200 "
-        "--judge-location judge_loc "
+        "--judge-folder judge_loc "
         "--judge judge2 "
         "--scorer 'match, includes'"
     )
     assert result.exit_code == 0
     assert "No environment file found at .env" in result.stderr
-    assert "Judge location loaded from judge_loc" in result.stderr
+    assert "judge folder loaded from judge_loc" in result.stderr
     assert "Judges to be used: ['judge2']" in result.stderr
     assert "Scoring functions to be used: ['match', 'includes']" in result.stderr
     assert (
