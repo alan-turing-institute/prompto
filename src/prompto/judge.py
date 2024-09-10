@@ -11,8 +11,8 @@ def load_judge_folder(
     Parses the judge_folder to load the template prompt
     string and judge settings dictionary.
 
-    ≈ should be a path to the judge
-    folder containing the template.txt and settings.json files.
+    The judge_folder should be a path to the judge
+    folder containing the template files and settings.json files.
 
     We read the template from judge_folder/template.txt
     and the settings from judge_folder/settings.json. If
@@ -22,7 +22,7 @@ def load_judge_folder(
     Parameters
     ----------
     judge_folder : str
-        Path to the judge folder containing the template.txt
+        Path to the judge folder containing the template files
         and settings.json files
     templates : str | list[str]
         Path(s) to the template file(s) to be used for the judge.
