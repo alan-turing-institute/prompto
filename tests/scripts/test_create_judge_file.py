@@ -155,7 +155,8 @@ def test_create_judge_file_full(temporary_data_folder_judge):
     assert len(judge_inputs) == 3
     assert judge_inputs == [
         {
-            "id": "judge-judge1-0",
+            "id": "judge-judge1-template-0",
+            "template_name": "template",
             "prompt": "Template: input=test prompt 1, output=test response 1",
             "api": "test",
             "model_name": "model1",
@@ -167,7 +168,8 @@ def test_create_judge_file_full(temporary_data_folder_judge):
             "input-response": "test response 1",
         },
         {
-            "id": "judge-judge1-1",
+            "id": "judge-judge1-template-1",
+            "template_name": "template",
             "prompt": "Template: input=test prompt 2, output=test response 2",
             "api": "test",
             "model_name": "model1",
@@ -179,11 +181,251 @@ def test_create_judge_file_full(temporary_data_folder_judge):
             "input-response": "test response 2",
         },
         {
-            "id": "judge-judge1-2",
+            "id": "judge-judge1-template-2",
+            "template_name": "template",
             "prompt": "Template: input=test prompt 3, output=test response 3",
             "api": "test",
             "model_name": "model1",
             "parameters": {"temperature": 0.5},
+            "input-id": 2,
+            "input-api": "test",
+            "input-model": "test_model",
+            "input-prompt": "test prompt 3",
+            "input-response": "test response 3",
+        },
+    ]
+
+
+def test_create_judge_file_full_single_templates(temporary_data_folder_judge):
+    result = shell(
+        "prompto_create_judge_file "
+        "--input-file data/output/completed-test-experiment.jsonl "
+        "--judge-folder judge_loc "
+        "--templates template2.txt "
+        "--judge judge1 "
+        "--output-folder ."
+    )
+    assert result.exit_code == 0
+    assert os.path.isfile("./judge-test-experiment.jsonl")
+
+    # read and check the contents of the judge file
+    with open("./judge-test-experiment.jsonl", "r") as f:
+        judge_inputs = [dict(json.loads(line)) for line in f]
+
+    assert len(judge_inputs) == 3
+    assert judge_inputs == [
+        {
+            "id": "judge-judge1-template2-0",
+            "template_name": "template2",
+            "prompt": "Template 2: input:test prompt 1, output:test response 1",
+            "api": "test",
+            "model_name": "model1",
+            "parameters": {"temperature": 0.5},
+            "input-id": 0,
+            "input-api": "test",
+            "input-model": "test_model",
+            "input-prompt": "test prompt 1",
+            "input-response": "test response 1",
+        },
+        {
+            "id": "judge-judge1-template2-1",
+            "template_name": "template2",
+            "prompt": "Template 2: input:test prompt 2, output:test response 2",
+            "api": "test",
+            "model_name": "model1",
+            "parameters": {"temperature": 0.5},
+            "input-id": 1,
+            "input-api": "test",
+            "input-model": "test_model",
+            "input-prompt": "test prompt 2",
+            "input-response": "test response 2",
+        },
+        {
+            "id": "judge-judge1-template2-2",
+            "template_name": "template2",
+            "prompt": "Template 2: input:test prompt 3, output:test response 3",
+            "api": "test",
+            "model_name": "model1",
+            "parameters": {"temperature": 0.5},
+            "input-id": 2,
+            "input-api": "test",
+            "input-model": "test_model",
+            "input-prompt": "test prompt 3",
+            "input-response": "test response 3",
+        },
+    ]
+
+
+def test_create_judge_file_full_multiple_templates_and_judges(
+    temporary_data_folder_judge,
+):
+    result = shell(
+        "prompto_create_judge_file "
+        "--input-file data/output/completed-test-experiment.jsonl "
+        "--judge-folder judge_loc "
+        "--templates template2.txt,template.txt "
+        "--judge judge1,judge2 "
+        "--output-folder ."
+    )
+    assert result.exit_code == 0
+    assert os.path.isfile("./judge-test-experiment.jsonl")
+
+    # read and check the contents of the judge file
+    with open("./judge-test-experiment.jsonl", "r") as f:
+        judge_inputs = [dict(json.loads(line)) for line in f]
+
+    assert len(judge_inputs) == 12
+    assert judge_inputs == [
+        {
+            "id": "judge-judge1-template2-0",
+            "template_name": "template2",
+            "prompt": "Template 2: input:test prompt 1, output:test response 1",
+            "api": "test",
+            "model_name": "model1",
+            "parameters": {"temperature": 0.5},
+            "input-id": 0,
+            "input-api": "test",
+            "input-model": "test_model",
+            "input-prompt": "test prompt 1",
+            "input-response": "test response 1",
+        },
+        {
+            "id": "judge-judge1-template2-1",
+            "template_name": "template2",
+            "prompt": "Template 2: input:test prompt 2, output:test response 2",
+            "api": "test",
+            "model_name": "model1",
+            "parameters": {"temperature": 0.5},
+            "input-id": 1,
+            "input-api": "test",
+            "input-model": "test_model",
+            "input-prompt": "test prompt 2",
+            "input-response": "test response 2",
+        },
+        {
+            "id": "judge-judge1-template2-2",
+            "template_name": "template2",
+            "prompt": "Template 2: input:test prompt 3, output:test response 3",
+            "api": "test",
+            "model_name": "model1",
+            "parameters": {"temperature": 0.5},
+            "input-id": 2,
+            "input-api": "test",
+            "input-model": "test_model",
+            "input-prompt": "test prompt 3",
+            "input-response": "test response 3",
+        },
+        {
+            "id": "judge-judge1-template-0",
+            "template_name": "template",
+            "prompt": "Template: input=test prompt 1, output=test response 1",
+            "api": "test",
+            "model_name": "model1",
+            "parameters": {"temperature": 0.5},
+            "input-id": 0,
+            "input-api": "test",
+            "input-model": "test_model",
+            "input-prompt": "test prompt 1",
+            "input-response": "test response 1",
+        },
+        {
+            "id": "judge-judge1-template-1",
+            "template_name": "template",
+            "prompt": "Template: input=test prompt 2, output=test response 2",
+            "api": "test",
+            "model_name": "model1",
+            "parameters": {"temperature": 0.5},
+            "input-id": 1,
+            "input-api": "test",
+            "input-model": "test_model",
+            "input-prompt": "test prompt 2",
+            "input-response": "test response 2",
+        },
+        {
+            "id": "judge-judge1-template-2",
+            "template_name": "template",
+            "prompt": "Template: input=test prompt 3, output=test response 3",
+            "api": "test",
+            "model_name": "model1",
+            "parameters": {"temperature": 0.5},
+            "input-id": 2,
+            "input-api": "test",
+            "input-model": "test_model",
+            "input-prompt": "test prompt 3",
+            "input-response": "test response 3",
+        },
+        {
+            "id": "judge-judge2-template2-0",
+            "template_name": "template2",
+            "prompt": "Template 2: input:test prompt 1, output:test response 1",
+            "api": "test",
+            "model_name": "model2",
+            "parameters": {"temperature": 0.2, "top_k": 0.9},
+            "input-id": 0,
+            "input-api": "test",
+            "input-model": "test_model",
+            "input-prompt": "test prompt 1",
+            "input-response": "test response 1",
+        },
+        {
+            "id": "judge-judge2-template2-1",
+            "template_name": "template2",
+            "prompt": "Template 2: input:test prompt 2, output:test response 2",
+            "api": "test",
+            "model_name": "model2",
+            "parameters": {"temperature": 0.2, "top_k": 0.9},
+            "input-id": 1,
+            "input-api": "test",
+            "input-model": "test_model",
+            "input-prompt": "test prompt 2",
+            "input-response": "test response 2",
+        },
+        {
+            "id": "judge-judge2-template2-2",
+            "template_name": "template2",
+            "prompt": "Template 2: input:test prompt 3, output:test response 3",
+            "api": "test",
+            "model_name": "model2",
+            "parameters": {"temperature": 0.2, "top_k": 0.9},
+            "input-id": 2,
+            "input-api": "test",
+            "input-model": "test_model",
+            "input-prompt": "test prompt 3",
+            "input-response": "test response 3",
+        },
+        {
+            "id": "judge-judge2-template-0",
+            "template_name": "template",
+            "prompt": "Template: input=test prompt 1, output=test response 1",
+            "api": "test",
+            "model_name": "model2",
+            "parameters": {"temperature": 0.2, "top_k": 0.9},
+            "input-id": 0,
+            "input-api": "test",
+            "input-model": "test_model",
+            "input-prompt": "test prompt 1",
+            "input-response": "test response 1",
+        },
+        {
+            "id": "judge-judge2-template-1",
+            "template_name": "template",
+            "prompt": "Template: input=test prompt 2, output=test response 2",
+            "api": "test",
+            "model_name": "model2",
+            "parameters": {"temperature": 0.2, "top_k": 0.9},
+            "input-id": 1,
+            "input-api": "test",
+            "input-model": "test_model",
+            "input-prompt": "test prompt 2",
+            "input-response": "test response 2",
+        },
+        {
+            "id": "judge-judge2-template-2",
+            "template_name": "template",
+            "prompt": "Template: input=test prompt 3, output=test response 3",
+            "api": "test",
+            "model_name": "model2",
+            "parameters": {"temperature": 0.2, "top_k": 0.9},
             "input-id": 2,
             "input-api": "test",
             "input-model": "test_model",

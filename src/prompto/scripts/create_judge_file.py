@@ -36,6 +36,17 @@ def main():
         required=True,
     )
     parser.add_argument(
+        "--templates",
+        "-t",
+        help=(
+            "Template file(s) to be used for the judge separated by commas. "
+            "These must be .txt files in the judge folder. "
+            "By default, the template file is 'template.txt'"
+        ),
+        type=str,
+        default="template.txt",
+    )
+    parser.add_argument(
         "--judge",
         "-j",
         help=(
@@ -64,8 +75,11 @@ def main():
             f"Input file '{input_filepath}' is not a valid input file"
         ) from exc
 
-    # parse judge folder and judge arguments
-    template_prompt, judge_settings = load_judge_folder(judge_folder=args.judge_folder)
+    # parse template, judge folder and judge arguments
+    templates = parse_list_arg(argument=args.templates)
+    template_prompts, judge_settings = load_judge_folder(
+        judge_folder=args.judge_folder, templates=templates
+    )
     judge = parse_list_arg(argument=args.judge)
     # check if the judge is in the judge settings dictionary
     Judge.check_judge_in_judge_settings(judge=judge, judge_settings=judge_settings)
@@ -79,7 +93,7 @@ def main():
     j = Judge(
         completed_responses=responses,
         judge_settings=judge_settings,
-        template_prompt=template_prompt,
+        template_prompts=template_prompts,
     )
 
     # create judge file

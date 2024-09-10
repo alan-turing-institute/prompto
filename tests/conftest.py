@@ -542,6 +542,7 @@ def temporary_data_folder_judge(tmp_path: Path):
     ├── pipeline_data/
     ├── judge_loc/
         └── template.txt
+        └── template2.txt
         └── settings.json
     ├── judge_loc_no_template/
         └── settings.json
@@ -598,6 +599,10 @@ def temporary_data_folder_judge(tmp_path: Path):
     # create a template.txt file
     with open(Path(tmp_path / "judge_loc" / "template.txt"), "w") as f:
         f.write("Template: input={INPUT_PROMPT}, output={OUTPUT_RESPONSE}")
+
+    # create a template2.txt file
+    with open(Path(tmp_path / "judge_loc" / "template2.txt"), "w") as f:
+        f.write("Template 2: input:{INPUT_PROMPT}, output:{OUTPUT_RESPONSE}")
 
     # create a settings.json file
     with open(Path(tmp_path / "judge_loc" / "settings.json"), "w") as f:

@@ -85,6 +85,7 @@ def load_max_queries_json(max_queries_json: str | None) -> dict:
 def load_judge_args(
     judge_folder_arg: str | None,
     judge_arg: str | None,
+    templates_arg: str | None,
 ) -> tuple[bool, str, dict, list[str]]:
     """
     Load the judge arguments and parse them to get the
@@ -109,23 +110,31 @@ def load_judge_args(
         should be created, the template prompt string, the judge
         settings dictionary and the judge list
     """
-    if judge_folder_arg is not None and judge_arg is not None:
+    if (
+        judge_folder_arg is not None
+        and judge_arg is not None
+        and templates_arg is not None
+    ):
         create_judge_file = True
-        # parse judge folder and judge arguments
-        template_prompt, judge_settings = load_judge_folder(
-            judge_folder=judge_folder_arg
+        # parse template, judge folder and judge arguments
+        templates = parse_list_arg(argument=templates_arg)
+        template_prompts, judge_settings = load_judge_folder(
+            judge_folder=judge_folder_arg, templates=templates
         )
         judge = parse_list_arg(argument=judge_arg)
         # check if the judge is in the judge settings dictionary
         Judge.check_judge_in_judge_settings(judge=judge, judge_settings=judge_settings)
-        logging.info(f"judge folder loaded from {judge_folder_arg}")
+        logging.info(f"Judge folder loaded from {judge_folder_arg}")
+        logging.info(f"Templates to be used: {templates}")
         logging.info(f"Judges to be used: {judge}")
     else:
-        logging.info("Not creating judge file as one of judge_folder or judge is None")
+        logging.info(
+            "Not creating judge file as one of judge_folder, judge or templates is None"
+        )
         create_judge_file = False
-        template_prompt, judge_settings, judge = None, None, None
+        template_prompts, judge_settings, judge = None, None, None
 
-    return create_judge_file, template_prompt, judge_settings, judge
+    return create_judge_file, template_prompts, judge_settings, judge
 
 
 def parse_file_path_and_check_in_input(
@@ -194,7 +203,7 @@ def parse_file_path_and_check_in_input(
 def create_judge_experiment(
     create_judge_file: bool,
     experiment: Experiment,
-    template_prompt: str | None,
+    template_prompts: dict[str, str] | None,
     judge_settings: dict | None,
     judge: list[str] | str | None,
 ) -> Experiment | None:
@@ -213,7 +222,7 @@ def create_judge_experiment(
         The experiment object to create the judge experiment from.
         This is used to obtain the list of completed responses
         and to create the judge experiment and file name.
-    template_prompt : str | None
+    template_prompts : str | None
         The template prompt string to be used for the judge
     judge_settings : dict | None
         The judge settings dictionary to be used for the judge
@@ -235,9 +244,9 @@ def create_judge_experiment(
                 "as completed_responses is empty"
             )
 
-        if not isinstance(template_prompt, str):
+        if not isinstance(template_prompts, dict):
             raise TypeError(
-                "If create_judge_file is True, template_prompt must be a string"
+                "If create_judge_file is True, template_prompts must be a dictionary"
             )
         if not isinstance(judge_settings, dict):
             raise TypeError(
@@ -252,7 +261,7 @@ def create_judge_experiment(
         j = Judge(
             completed_responses=experiment.completed_responses,
             judge_settings=judge_settings,
-            template_prompt=template_prompt,
+            template_prompts=template_prompts,
         )
 
         # create judge file
@@ -358,6 +367,17 @@ async def main():
         default=None,
     )
     parser.add_argument(
+        "--templates",
+        "-t",
+        help=(
+            "Template file(s) to be used for the judge separated by commas. "
+            "These must be .txt files in the judge folder. "
+            "By default, the template file is 'template.txt'"
+        ),
+        type=str,
+        default="template.txt",
+    )
+    parser.add_argument(
         "--judge",
         "-j",
         help=(
@@ -393,9 +413,10 @@ async def main():
     max_queries_dict = load_max_queries_json(args.max_queries_json)
 
     # check if judge arguments are provided
-    create_judge_file, template_prompt, judge_settings, judge = load_judge_args(
+    create_judge_file, template_prompts, judge_settings, judge = load_judge_args(
         judge_folder_arg=args.judge_folder,
         judge_arg=args.judge,
+        templates_arg=args.templates,
     )
 
     # check if scorer is provided, and if it is in the SCORING_FUNCTIONS dictionary
@@ -433,7 +454,7 @@ async def main():
     judge_experiment = create_judge_experiment(
         create_judge_file=create_judge_file,
         experiment=experiment,
-        template_prompt=template_prompt,
+        template_prompts=template_prompts,
         judge_settings=judge_settings,
         judge=judge,
     )
