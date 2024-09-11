@@ -14,9 +14,12 @@ Therefore, given a _completed_ experiment file (i.e., a jsonl file where each li
 To run an LLM-as-judge evaluation, you must first create a _judge folder_ consisting of:
 ```
 └── judge_folder
-    └── settings.json: a dictionary where keys are judge identifiers and the values are also dictionaries containing the "api", "model_name", and "parameters" to specify the LLM to use as a judge.
+    └── settings.json: a dictionary where keys are judge identifiers
+        and the values are also dictionaries containing the "api",
+        "model_name", and "parameters" to specify the LLM to use as a judge.
     ...
-    └── template .txt files: several template files that specify how to generate the prompts for the judge evaluation
+    └── template .txt files: several template files that specify how to
+        generate the prompts for the judge evaluation
 ```
 
 #### Judge settings file
