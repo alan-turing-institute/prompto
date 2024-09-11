@@ -227,7 +227,7 @@ class Judge:
                     | {f"input-{k}": v for k, v in response.items()}
                     for response in tqdm(
                         self.completed_responses,
-                        desc=f"Creating judge inputs for {j}",
+                        desc=f"Creating judge inputs for judge '{j}' and template '{template_name}'",
                         unit="responses",
                     )
                 ]

@@ -344,7 +344,7 @@ def test_judge_create_judge_inputs_errors():
         judge.create_judge_inputs(["judge1", 2])
 
 
-def test_judge_create_judge_inputs():
+def test_judge_create_judge_inputs(capsys):
     tp = {"temp": "prompt: {INPUT_PROMPT} || response: {OUTPUT_RESPONSE}"}
     judge = Judge(
         completed_responses=COMPLETED_RESPONSES,
@@ -380,6 +380,11 @@ def test_judge_create_judge_inputs():
         },
     ]
 
+    captured = capsys.readouterr()
+    assert (
+        "Creating judge inputs for judge 'judge1' and template 'temp'" in captured.err
+    )
+
     # "judge2" case
     judge_2_inputs = judge.create_judge_inputs("judge2")
     assert len(judge_2_inputs) == 2
@@ -407,6 +412,20 @@ def test_judge_create_judge_inputs():
             "input-response": "test response 2",
         },
     ]
+
+    captured = capsys.readouterr()
+    assert (
+        "Creating judge inputs for judge 'judge2' and template 'temp'" in captured.err
+    )
+
+
+def test_judge_create_judge_inputs_multiple_judges(capsys):
+    tp = {"temp": "prompt: {INPUT_PROMPT} || response: {OUTPUT_RESPONSE}"}
+    judge = Judge(
+        completed_responses=COMPLETED_RESPONSES,
+        template_prompts=tp,
+        judge_settings=JUDGE_SETTINGS,
+    )
 
     # "judge1, judge2" case
     judge_1_2_inputs = judge.create_judge_inputs(["judge1", "judge2"])
@@ -458,8 +477,16 @@ def test_judge_create_judge_inputs():
         },
     ]
 
+    captured = capsys.readouterr()
+    assert (
+        "Creating judge inputs for judge 'judge1' and template 'temp'" in captured.err
+    )
+    assert (
+        "Creating judge inputs for judge 'judge2' and template 'temp'" in captured.err
+    )
 
-def test_judge_create_judge_file(temporary_data_folder_judge):
+
+def test_judge_create_judge_file(temporary_data_folder_judge, capsys):
     # case where template_prompt has multiple templates
     tp = {
         "temp": "prompt: {INPUT_PROMPT} || response: {OUTPUT_RESPONSE}",
@@ -487,6 +514,14 @@ def test_judge_create_judge_file(temporary_data_folder_judge):
 
     # create judge file
     judge.create_judge_file(judge="judge1", out_filepath="judge_file.jsonl")
+
+    captured = capsys.readouterr()
+    assert (
+        "Creating judge inputs for judge 'judge1' and template 'temp'" in captured.err
+    )
+    assert (
+        "Creating judge inputs for judge 'judge1' and template 'temp2'" in captured.err
+    )
 
     # check the judge file was created
     assert os.path.isfile("judge_file.jsonl")
