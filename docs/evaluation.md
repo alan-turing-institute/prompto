@@ -147,8 +147,6 @@ experiment.process(evaluation_funcs=[match, includes])
 
 Here, you could also include any other custom functions in the list passed for `evaluation_funcs`.
 
-For a more detailed notebook walkthrough, see the [Running experiments with custom evaluations notebook](https://github.com/alan-turing-institute/prompto/blob/main/examples/evaluation/running_experiments_with_custom_evaluations.ipynb)
-
 ### Running a scorer evaluation automatically using `prompto_run_experiment`
 
 In the command line, you can use the `--scorers` argument to specify a list of scoring functions to use. To do so, you must first add the scoring function to the `SCORING_FUNCTIONS` dictionary in [src/prompto/scorers.py](https://github.com/alan-turing-institute/prompto/blob/main/src/prompto/scorer.py) (this is at the bottom of the file). You can then pass in the key corresponding to the scoring function to the `--scorers` argument as a comma-separated list. For instance, to run an experiment file with automatic evaluation using the `match` and `includes` scorers, you can use the following command:
