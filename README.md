@@ -43,7 +43,7 @@ See below for [installation instructions](#installation) and [quickstarts for ge
 
 ## `prompto` for Evaluation
 
-`prompto` can also be used as an evaluation tool for LLMs. For details on how to use `prompto` for evaluation, see the [evaluation docs](./docs/evaluation.md).
+`prompto` can also be used as an evaluation tool for LLMs. In particular, it has functionality to automatically conduct an LLM-as-judge evaluation on the outputs of models and/or apply a `scorer` function (e.g. string matching, regex, or any custom function applied to some output) to outputs. For details on how to use `prompto` for evaluation, see the [evaluation docs](./docs/evaluation.md).
 
 ## Available APIs and Models
 
