@@ -119,8 +119,8 @@ This command would first run the experiment file to obtain responses for each pr
 `prompto` supports automatic evaluation using a scoring function. A scoring function is typically something which is lightweight such as performing string matching or regex computation. For `prompto` a scoring function is defined as any function that takes in a completed prompt dictionary and returns a dictionary with new keys that define some score for the prompt.
 
 For example, we have some built-in scoring functions in [src/prompto/scorers.py](https://github.com/alan-turing-institute/prompto/blob/main/src/prompto/scorer.py):
-- `match()`: takes in a completed prompt dictionary `prompt_dict` as an argument and sets a new key "match" which is `True` if `prompt_dict["response"`]==`prompt_dict["expected_response"]` and `False` otherwise.
-- `includes()`: takes in a completed prompt dictionary `prompt_dict` as an argument and sets a new key "includes" which is `True` if `prompt_dict["response"`] includes `prompt_dict["expected_response"]` and `False` otherwise.
+- `match()`: takes in a completed prompt dictionary `prompt_dict` as an argument and sets a new key "match" which is `True` if `prompt_dict["response"]==prompt_dict["expected_response"]` and `False` otherwise.
+- `includes()`: takes in a completed prompt dictionary `prompt_dict` as an argument and sets a new key "includes" which is `True` if `prompt_dict["response"]` includes `prompt_dict["expected_response"]` and `False` otherwise.
 
 It is possible to define your own scoring functions by creating a new function in a Python file. The only restriction is that it must take in a completed prompt dictionary as an argument and return a dictionary with new keys that define some score for the prompt, i.e. it has the following structure:
 ```python
