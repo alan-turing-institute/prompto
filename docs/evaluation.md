@@ -9,6 +9,8 @@ To perform an LLM-as-judge evaluation, we essentially treat this as just _anothe
 
 Therefore, given a _completed_ experiment file (i.e., a jsonl file where each line is a json object containing the prompt and response from a model), we can create another experiment file where the prompts are generated using some judge evaluation template and the completed response file. We must specify the model that we want to use as the judge. We call this a _judge_ experiment file and we can use `prompto` again to run this experiment and obtain the judge evaluation responses.
 
+Also see the [Running LLM-as-judge experiment notebook](https://alan-turing-institute.github.io/prompto/examples/evaluation/running_llm_as_judge_experiment/) for a more detailed walkthrough the library for creating and running judge evaluations.
+
 ### Judge folder
 
 To run an LLM-as-judge evaluation, you must first create a _judge folder_ consisting of:
@@ -127,6 +129,8 @@ def my_scorer(prompt_dict: dict) -> dict:
     prompt_dict["my_score"] = <something>
     return prompt_dict
 ```
+
+Also see the [Running experiments with custom evaluations](https://alan-turing-institute.github.io/prompto/examples/evaluation/running_experiments_with_custom_evaluations/) for a more detailed walkthrough the library for using custom scoring functions.
 
 ### Using a scorer in `prompto`
 
