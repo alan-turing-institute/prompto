@@ -274,33 +274,33 @@ def test_check_judge_init():
     ):
         Judge()
 
-    # raise error if judge_settings is not a valid dictionary
-    with pytest.raises(
-        TypeError,
-        match="judge_settings must be a dictionary",
-    ):
-        Judge(
-            completed_responses="completed_responses",
-            judge_settings="not_a_dict",
-            template_prompts="template_prompt",
-        )
-
     # raise error if template_prompts is not a dictionary
     with pytest.raises(
         TypeError,
         match="template_prompts must be a dictionary",
     ):
         Judge(
-            completed_responses="completed_responses",
-            judge_settings=JUDGE_SETTINGS,
+            completed_responses="completed_responses (no check on list of dicts)",
             template_prompts="not_a_dict",
+            judge_settings=JUDGE_SETTINGS,
+        )
+
+    # raise error if judge_settings is not a valid dictionary
+    with pytest.raises(
+        TypeError,
+        match="judge_settings must be a dictionary",
+    ):
+        Judge(
+            completed_responses="completed_responses (no check on list of dicts)",
+            template_prompts={"template": "some template"},
+            judge_settings="not_a_dict",
         )
 
     tp = {"temp": "prompt: {INPUT_PROMPT} || response: {OUTPUT_RESPONSE}"}
     judge = Judge(
         completed_responses=COMPLETED_RESPONSES,
-        judge_settings=JUDGE_SETTINGS,
         template_prompts=tp,
+        judge_settings=JUDGE_SETTINGS,
     )
     assert judge.completed_responses == COMPLETED_RESPONSES
     assert judge.judge_settings == JUDGE_SETTINGS
@@ -311,8 +311,8 @@ def test_judge_create_judge_inputs_errors():
     tp = {"temp": "prompt: {INPUT_PROMPT} || response: {OUTPUT_RESPONSE}"}
     judge = Judge(
         completed_responses=COMPLETED_RESPONSES,
-        judge_settings=JUDGE_SETTINGS,
         template_prompts=tp,
+        judge_settings=JUDGE_SETTINGS,
     )
 
     # raise error if judge not provided
@@ -348,8 +348,8 @@ def test_judge_create_judge_inputs():
     tp = {"temp": "prompt: {INPUT_PROMPT} || response: {OUTPUT_RESPONSE}"}
     judge = Judge(
         completed_responses=COMPLETED_RESPONSES,
-        judge_settings=JUDGE_SETTINGS,
         template_prompts=tp,
+        judge_settings=JUDGE_SETTINGS,
     )
 
     # "judge1" case
@@ -467,8 +467,8 @@ def test_judge_create_judge_file(temporary_data_folder_judge):
     }
     judge = Judge(
         completed_responses=COMPLETED_RESPONSES,
-        judge_settings=JUDGE_SETTINGS,
         template_prompts=tp,
+        judge_settings=JUDGE_SETTINGS,
     )
 
     # raise error if nothing is provided

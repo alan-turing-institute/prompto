@@ -92,8 +92,8 @@ def main():
     # create judge object from the parsed arguments
     j = Judge(
         completed_responses=responses,
-        judge_settings=judge_settings,
         template_prompts=template_prompts,
+        judge_settings=judge_settings,
     )
 
     # create judge file

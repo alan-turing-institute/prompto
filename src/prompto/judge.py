@@ -81,10 +81,6 @@ class Judge:
         A list of dictionaries containing the responses to judge.
         Each dictionary should contain the keys "prompt",
         and "response"
-    judge_settings : dict
-        A dictionary of judge settings with the keys "api",
-        "model_name", "parameters". Used to define the
-        judge LLMs to be used in the judging process
     template_prompt : dict[str, str]
         A dictionary containing the template prompt strings
         to be used for the judge LLMs. The keys should be the
@@ -94,20 +90,24 @@ class Judge:
         for the input prompt (INPUT_PROMPT) and the
         output response (OUTPUT_RESPONSE) which will be formatted
         with the prompt and response from the completed prompt dict
+    judge_settings : dict
+        A dictionary of judge settings with the keys "api",
+        "model_name", "parameters". Used to define the
+        judge LLMs to be used in the judging process
     """
 
     def __init__(
         self,
         completed_responses: list[dict],
-        judge_settings: dict,
         template_prompts: dict[str, str],
+        judge_settings: dict,
     ):
-        self.check_judge_settings(judge_settings)
         if not isinstance(template_prompts, dict):
             raise TypeError("template_prompts must be a dictionary")
+        self.check_judge_settings(judge_settings)
         self.completed_responses = completed_responses
-        self.judge_settings = judge_settings
         self.template_prompts = template_prompts
+        self.judge_settings = judge_settings
 
     @staticmethod
     def check_judge_settings(judge_settings: dict[str, dict]) -> bool:
