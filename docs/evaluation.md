@@ -114,7 +114,7 @@ This command would first run the experiment file to obtain responses for each pr
 
 ## Automatic evaluation using a scoring function
 
-`prompto` supports automatic evaluation using a scoring function. A scoring function is typically something which is lightweight such as performing string matching or regex computation. For `prompto` a socring function is defined as any function that takes in a completed prompt dictionary and returns a dictionary with new keys that define some score for the prompt.
+`prompto` supports automatic evaluation using a scoring function. A scoring function is typically something which is lightweight such as performing string matching or regex computation. For `prompto` a scoring function is defined as any function that takes in a completed prompt dictionary and returns a dictionary with new keys that define some score for the prompt.
 
 For example, we have some built-in scoring functions in [src/prompto/scorers.py](https://github.com/alan-turing-institute/prompto/blob/main/src/prompto/scorer.py):
 - `match()`: takes in a completed prompt dictionary `prompt_dict` as an argument and sets a new key "match" which is `True` if `prompt_dict["response"`]==`prompt_dict["expected_response"]` and `False` otherwise.
@@ -141,13 +141,13 @@ experiment = Experiment(file_name="experiment.jsonl", settings=settings)
 experiment.process(evaluation_funcs=[match, includes])
 ```
 
-Here, you could also include any other custum functions in the list passed for `evaluation_funcs`.
+Here, you could also include any other custom functions in the list passed for `evaluation_funcs`.
 
 For a more detailed notebook walkthrough, see the [Running experiments with custom evaluations notebook](https://github.com/alan-turing-institute/prompto/blob/main/examples/evaluation/Running_experiments_with_custom_evaluations.ipynb)
 
 ### Running a scorer evaluation automatically using `prompto_run_experiment`
 
-In the command line, you can use the `--scorers` argument to specify a list of scoring functions to use. To do so, you must first add the scoring function to the `SCORING_FUNCTIONS` dictionary in [src/prompto/scorers.py](https://github.com/alan-turing-institute/prompto/blob/main/src/prompto/scorer.py). You can then pass in the key corresponding to the scoring function to the `--scorers` argument as a comma-separated list. For instance, to run an experiment file with automatic evaluation using the `match` and `includes` scorers, you can use the following command:
+In the command line, you can use the `--scorers` argument to specify a list of scoring functions to use. To do so, you must first add the scoring function to the `SCORING_FUNCTIONS` dictionary in [src/prompto/scorers.py](https://github.com/alan-turing-institute/prompto/blob/main/src/prompto/scorer.py) (this is at the bottom of the file). You can then pass in the key corresponding to the scoring function to the `--scorers` argument as a comma-separated list. For instance, to run an experiment file with automatic evaluation using the `match` and `includes` scorers, you can use the following command:
 ```
 prompto_run_experiment \
     --file path/to/experiment.jsonl \

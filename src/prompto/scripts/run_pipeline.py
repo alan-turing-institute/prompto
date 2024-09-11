@@ -12,7 +12,7 @@ from prompto.settings import Settings
 def main():
     """
     Constantly checks the input folder for new files
-    and proccesses them sequentially (ordered by creation time).
+    and processes them sequentially (ordered by creation time).
     """
     # parse command line arguments
     parser = argparse.ArgumentParser()

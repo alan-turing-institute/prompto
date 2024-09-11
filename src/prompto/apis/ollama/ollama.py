@@ -66,7 +66,7 @@ class OllamaAPI(AsyncAPI):
         the required environment variables are set.
 
         If these are passed, we check if the API endpoint is a valid
-        and that the model is avaialble at the endpoint.
+        and that the model is available at the endpoint.
 
         Returns
         -------
