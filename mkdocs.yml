@@ -34,7 +34,7 @@ nav:
           - Example: examples/ollama/README.md
           - Notebook: examples/ollama/ollama.ipynb
       - Custom Evaluations:
-          - Notebook: examples/evaluation/Running_experiments_with_custom_evaluations.ipynb
+          - Notebook: examples/evaluation/running_experiments_with_custom_evaluations.ipynb
   - Using prompto:
       - Setting up an experiment file: docs/experiment_file.md
       - Configuring environment variables: docs/environment_variables.md

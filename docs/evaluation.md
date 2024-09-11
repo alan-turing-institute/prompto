@@ -143,7 +143,7 @@ experiment.process(evaluation_funcs=[match, includes])
 
 Here, you could also include any other custom functions in the list passed for `evaluation_funcs`.
 
-For a more detailed notebook walkthrough, see the [Running experiments with custom evaluations notebook](https://github.com/alan-turing-institute/prompto/blob/main/examples/evaluation/Running_experiments_with_custom_evaluations.ipynb)
+For a more detailed notebook walkthrough, see the [Running experiments with custom evaluations notebook](https://github.com/alan-turing-institute/prompto/blob/main/examples/evaluation/running_experiments_with_custom_evaluations.ipynb)
 
 ### Running a scorer evaluation automatically using `prompto_run_experiment`
 
