@@ -1,18 +1,34 @@
 import json
-import logging
 import os
 
 import pytest
 
-from prompto.judge import Judge, parse_judge_location_arg
+from prompto.judge import Judge, load_judge_folder
+
+COMPLETED_RESPONSES = [
+    {"id": 0, "prompt": "test prompt 1", "response": "test response 1"},
+    {"id": 1, "prompt": "test prompt 2", "response": "test response 2"},
+]
+JUDGE_SETTINGS = {
+    "judge1": {
+        "api": "test",
+        "model_name": "model1",
+        "parameters": {"temperature": 0.5},
+    },
+    "judge2": {
+        "api": "test",
+        "model_name": "model2",
+        "parameters": {"temperature": 0.2, "top_k": 0.9},
+    },
+}
 
 
-def test_parse_judge_location_arg(temporary_data_folder_judge):
+def test_load_judge_folder(temporary_data_folder_judge):
     # test the function reads template.txt and settings.json correctly
-    template_prompt, judge_settings = parse_judge_location_arg("judge_loc")
-    assert template_prompt == (
-        "Template: input={INPUT_PROMPT}, output={OUTPUT_RESPONSE}"
-    )
+    template_prompt, judge_settings = load_judge_folder("judge_loc")
+    assert template_prompt == {
+        "template": "Template: input={INPUT_PROMPT}, output={OUTPUT_RESPONSE}"
+    }
     assert judge_settings == {
         "judge1": {
             "api": "test",
@@ -27,27 +43,96 @@ def test_parse_judge_location_arg(temporary_data_folder_judge):
     }
 
 
-def test_parse_location_arg_error(temporary_data_folder_judge):
-    # raise error if judge location is not a valid path to a directory
+def test_load_judge_folder_string_as_arg(temporary_data_folder_judge):
+    # test the function reads template.txt and settings.json correctly
+    template_prompt, judge_settings = load_judge_folder(
+        "judge_loc", templates="template2.txt"
+    )
+    assert template_prompt == {
+        "template2": "Template 2: input:{INPUT_PROMPT}, output:{OUTPUT_RESPONSE}"
+    }
+    assert judge_settings == {
+        "judge1": {
+            "api": "test",
+            "model_name": "model1",
+            "parameters": {"temperature": 0.5},
+        },
+        "judge2": {
+            "api": "test",
+            "model_name": "model2",
+            "parameters": {"temperature": 0.2, "top_k": 0.9},
+        },
+    }
+
+
+def test_load_judge_folder_multiple_templates(temporary_data_folder_judge):
+    # test the function reads template.txt and settings.json correctly
+    template_prompt, judge_settings = load_judge_folder(
+        "judge_loc", templates=["template.txt", "template2.txt"]
+    )
+    assert template_prompt == {
+        "template": "Template: input={INPUT_PROMPT}, output={OUTPUT_RESPONSE}",
+        "template2": "Template 2: input:{INPUT_PROMPT}, output:{OUTPUT_RESPONSE}",
+    }
+    assert judge_settings == {
+        "judge1": {
+            "api": "test",
+            "model_name": "model1",
+            "parameters": {"temperature": 0.5},
+        },
+        "judge2": {
+            "api": "test",
+            "model_name": "model2",
+            "parameters": {"temperature": 0.2, "top_k": 0.9},
+        },
+    }
+
+
+def test_load_judge_folder_arg_error(temporary_data_folder_judge):
+    # raise error if judge folder is not a valid path to a directory
     with pytest.raises(
         ValueError,
-        match="Judge location 'non_existent_folder' must be a valid path to a folder",
+        match="judge folder 'non_existent_folder' must be a valid path to a folder",
     ):
-        parse_judge_location_arg("non_existent_folder")
+        load_judge_folder("non_existent_folder")
 
-    # raise error if template file does not exist in the judge location
+    # raise error if template file does not exist in the judge folder
+    # default template.txt case
     with pytest.raises(
         FileNotFoundError,
         match="Template file 'judge_loc_no_template/template.txt' does not exist",
     ):
-        parse_judge_location_arg("judge_loc_no_template")
+        load_judge_folder("judge_loc_no_template")
 
-    # raise error if settings file does not exist in the judge location
+    # string template case
+    with pytest.raises(
+        FileNotFoundError,
+        match="Template file 'judge_loc/some-other-template.txt' does not exist",
+    ):
+        load_judge_folder("judge_loc", templates="some-other-template.txt")
+
+    # list of templates case
+    with pytest.raises(
+        FileNotFoundError,
+        match="Template file 'judge_loc/some-other-template.txt' does not exist",
+    ):
+        load_judge_folder(
+            "judge_loc", templates=["template.txt", "some-other-template.txt"]
+        )
+
+    # raise error if template file is not a .txt file
+    with pytest.raises(
+        ValueError,
+        match="Template file 'judge_loc/template.json' must end with '.txt'",
+    ):
+        load_judge_folder("judge_loc", templates="template.json")
+
+    # raise error if settings file does not exist in the judge folder
     with pytest.raises(
         FileNotFoundError,
         match="Judge settings file 'judge_loc_no_settings/settings.json' does not exist",
     ):
-        parse_judge_location_arg("judge_loc_no_settings")
+        load_judge_folder("judge_loc_no_settings")
 
 
 def test_judge_check_judge_settings():
@@ -189,62 +274,46 @@ def test_check_judge_init():
     ):
         Judge()
 
+    # raise error if template_prompts is not a dictionary
+    with pytest.raises(
+        TypeError,
+        match="template_prompts must be a dictionary",
+    ):
+        Judge(
+            completed_responses="completed_responses (no check on list of dicts)",
+            template_prompts="not_a_dict",
+            judge_settings=JUDGE_SETTINGS,
+        )
+
     # raise error if judge_settings is not a valid dictionary
     with pytest.raises(
         TypeError,
         match="judge_settings must be a dictionary",
     ):
         Judge(
-            completed_responses="completed_responses",
+            completed_responses="completed_responses (no check on list of dicts)",
+            template_prompts={"template": "some template"},
             judge_settings="not_a_dict",
-            template_prompt="template_prompt",
         )
 
-    # passes
-    cr = [
-        {"id": 0, "prompt": "test prompt 1", "response": "test response 1"},
-        {"id": 1, "prompt": "test prompt 2", "response": "test response 2"},
-    ]
-    js = {
-        "judge1": {
-            "api": "test",
-            "model_name": "model1",
-            "parameters": {"temperature": 0.5},
-        },
-        "judge2": {
-            "api": "test",
-            "model_name": "model2",
-            "parameters": {"temperature": 0.5},
-        },
-    }
+    tp = {"temp": "prompt: {INPUT_PROMPT} || response: {OUTPUT_RESPONSE}"}
     judge = Judge(
-        completed_responses=cr, judge_settings=js, template_prompt="template_prompt"
+        completed_responses=COMPLETED_RESPONSES,
+        template_prompts=tp,
+        judge_settings=JUDGE_SETTINGS,
     )
-    assert judge.completed_responses == cr
-    assert judge.judge_settings == js
-    assert judge.template_prompt == "template_prompt"
+    assert judge.completed_responses == COMPLETED_RESPONSES
+    assert judge.judge_settings == JUDGE_SETTINGS
+    assert judge.template_prompts == tp
 
 
-def test_judge_create_judge_inputs():
-    cr = [
-        {"id": 0, "prompt": "test prompt 1", "response": "test response 1"},
-        {"id": 1, "prompt": "test prompt 2", "response": "test response 2"},
-    ]
-    js = {
-        "judge1": {
-            "api": "test",
-            "model_name": "model1",
-            "parameters": {"temperature": 0.5},
-        },
-        "judge2": {
-            "api": "test",
-            "model_name": "model2",
-            "parameters": {"temperature": 0.2, "top_k": 0.9},
-        },
-    }
-    tp = "prompt: {INPUT_PROMPT} || response: {OUTPUT_RESPONSE}"
-
-    judge = Judge(completed_responses=cr, judge_settings=js, template_prompt=tp)
+def test_judge_create_judge_inputs_errors():
+    tp = {"temp": "prompt: {INPUT_PROMPT} || response: {OUTPUT_RESPONSE}"}
+    judge = Judge(
+        completed_responses=COMPLETED_RESPONSES,
+        template_prompts=tp,
+        judge_settings=JUDGE_SETTINGS,
+    )
 
     # raise error if judge not provided
     with pytest.raises(
@@ -274,12 +343,22 @@ def test_judge_create_judge_inputs():
     ):
         judge.create_judge_inputs(["judge1", 2])
 
+
+def test_judge_create_judge_inputs(capsys):
+    tp = {"temp": "prompt: {INPUT_PROMPT} || response: {OUTPUT_RESPONSE}"}
+    judge = Judge(
+        completed_responses=COMPLETED_RESPONSES,
+        template_prompts=tp,
+        judge_settings=JUDGE_SETTINGS,
+    )
+
     # "judge1" case
     judge_1_inputs = judge.create_judge_inputs("judge1")
     assert len(judge_1_inputs) == 2
     assert judge_1_inputs == [
         {
-            "id": "judge-judge1-0",
+            "id": "judge-judge1-temp-0",
+            "template_name": "temp",
             "prompt": "prompt: test prompt 1 || response: test response 1",
             "api": "test",
             "model_name": "model1",
@@ -289,7 +368,8 @@ def test_judge_create_judge_inputs():
             "input-response": "test response 1",
         },
         {
-            "id": "judge-judge1-1",
+            "id": "judge-judge1-temp-1",
+            "template_name": "temp",
             "prompt": "prompt: test prompt 2 || response: test response 2",
             "api": "test",
             "model_name": "model1",
@@ -299,13 +379,19 @@ def test_judge_create_judge_inputs():
             "input-response": "test response 2",
         },
     ]
+
+    captured = capsys.readouterr()
+    assert (
+        "Creating judge inputs for judge 'judge1' and template 'temp'" in captured.err
+    )
 
     # "judge2" case
     judge_2_inputs = judge.create_judge_inputs("judge2")
     assert len(judge_2_inputs) == 2
     assert judge_2_inputs == [
         {
-            "id": "judge-judge2-0",
+            "id": "judge-judge2-temp-0",
+            "template_name": "temp",
             "prompt": "prompt: test prompt 1 || response: test response 1",
             "api": "test",
             "model_name": "model2",
@@ -315,7 +401,8 @@ def test_judge_create_judge_inputs():
             "input-response": "test response 1",
         },
         {
-            "id": "judge-judge2-1",
+            "id": "judge-judge2-temp-1",
+            "template_name": "temp",
             "prompt": "prompt: test prompt 2 || response: test response 2",
             "api": "test",
             "model_name": "model2",
@@ -325,13 +412,28 @@ def test_judge_create_judge_inputs():
             "input-response": "test response 2",
         },
     ]
+
+    captured = capsys.readouterr()
+    assert (
+        "Creating judge inputs for judge 'judge2' and template 'temp'" in captured.err
+    )
+
+
+def test_judge_create_judge_inputs_multiple_judges(capsys):
+    tp = {"temp": "prompt: {INPUT_PROMPT} || response: {OUTPUT_RESPONSE}"}
+    judge = Judge(
+        completed_responses=COMPLETED_RESPONSES,
+        template_prompts=tp,
+        judge_settings=JUDGE_SETTINGS,
+    )
 
     # "judge1, judge2" case
     judge_1_2_inputs = judge.create_judge_inputs(["judge1", "judge2"])
     assert len(judge_1_2_inputs) == 4
     assert judge_1_2_inputs == [
         {
-            "id": "judge-judge1-0",
+            "id": "judge-judge1-temp-0",
+            "template_name": "temp",
             "prompt": "prompt: test prompt 1 || response: test response 1",
             "api": "test",
             "model_name": "model1",
@@ -341,7 +443,8 @@ def test_judge_create_judge_inputs():
             "input-response": "test response 1",
         },
         {
-            "id": "judge-judge1-1",
+            "id": "judge-judge1-temp-1",
+            "template_name": "temp",
             "prompt": "prompt: test prompt 2 || response: test response 2",
             "api": "test",
             "model_name": "model1",
@@ -351,7 +454,8 @@ def test_judge_create_judge_inputs():
             "input-response": "test response 2",
         },
         {
-            "id": "judge-judge2-0",
+            "id": "judge-judge2-temp-0",
+            "template_name": "temp",
             "prompt": "prompt: test prompt 1 || response: test response 1",
             "api": "test",
             "model_name": "model2",
@@ -361,7 +465,8 @@ def test_judge_create_judge_inputs():
             "input-response": "test response 1",
         },
         {
-            "id": "judge-judge2-1",
+            "id": "judge-judge2-temp-1",
+            "template_name": "temp",
             "prompt": "prompt: test prompt 2 || response: test response 2",
             "api": "test",
             "model_name": "model2",
@@ -372,27 +477,26 @@ def test_judge_create_judge_inputs():
         },
     ]
 
+    captured = capsys.readouterr()
+    assert (
+        "Creating judge inputs for judge 'judge1' and template 'temp'" in captured.err
+    )
+    assert (
+        "Creating judge inputs for judge 'judge2' and template 'temp'" in captured.err
+    )
 
-def test_judge_create_judge_file(temporary_data_folder_judge):
-    cr = [
-        {"id": 0, "prompt": "test prompt 1", "response": "test response 1"},
-        {"id": 1, "prompt": "test prompt 2", "response": "test response 2"},
-    ]
-    js = {
-        "judge1": {
-            "api": "test",
-            "model_name": "model1",
-            "parameters": {"temperature": 0.5},
-        },
-        "judge2": {
-            "api": "test",
-            "model_name": "model2",
-            "parameters": {"temperature": 0.2, "top_k": 0.9},
-        },
+
+def test_judge_create_judge_file(temporary_data_folder_judge, capsys):
+    # case where template_prompt has multiple templates
+    tp = {
+        "temp": "prompt: {INPUT_PROMPT} || response: {OUTPUT_RESPONSE}",
+        "temp2": "prompt 2: {INPUT_PROMPT} || response 2: {OUTPUT_RESPONSE}",
     }
-    tp = "prompt: {INPUT_PROMPT} || response: {OUTPUT_RESPONSE}"
-
-    judge = Judge(completed_responses=cr, judge_settings=js, template_prompt=tp)
+    judge = Judge(
+        completed_responses=COMPLETED_RESPONSES,
+        template_prompts=tp,
+        judge_settings=JUDGE_SETTINGS,
+    )
 
     # raise error if nothing is provided
     with pytest.raises(
@@ -411,6 +515,14 @@ def test_judge_create_judge_file(temporary_data_folder_judge):
     # create judge file
     judge.create_judge_file(judge="judge1", out_filepath="judge_file.jsonl")
 
+    captured = capsys.readouterr()
+    assert (
+        "Creating judge inputs for judge 'judge1' and template 'temp'" in captured.err
+    )
+    assert (
+        "Creating judge inputs for judge 'judge1' and template 'temp2'" in captured.err
+    )
+
     # check the judge file was created
     assert os.path.isfile("judge_file.jsonl")
 
@@ -418,10 +530,11 @@ def test_judge_create_judge_file(temporary_data_folder_judge):
     with open("judge_file.jsonl", "r") as f:
         judge_inputs = [dict(json.loads(line)) for line in f]
 
-    assert len(judge_inputs) == 2
+    assert len(judge_inputs) == 4
     assert judge_inputs == [
         {
-            "id": "judge-judge1-0",
+            "id": "judge-judge1-temp-0",
+            "template_name": "temp",
             "prompt": "prompt: test prompt 1 || response: test response 1",
             "api": "test",
             "model_name": "model1",
@@ -431,8 +544,31 @@ def test_judge_create_judge_file(temporary_data_folder_judge):
             "input-response": "test response 1",
         },
         {
-            "id": "judge-judge1-1",
+            "id": "judge-judge1-temp-1",
+            "template_name": "temp",
             "prompt": "prompt: test prompt 2 || response: test response 2",
+            "api": "test",
+            "model_name": "model1",
+            "parameters": {"temperature": 0.5},
+            "input-id": 1,
+            "input-prompt": "test prompt 2",
+            "input-response": "test response 2",
+        },
+        {
+            "id": "judge-judge1-temp2-0",
+            "template_name": "temp2",
+            "prompt": "prompt 2: test prompt 1 || response 2: test response 1",
+            "api": "test",
+            "model_name": "model1",
+            "parameters": {"temperature": 0.5},
+            "input-id": 0,
+            "input-prompt": "test prompt 1",
+            "input-response": "test response 1",
+        },
+        {
+            "id": "judge-judge1-temp2-1",
+            "template_name": "temp2",
+            "prompt": "prompt 2: test prompt 2 || response 2: test response 2",
             "api": "test",
             "model_name": "model1",
             "parameters": {"temperature": 0.5},

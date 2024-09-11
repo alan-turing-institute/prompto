@@ -309,9 +309,9 @@ class AnthropicAPI(AsyncAPI):
         i.e. multi-turn chat with history.
 
         The "system" role is not handled the same way as in the OpenAI API.
-        There is no "system role". Instead, it is handled in a seperate parameter
+        There is no "system role". Instead, it is handled in a separate parameter
         outside of the dictionary. This argument accepts the system role in the prompt_dict,
-        but extracts it from the dictionary and passes it as a seperate argument.
+        but extracts it from the dictionary and passes it as a separate argument.
         """
         prompt, model_name, client, generation_config = await self._obtain_model_inputs(
             prompt_dict

@@ -156,7 +156,7 @@ class Experiment:
         It first initialises a dictionary with keys as the grouping names
         determined by the 'max_queries_dict' attribute in the settings object,
         and values are dictionaries with "prompt_dicts" and "rate_limit" keys.
-        It will use any of the rate limits provided to intialise these values.
+        It will use any of the rate limits provided to initialise these values.
         The function then loops over the experiment prompts and adds them to the
         appropriate group in the dictionary. If a grouping name (given by the "group" or
         "api" key) is not in the dictionary already, it will initialise it
@@ -216,7 +216,7 @@ class Experiment:
                 key = prompt_dict["api"]
 
             if key not in grouped_dict:
-                # initilise the key with an empty prompt_dicts list
+                # initialise the key with an empty prompt_dicts list
                 # and the rate limit is just the default max_queries
                 # as no rate limit was provided for this api / group
                 grouped_dict[key] = {
@@ -622,7 +622,7 @@ class Experiment:
                     write_log_message(
                         log_file=self.log_file, log_message=log_message, log=True
                     )
-                # return Execption to indicate that we should try this prompt again later
+                # return Exception to indicate that we should try this prompt again later
                 return Exception(f"{type(err).__name__} - {err}\n")
 
         # record the response in a jsonl file asynchronously using FILE_WRITE_LOCK

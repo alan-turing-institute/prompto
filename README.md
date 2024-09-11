@@ -25,7 +25,7 @@
 
 `prompto` is a Python library which facilitates processing of experiments of Large Language Models (LLMs) stored as jsonl files. It automates _asynchronous querying of LLM API endpoints_ and logs progress.
 
-`prompto` derives from the Italian word "_pronto_" which means "_ready_". It could also mean "_I prompt_" in Italian (if "_promptare_" was a verb meaning "_to prompt_").
+`prompto` derives from the Italian word "_pronto_" which means "_ready_" (or "hello" when answering the phone). It could also mean "_I prompt_" in Italian (if "_promptare_" was a verb meaning "_to prompt_").
 
 A pre-print for this work is available on [arXiv](https://arxiv.org/abs/2408.11847). If you use this library, please see the [citation](#citation) below. For the experiments in the pre-print, see the [system demonstration examples](./examples/system-demo/README.md).
 
@@ -40,6 +40,10 @@ The library is designed to be extensible and can be used to query different mode
 For more details on the library, see the [documentation](./docs/README.md) where you can find information on [how to set up an experiment file](./docs/experiment_file.md), [how to run experiments](./docs/pipeline.md), [how to configure environment variables](./docs/environment_variables.md), [how to specify rate limits for APIs and to use parallel processing](./docs/rate_limits.md) and much more.
 
 See below for [installation instructions](#installation) and [quickstarts for getting started](#getting-started) with `prompto`.
+
+## `prompto` for Evaluation
+
+`prompto` can also be used as an evaluation tool for LLMs. In particular, it has functionality to automatically conduct an LLM-as-judge evaluation on the outputs of models and/or apply a `scorer` function (e.g. string matching, regex, or any custom function applied to some output) to outputs. For details on how to use `prompto` for evaluation, see the [evaluation docs](./docs/evaluation.md).
 
 ## Available APIs and Models
 
@@ -130,7 +134,7 @@ prompto_run_experiment --file data/input/openai.jsonl --max-queries 30
 This will:
 
 1. Create subfolders in the `data` folder (in particular, it will create `media` (`data/media`) and `output` (`data/media`) folders)
-2. Create a folder in the`output` folder with the name of the experiment (the file name without the `.jsonl` extention * in this case, `openai`)
+2. Create a folder in the`output` folder with the name of the experiment (the file name without the `.jsonl` extension * in this case, `openai`)
 3. Move the `openai.jsonl` file to the `output/openai` folder (and add a timestamp of when the run of the experiment started)
 4. Start running the experiment and sending requests to the OpenAI API asynchronously which we specified in this command to be 30 queries a minute (so requests are sent every 2 seconds) * the default is 10 queries per minute
 5. Results will be stored in a "completed" jsonl file in the output folder (which is also timestamped)

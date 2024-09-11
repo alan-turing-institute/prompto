@@ -18,3 +18,9 @@ repos:
       - id: isort
         name: isort (python)
         args: ["--profile", "black", "--filter-files"]
+
+  - repo: https://github.com/codespell-project/codespell
+    rev: v2.3.0
+    hooks:
+    - id: codespell
+      args: ["--skip", "*.jsonl,*.json,examples/system-demo/alpaca_sample_generation.ipynb"]

@@ -634,7 +634,7 @@ async def test_generate_text_with_1evaluation(
         evaluation_funcs=[example_evaluation_func1],
     )
 
-    # normal repsonses should remain unchanged
+    # normal responses should remain unchanged
     assert result["api"] == "test"
     assert result["prompt"] == "test prompt"
     assert result["response"] == "This is a test response"
@@ -670,7 +670,7 @@ async def test_generate_text_with_2evaluations(
         evaluation_funcs=[example_evaluation_func1, example_evaluation_func2],
     )
 
-    # normal repsonses should remain unchanged
+    # normal responses should remain unchanged
     assert result["api"] == "test"
     assert result["prompt"] == "test prompt"
     assert result["response"] == "This is a test response"

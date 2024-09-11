@@ -31,7 +31,7 @@ TYPE_ERROR = TypeError(
 
 class HuggingfaceTGIAPI(AsyncAPI):
     """
-    Class for asynchrnous querying of the Huggingface TGI API endpoint.
+    Class for asynchronous querying of the Huggingface TGI API endpoint.
 
     Parameters
     ----------

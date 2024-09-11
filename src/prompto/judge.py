@@ -4,47 +4,63 @@ import os
 from tqdm import tqdm
 
 
-def parse_judge_location_arg(argument: str) -> tuple[str, dict]:
+def load_judge_folder(
+    judge_folder: str, templates: str | list[str] = "template.txt"
+) -> tuple[dict[str, str], dict]:
     """
-    Parses the judge location argument to get the
-    template prompt string and judge settings dictionary.
+    Parses the judge_folder to load the template prompt
+    string and judge settings dictionary.
 
-    The judge_location argument should be a path to the judge
-    folder containing the template.txt and settings.json files.
+    The judge_folder should be a path to the judge
+    folder containing the template files and settings.json files.
 
-    We read the template from judge_location/template.txt
-    and the settings from judge_location/settings.json. If
+    We read the template from judge_folder/template.txt
+    and the settings from judge_folder/settings.json. If
     either of these files do not exist, a FileNotFoundError
     will be raised.
 
     Parameters
     ----------
-    argument : str
-        Path to the judge folder containing the template.txt
+    judge_folder : str
+        Path to the judge folder containing the template files
         and settings.json files
+    templates : str | list[str]
+        Path(s) to the template file(s) to be used for the judge.
+        By default, this is 'template.txt'. These files must be
+        in the judge folder and end with '.txt'
 
     Returns
     -------
-    tuple[str, dict]
-        A tuple containing the template prompt string and
-        the judge settings dictionary
+    tuple[dict[str, str], dict]
+        A tuple containing the template prompt string, which
+        are given as a dictionary with the template name as the
+        key (the template file name without the '.txt' extension)
+        and the value as the template string, and the judge
+        settings dictionary
     """
-    if not os.path.isdir(argument):
+    if not os.path.isdir(judge_folder):
         raise ValueError(
-            f"Judge location '{argument}' must be a valid path to a folder"
+            f"judge folder '{judge_folder}' must be a valid path to a folder"
         )
+    if isinstance(templates, str):
+        templates = [templates]
+
+    template_prompts = {}
+    for template in templates:
+        template_path = os.path.join(judge_folder, template)
+        if not template_path.endswith(".txt"):
+            raise ValueError(f"Template file '{template_path}' must end with '.txt'")
+
+        try:
+            with open(template_path, "r", encoding="utf-8") as f:
+                template_prompts[template.split(".")[0]] = f.read()
+        except FileNotFoundError as exc:
+            raise FileNotFoundError(
+                f"Template file '{template_path}' does not exist"
+            ) from exc
 
     try:
-        template_path = os.path.join(argument, "template.txt")
-        with open(template_path, "r", encoding="utf-8") as f:
-            template_prompt = f.read()
-    except FileNotFoundError as exc:
-        raise FileNotFoundError(
-            f"Template file '{template_path}' does not exist"
-        ) from exc
-
-    try:
-        judge_settings_path = os.path.join(argument, "settings.json")
+        judge_settings_path = os.path.join(judge_folder, "settings.json")
         with open(judge_settings_path, "r", encoding="utf-8") as f:
             judge_settings = json.load(f)
     except FileNotFoundError as exc:
@@ -52,7 +68,7 @@ def parse_judge_location_arg(argument: str) -> tuple[str, dict]:
             f"Judge settings file '{judge_settings_path}' does not exist"
         ) from exc
 
-    return template_prompt, judge_settings
+    return template_prompts, judge_settings
 
 
 class Judge:
@@ -65,28 +81,33 @@ class Judge:
         A list of dictionaries containing the responses to judge.
         Each dictionary should contain the keys "prompt",
         and "response"
+    template_prompts : dict[str, str]
+        A dictionary containing the template prompt strings
+        to be used for the judge LLMs. The keys should be the
+        name of the template and the value should be the template.
+        The string templates (the values) are to be used to format
+        the prompt for the judge LLMs. Often contains placeholders
+        for the input prompt (INPUT_PROMPT) and the
+        output response (OUTPUT_RESPONSE) which will be formatted
+        with the prompt and response from the completed prompt dict
     judge_settings : dict
         A dictionary of judge settings with the keys "api",
         "model_name", "parameters". Used to define the
         judge LLMs to be used in the judging process
-    template_prompt : str
-        A string template to be used to format the prompt
-        for the judge LLMs. Often contains placeholders
-        for the input prompt (INPUT_PROMPT) and the
-        output response (OUTPUT_RESPONSE) which will be formatted
-        with the prompt and response from the completed prompt dict
     """
 
     def __init__(
         self,
         completed_responses: list[dict],
+        template_prompts: dict[str, str],
         judge_settings: dict,
-        template_prompt: str,
     ):
+        if not isinstance(template_prompts, dict):
+            raise TypeError("template_prompts must be a dictionary")
         self.check_judge_settings(judge_settings)
         self.completed_responses = completed_responses
+        self.template_prompts = template_prompts
         self.judge_settings = judge_settings
-        self.template_prompt = template_prompt
 
     @staticmethod
     def check_judge_settings(judge_settings: dict[str, dict]) -> bool:
@@ -190,24 +211,26 @@ class Judge:
 
         judge_inputs = []
         for j in judge:
-            judge_inputs += [
-                {
-                    "id": f"judge-{j}-{str(response.get('id', 'NA'))}",
-                    "prompt": self.template_prompt.format(
-                        INPUT_PROMPT=response["prompt"],
-                        OUTPUT_RESPONSE=response["response"],
-                    ),
-                    "api": self.judge_settings[j]["api"],
-                    "model_name": self.judge_settings[j]["model_name"],
-                    "parameters": self.judge_settings[j]["parameters"],
-                }
-                | {f"input-{k}": v for k, v in response.items()}
-                for response in tqdm(
-                    self.completed_responses,
-                    desc=f"Creating judge inputs for {j}",
-                    unit="responses",
-                )
-            ]
+            for template_name, template_prompt in self.template_prompts.items():
+                judge_inputs += [
+                    {
+                        "id": f"judge-{j}-{template_name}-{str(response.get('id', 'NA'))}",
+                        "template_name": template_name,
+                        "prompt": template_prompt.format(
+                            INPUT_PROMPT=response["prompt"],
+                            OUTPUT_RESPONSE=response["response"],
+                        ),
+                        "api": self.judge_settings[j]["api"],
+                        "model_name": self.judge_settings[j]["model_name"],
+                        "parameters": self.judge_settings[j]["parameters"],
+                    }
+                    | {f"input-{k}": v for k, v in response.items()}
+                    for response in tqdm(
+                        self.completed_responses,
+                        desc=f"Creating judge inputs for judge '{j}' and template '{template_name}'",
+                        unit="responses",
+                    )
+                ]
 
         return judge_inputs
 

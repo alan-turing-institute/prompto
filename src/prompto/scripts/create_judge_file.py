@@ -2,7 +2,7 @@ import argparse
 import json
 import os
 
-from prompto.judge import Judge, parse_judge_location_arg
+from prompto.judge import Judge, load_judge_folder
 from prompto.utils import parse_list_arg
 
 
@@ -26,7 +26,7 @@ def main():
         required=True,
     )
     parser.add_argument(
-        "--judge-location",
+        "--judge-folder",
         "-l",
         help=(
             "Location of the judge folder storing the template.txt "
@@ -34,6 +34,17 @@ def main():
         ),
         type=str,
         required=True,
+    )
+    parser.add_argument(
+        "--templates",
+        "-t",
+        help=(
+            "Template file(s) to be used for the judge separated by commas. "
+            "These must be .txt files in the judge folder. "
+            "By default, the template file is 'template.txt'"
+        ),
+        type=str,
+        default="template.txt",
     )
     parser.add_argument(
         "--judge",
@@ -64,9 +75,12 @@ def main():
             f"Input file '{input_filepath}' is not a valid input file"
         ) from exc
 
-    # parse judge location and judge arguments
-    template_prompt, judge_settings = parse_judge_location_arg(args.judge_location)
-    judge = parse_list_arg(args.judge)
+    # parse template, judge folder and judge arguments
+    templates = parse_list_arg(argument=args.templates)
+    template_prompts, judge_settings = load_judge_folder(
+        judge_folder=args.judge_folder, templates=templates
+    )
+    judge = parse_list_arg(argument=args.judge)
     # check if the judge is in the judge settings dictionary
     Judge.check_judge_in_judge_settings(judge=judge, judge_settings=judge_settings)
 
@@ -78,8 +92,8 @@ def main():
     # create judge object from the parsed arguments
     j = Judge(
         completed_responses=responses,
+        template_prompts=template_prompts,
         judge_settings=judge_settings,
-        template_prompt=template_prompt,
     )
 
     # create judge file

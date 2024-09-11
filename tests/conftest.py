@@ -542,6 +542,7 @@ def temporary_data_folder_judge(tmp_path: Path):
     ├── pipeline_data/
     ├── judge_loc/
         └── template.txt
+        └── template2.txt
         └── settings.json
     ├── judge_loc_no_template/
         └── settings.json
@@ -592,12 +593,16 @@ def temporary_data_folder_judge(tmp_path: Path):
             '{"id": 2, "api": "test", "model": "test_model", "prompt": "test prompt 3", "response": "test response 3"}\n'
         )
 
-    # create a judge location folder
+    # create a judge folder
     judge_loc = Path(tmp_path / "judge_loc").mkdir()
 
     # create a template.txt file
     with open(Path(tmp_path / "judge_loc" / "template.txt"), "w") as f:
         f.write("Template: input={INPUT_PROMPT}, output={OUTPUT_RESPONSE}")
+
+    # create a template2.txt file
+    with open(Path(tmp_path / "judge_loc" / "template2.txt"), "w") as f:
+        f.write("Template 2: input:{INPUT_PROMPT}, output:{OUTPUT_RESPONSE}")
 
     # create a settings.json file
     with open(Path(tmp_path / "judge_loc" / "settings.json"), "w") as f:
@@ -610,7 +615,7 @@ def temporary_data_folder_judge(tmp_path: Path):
         )
         f.write("}")
 
-    # create a judge location folder without template.txt
+    # create a judge folder without template.txt
     judge_loc_no_template = Path(tmp_path / "judge_loc_no_template").mkdir()
     with open(Path(tmp_path / "judge_loc_no_template" / "settings.json"), "w") as f:
         f.write("{\n")
@@ -622,7 +627,7 @@ def temporary_data_folder_judge(tmp_path: Path):
         )
         f.write("}")
 
-    # create a judge location folder without settings.json
+    # create a judge folder without settings.json
     judge_loc_no_settings = Path(tmp_path / "judge_loc_no_settings").mkdir()
     with open(Path(tmp_path / "judge_loc_no_settings" / "template.txt"), "w") as f:
         f.write("Template: input={INPUT_PROMPT}, output={OUTPUT_RESPONSE}")

@@ -21,7 +21,7 @@ def test_async_api_init_errors(temporary_data_folders):
 
 
 def test_async_api_init(temporary_data_folders):
-    # intialise settings object for AsyncAPI
+    # initialise settings object for AsyncAPI
     settings = Settings()
 
     # test that the base model class can be instantiated

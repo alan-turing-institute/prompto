@@ -1,1 +1,5 @@
-{"gemini-1.0-pro": {"api":"gemini", "model_name": "gemini-1.0-pro-002", "parameters": {"temperature": 0}}}
+{
+    "gpt-4o": {"api": "openai", "model_name": "gpt-4o", "parameters": {"temperature": 0.5}},
+    "gemini-1.0-pro": {"api":"gemini", "model_name": "gemini-1.0-pro-002", "parameters": {"temperature": 0}},
+    "ollama-llama3-1": {"api":"ollama", "model_name": "llama3.1", "parameters": {"temperature": 0}}
+}
