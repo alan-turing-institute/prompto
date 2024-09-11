@@ -93,7 +93,7 @@ In `judge`, you must have the following files:
 
 For the template file(s), we allow for specifying multiple templates (for different evaluation prompts), in which case the `--templates` argument should be a comma-separated list of template files. By default, this is set to `template.txt` if not specified. In the above example, we explicitly pass in `template.txt` to the `--templates` argument, so the command will look for a `template.txt` file in the judge folder.
 
-See for example [this judge example](./../examples/evaluation/judge/) which contains example template and settings files.
+See for example [this judge example](https://github.com/alan-turing-institute/prompto/tree/main/examples/evaluation/judge) which contains example template and settings files.
 
 The judge specified with the `--judge` flag should be a key in the `settings.json` file in the judge folder. You can create different judge files using different LLMs as judge by specifying a different judge identifier from the keys in the `settings.json` file.
 

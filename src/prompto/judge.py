@@ -81,7 +81,7 @@ class Judge:
         A list of dictionaries containing the responses to judge.
         Each dictionary should contain the keys "prompt",
         and "response"
-    template_prompt : dict[str, str]
+    template_prompts : dict[str, str]
         A dictionary containing the template prompt strings
         to be used for the judge LLMs. The keys should be the
         name of the template and the value should be the template.
