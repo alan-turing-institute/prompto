@@ -23,4 +23,4 @@ repos:
     rev: v2.3.0
     hooks:
     - id: codespell
-      args: ["--skip", "*.jsonl,*.json,examples/system-demo/alpaca_sample_generation.ipynb"]
+      args: ["--skip", "*.txt,*.jsonl,*.json,examples/system-demo/alpaca_sample_generation.ipynb"]
