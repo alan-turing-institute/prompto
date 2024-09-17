@@ -579,7 +579,13 @@ class Experiment:
                     index=index,
                     evaluation_funcs=evaluation_funcs,
                 )
-        except (NotImplementedError, KeyError, ValueError, TypeError) as err:
+        except (
+            NotImplementedError,
+            KeyError,
+            ValueError,
+            TypeError,
+            FileNotFoundError,
+        ) as err:
             # don't retry for selected errors, log the error and save an error response
             log_message = (
                 f"Error (i={index}, id={prompt_dict.get('id', 'NA')}): "

@@ -189,10 +189,10 @@ async def test_query_model_and_record_response_key_error(
     experiment = Experiment("test_experiment.jsonl", settings=settings)
     create_folder(experiment.output_folder)
 
-    # mock the generate_text method to raise a NotImplementedError
+    # mock the generate_text method to raise a KeyError
     mock_generate_text.side_effect = KeyError("some key error")
 
-    # we do not retry on NotImplementedError
+    # we do not retry on KeyError
     result = await experiment.query_model_and_record_response(
         prompt_dict={
             "id": "test_id",
@@ -291,10 +291,10 @@ async def test_query_model_and_record_response_type_error(
     experiment = Experiment("test_experiment.jsonl", settings=settings)
     create_folder(experiment.output_folder)
 
-    # mock the generate_text method to raise a NotImplementedError
+    # mock the generate_text method to raise a TypeError
     mock_generate_text.side_effect = TypeError("some type error")
 
-    # we do not retry on NotImplementedError
+    # we do not retry on TypeError
     result = await experiment.query_model_and_record_response(
         prompt_dict={
             "id": "test_id",
@@ -329,6 +329,57 @@ async def test_query_model_and_record_response_type_error(
 
     # check logs
     log_msg = "Error (i=2, id=test_id): TypeError - some type error"
+    assert log_msg in caplog.text
+
+
+@pytest.mark.asyncio
+@patch("prompto.experiment.Experiment.generate_text", new_callable=AsyncMock)
+async def test_query_model_and_record_response_file_not_found_error(
+    mock_generate_text, temporary_data_folder_for_processing, caplog
+):
+    caplog.set_level(logging.INFO)
+    settings = Settings(data_folder="data")
+    experiment = Experiment("test_experiment.jsonl", settings=settings)
+    create_folder(experiment.output_folder)
+
+    # mock the generate_text method to raise a FileNotFoundError
+    mock_generate_text.side_effect = FileNotFoundError("some type error")
+
+    # we do not retry on FileNotFoundError
+    result = await experiment.query_model_and_record_response(
+        prompt_dict={
+            "id": "test_id",
+            "api": "test",
+            "model_name": "test_model",
+            "prompt": "test prompt",
+            "parameters": {"raise_error": "False"},
+        },
+        index=2,
+        attempt=1,
+    )
+
+    assert result["id"] == "test_id"
+    assert result["api"] == "test"
+    assert result["model_name"] == "test_model"
+    assert result["prompt"] == "test prompt"
+    assert result["parameters"] == {"raise_error": "False"}
+    assert result["response"] == "FileNotFoundError - some type error"
+
+    # check that the response is saved to the output file
+    assert os.path.exists(experiment.output_completed_file_path)
+    with open(experiment.output_completed_file_path, "r") as f:
+        responses = [dict(json.loads(line)) for line in f]
+
+    assert len(responses) == 1
+    assert responses[0]["id"] == result["id"]
+    assert responses[0]["api"] == result["api"]
+    assert responses[0]["model_name"] == result["model_name"]
+    assert responses[0]["prompt"] == result["prompt"]
+    assert responses[0]["parameters"] == result["parameters"]
+    assert responses[0]["response"] == result["response"]
+
+    # check logs
+    log_msg = "Error (i=2, id=test_id): FileNotFoundError - some type error"
     assert log_msg in caplog.text
 
 
