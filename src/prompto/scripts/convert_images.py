@@ -27,13 +27,13 @@ def main():
     for item in tqdm(os.listdir(args.folder)):
         file = os.path.join(args.folder, item)
         if file.lower().endswith(".jpg") or file.lower().endswith(".jpeg"):
-            image = Image.open(file)
-            converted_image = image.convert("RGB")
-            converted_image.save(file, "JPEG")
+            with Image.open(file) as image:
+                converted_image = image.convert("RGB")
+                converted_image.save(file, "JPEG")
         elif file.lower().endswith(".png"):
-            image = Image.open(file)
-            converted_image = image.convert("RGB")
-            converted_image.save(file, "PNG")
+            with Image.open(file) as image:
+                converted_image = image.convert("RGB")
+                converted_image.save(file, "PNG")
         else:
             logging.info(f"Skipping {file} as it is not a supported file type")
 
