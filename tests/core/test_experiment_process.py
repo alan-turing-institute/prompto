@@ -65,8 +65,8 @@ async def test_process(
     assert experiment.completed_responses == result
 
     # check that the response is saved to the output file
-    assert os.path.exists(experiment.output_completed_file_path)
-    with open(experiment.output_completed_file_path, "r") as f:
+    assert os.path.exists(experiment.output_completed_jsonl_file_path)
+    with open(experiment.output_completed_jsonl_file_path, "r") as f:
         responses = [dict(json.loads(line)) for line in f]
 
     assert responses == result
@@ -194,8 +194,8 @@ async def test_process_with_max_queries_dict(
     assert experiment.completed_responses == result
 
     # check that the response is saved to the output file
-    assert os.path.exists(experiment.output_completed_file_path)
-    with open(experiment.output_completed_file_path, "r") as f:
+    assert os.path.exists(experiment.output_completed_jsonl_file_path)
+    with open(experiment.output_completed_jsonl_file_path, "r") as f:
         responses = [dict(json.loads(line)) for line in f]
 
     assert responses == result
@@ -337,8 +337,8 @@ async def test_process_with_groups(
     assert experiment.completed_responses == result
 
     # check that the response is saved to the output file
-    assert os.path.exists(experiment.output_completed_file_path)
-    with open(experiment.output_completed_file_path, "r") as f:
+    assert os.path.exists(experiment.output_completed_jsonl_file_path)
+    with open(experiment.output_completed_jsonl_file_path, "r") as f:
         responses = [dict(json.loads(line)) for line in f]
 
     assert responses == result
@@ -466,8 +466,8 @@ async def test_process_with_max_queries_dict_and_groups(
     assert experiment.completed_responses == result
 
     # check that the response is saved to the output file
-    assert os.path.exists(experiment.output_completed_file_path)
-    with open(experiment.output_completed_file_path, "r") as f:
+    assert os.path.exists(experiment.output_completed_jsonl_file_path)
+    with open(experiment.output_completed_jsonl_file_path, "r") as f:
         responses = [dict(json.loads(line)) for line in f]
 
     assert responses == result
@@ -730,8 +730,8 @@ async def test_process_with_evaluation(
     assert experiment.completed_responses == result
 
     # check that the response is saved to the output file
-    assert os.path.exists(experiment.output_completed_file_path)
-    with open(experiment.output_completed_file_path, "r") as f:
+    assert os.path.exists(experiment.output_completed_jsonl_file_path)
+    with open(experiment.output_completed_jsonl_file_path, "r") as f:
         responses = [dict(json.loads(line)) for line in f]
 
     assert responses == result

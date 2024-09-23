@@ -5,6 +5,7 @@ import os
 import time
 from datetime import datetime
 
+import pandas as pd
 from tqdm import tqdm
 from tqdm.asyncio import tqdm_asyncio
 
@@ -32,7 +33,7 @@ class Experiment:
     Parameters
     ----------
     file_name : str
-        The name of the jsonl experiment file
+        The name of the jsonl or csv experiment file
     settings : Settings
         Settings for the pipeline which includes the data folder locations,
         the maximum number of queries to send per minute, the maximum number
@@ -44,8 +45,8 @@ class Experiment:
         file_name: str,
         settings: Settings,
     ):
-        if not file_name.endswith(".jsonl"):
-            raise ValueError("Experiment file must be a jsonl file")
+        if not file_name.endswith(".jsonl") and not file_name.endswith(".csv"):
+            raise ValueError("Experiment file must be a jsonl or csv file")
 
         self.file_name: str = file_name
         # obtain experiment name from file name
@@ -70,15 +71,7 @@ class Experiment:
             )
 
         # read in the experiment data
-        with open(self.input_file_path, "r") as f:
-            self._experiment_prompts: list[dict] = [
-                dict(json.loads(line)) for line in f
-            ]
-            # sort the prompts by model_name key for the ollama api
-            # (for avoiding constantly switching and loading models between prompts)
-            self._experiment_prompts = sort_prompts_by_model_for_api(
-                self._experiment_prompts, api="ollama"
-            )
+        self._experiment_prompts = self._read_input_file()
 
         # set the number of queries
         self.number_queries: int = len(self._experiment_prompts)
@@ -95,13 +88,14 @@ class Experiment:
         self.log_file: str = os.path.join(
             self.output_folder, f"{self.start_time}-log-{self.experiment_name}.txt"
         )
-        # file path of the completed experiment file in the output experiment folder
-        self.output_completed_file_path: str = os.path.join(
-            self.output_folder, f"{self.start_time}-completed-" + self.file_name
+        # file path of the completed experiment jsonl file in the output experiment folder
+        self.output_completed_jsonl_file_path: str = os.path.join(
+            self.output_folder,
+            f"{self.start_time}-completed-{self.experiment_name}.jsonl",
         )
-        # file path of the input file in the output experiment folder (for logging purposes)
-        self.output_input_file_out_path: str = os.path.join(
-            self.output_folder, f"{self.start_time}-input-" + self.file_name
+        # file path of the input jsonl file in the output experiment folder (for logging purposes)
+        self.output_input_jsonl_file_out_path: str = os.path.join(
+            self.output_folder, f"{self.start_time}-input-{self.experiment_name}.jsonl"
         )
 
         # grouped experiment prompts by
@@ -111,8 +105,30 @@ class Experiment:
         # initialise the completed responses
         self.completed_responses: list[dict] = []
 
+        # initialise the completed response data frame
+        self._completed_responses_dataframe: pd.DataFrame | None = None
+
     def __str__(self) -> str:
         return self.file_name
+
+    def _read_input_file(self) -> list[dict]:
+        with open(self.input_file_path, "r") as f:
+            if self.input_file_path.endswith(".jsonl"):
+                experiment_prompts: list[dict] = [dict(json.loads(line)) for line in f]
+            elif self.input_file_path.endswith(".csv"):
+                experiment_prompts: list[dict] = pd.read_csv(f).to_dict(
+                    orient="records"
+                )
+            else:
+                raise ValueError("Experiment file must be a jsonl or csv file")
+
+        # sort the prompts by model_name key for the ollama api
+        # (for avoiding constantly switching and loading models between prompts)
+        experiment_prompts = sort_prompts_by_model_for_api(
+            experiment_prompts, api="ollama"
+        )
+
+        return experiment_prompts
 
     @property
     def experiment_prompts(self) -> list[dict]:
@@ -121,6 +137,19 @@ class Experiment:
     @experiment_prompts.setter
     def experiment_prompts(self, value: list[dict]) -> None:
         raise AttributeError("Cannot set the experiment_prompts attribute")
+
+    @property
+    def completed_responses_dataframe(self) -> pd.DataFrame:
+        if self._completed_responses_dataframe is None:
+            self._completed_responses_dataframe = (
+                self._obtain_completed_responses_dataframe()
+            )
+
+        return self._completed_responses_dataframe
+
+    @completed_responses_dataframe.setter
+    def completed_responses_dataframe(self, value: pd.DataFrame) -> None:
+        raise AttributeError("Cannot set the completed_responses_dataframe attribute")
 
     @property
     def grouped_experiment_prompts(self) -> dict[str, list[dict]]:
@@ -298,14 +327,41 @@ class Experiment:
         # create the output folder for the experiment
         create_folder(self.output_folder)
 
-        # move the experiment file to the output folder
+        # if the experiment file is csv file, we create a jsonl file which will get moved
+        if self.input_file_path.endswith(".csv"):
+            # move the input experiment csv file to the output folder
+            output_input_csv_file_out_path = (
+                self.output_input_jsonl_file_out_path.replace(".jsonl", ".csv")
+            )
+            logging.info(
+                f"Moving {self.input_file_path} to {self.output_folder} as "
+                f"{output_input_csv_file_out_path}..."
+            )
+            move_file(
+                source=self.input_file_path,
+                destination=output_input_csv_file_out_path,
+            )
+
+            # create an input experiment jsonl file for the experiment
+            logging.info(
+                f"Converting {self.input_file_path} to jsonl file for processing..."
+            )
+            input_file_path_as_jsonl = self.input_file_path.replace(".csv", ".jsonl")
+            with open(input_file_path_as_jsonl, "w") as f:
+                for prompt_dict in self.experiment_prompts:
+                    json.dump(prompt_dict, f)
+                    f.write("\n")
+        else:
+            input_file_path_as_jsonl = self.input_file_path
+
+        # move the input experiment jsonl file to the output folder
         logging.info(
-            f"Moving {self.input_file_path} to {self.output_folder} as "
-            f"{self.output_input_file_out_path}..."
+            f"Moving {input_file_path_as_jsonl} to {self.output_folder} as "
+            f"{self.output_input_jsonl_file_out_path}..."
         )
         move_file(
-            source=self.input_file_path,
-            destination=self.output_input_file_out_path,
+            source=input_file_path_as_jsonl,
+            destination=self.output_input_jsonl_file_out_path,
         )
 
         # run the experiment asynchronously
@@ -347,7 +403,7 @@ class Experiment:
         avg_query_processing_time = processing_time / self.number_queries
 
         # read the output file
-        with open(self.output_completed_file_path, "r") as f:
+        with open(self.output_completed_jsonl_file_path, "r") as f:
             self.completed_responses: list[dict] = [
                 dict(json.loads(line)) for line in f
             ]
@@ -633,7 +689,7 @@ class Experiment:
 
         # record the response in a jsonl file asynchronously using FILE_WRITE_LOCK
         async with FILE_WRITE_LOCK:
-            with open(self.output_completed_file_path, "a") as f:
+            with open(self.output_completed_jsonl_file_path, "a") as f:
                 json.dump(completed_prompt_dict, f)
                 f.write("\n")
 
@@ -720,3 +776,30 @@ class Experiment:
             prompt_dict = func(prompt_dict)
 
         return prompt_dict
+
+    def _obtain_completed_responses_dataframe(self) -> pd.DataFrame:
+        if self.completed_responses == []:
+            raise ValueError(
+                "No completed responses to convert to a DataFrame "
+                "(completed_responses attribute is empty). "
+                "Run the process method to obtain the completed responses"
+            )
+
+        return pd.DataFrame.from_records(self.completed_responses)
+
+    def save_completed_responses_to_csv(self, filename: str = None) -> None:
+        """
+        Save the completed responses to a csv file.
+
+        Parameters
+        ----------
+        filename : str | None
+            The name of the csv file to save the completed responses to.
+            If None, the filename will be the experiment name with the
+            timestamp of when the experiment started to run, by default None
+        """
+        if filename is None:
+            filename = self.output_completed_jsonl_file_path.replace(".jsonl", ".csv")
+
+        logging.info(f"Saving completed responses (as csv) to {filename}...")
+        self.completed_responses_dataframe.to_csv(filename, index=False)

@@ -345,8 +345,8 @@ async def test_send_requests_retry(
     )
 
     # check that the response is saved to the output file
-    assert os.path.exists(experiment.output_completed_file_path)
-    with open(experiment.output_completed_file_path, "r") as f:
+    assert os.path.exists(experiment.output_completed_jsonl_file_path)
+    with open(experiment.output_completed_jsonl_file_path, "r") as f:
         responses = [dict(json.loads(line)) for line in f]
 
     assert len(responses) == len(PROMPT_DICTS_TO_TEST)
@@ -414,8 +414,8 @@ async def test_send_requests_retry_no_retries(
     )
 
     # check that the response is saved to the output file
-    assert os.path.exists(experiment.output_completed_file_path)
-    with open(experiment.output_completed_file_path, "r") as f:
+    assert os.path.exists(experiment.output_completed_jsonl_file_path)
+    with open(experiment.output_completed_jsonl_file_path, "r") as f:
         responses = [dict(json.loads(line)) for line in f]
 
     assert len(responses) == len(PROMPT_DICTS_TO_TEST) - 1
@@ -466,8 +466,8 @@ async def test_send_requests_retry_with_group(
     )
 
     # check that the response is saved to the output file
-    assert os.path.exists(experiment.output_completed_file_path)
-    with open(experiment.output_completed_file_path, "r") as f:
+    assert os.path.exists(experiment.output_completed_jsonl_file_path)
+    with open(experiment.output_completed_jsonl_file_path, "r") as f:
         responses = [dict(json.loads(line)) for line in f]
 
     assert len(responses) == len(PROMPT_DICTS_TO_TEST)
@@ -547,8 +547,8 @@ async def test_send_requests_retry_no_retries_group(
     )
 
     # check that the response is saved to the output file
-    assert os.path.exists(experiment.output_completed_file_path)
-    with open(experiment.output_completed_file_path, "r") as f:
+    assert os.path.exists(experiment.output_completed_jsonl_file_path)
+    with open(experiment.output_completed_jsonl_file_path, "r") as f:
         responses = [dict(json.loads(line)) for line in f]
 
     assert len(responses) == len(PROMPT_DICTS_TO_TEST) - 1

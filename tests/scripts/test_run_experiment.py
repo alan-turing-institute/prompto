@@ -151,7 +151,7 @@ def test_parse_file_path_and_check_in_input_error(temporary_data_folder_judge):
         parse_file_path_and_check_in_input("unknown.json", "test")
 
     # raise error if file is not jsonl file path
-    with pytest.raises(ValueError, match="Experiment file must be a jsonl file"):
+    with pytest.raises(ValueError, match="Experiment file must be a jsonl or csv file"):
         parse_file_path_and_check_in_input("max_queries_dict.json", "test")
 
 

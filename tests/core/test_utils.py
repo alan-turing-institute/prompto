@@ -19,29 +19,29 @@ from prompto.utils import (
     log_success_response_query,
     move_file,
     parse_list_arg,
-    sort_jsonl_files_by_creation_time,
+    sort_input_files_by_creation_time,
     sort_prompts_by_model_for_api,
     write_log_message,
 )
 
 
-def test_sort_jsonl_files_by_creation_time(temporary_data_folders, caplog):
+def test_sort_input_files_by_creation_time(temporary_data_folders, caplog):
     caplog.set_level(logging.INFO)
     # raise error if no input folder is passed
     with pytest.raises(TypeError, match="missing 1 required positional argument"):
-        sort_jsonl_files_by_creation_time()
+        sort_input_files_by_creation_time()
 
     # raise error if not a path
     with pytest.raises(
         ValueError, match="Input folder 'not_a_folder' must be a valid path to a folder"
     ):
-        sort_jsonl_files_by_creation_time(input_folder="not_a_folder")
+        sort_input_files_by_creation_time(input_folder="not_a_folder")
 
     # raise error if not a folder
     with pytest.raises(
         ValueError, match="Input folder 'test.txt' must be a valid path to a folder"
     ):
-        sort_jsonl_files_by_creation_time(input_folder="test.txt")
+        sort_input_files_by_creation_time(input_folder="test.txt")
 
     # sort the jsonl files in the utils folder by creation time
     logging.info(
@@ -54,11 +54,11 @@ def test_sort_jsonl_files_by_creation_time(temporary_data_folders, caplog):
             if f.endswith(".jsonl")
         }
     )
-    sorted_files = sort_jsonl_files_by_creation_time(input_folder="utils")
+    sorted_files = sort_input_files_by_creation_time(input_folder="utils")
     assert sorted_files == ["first.jsonl", "second.jsonl", "third.jsonl"]
 
     # sort empty folder should return empty list
-    empty_folder = sort_jsonl_files_by_creation_time(input_folder="data")
+    empty_folder = sort_input_files_by_creation_time(input_folder="data")
     assert empty_folder == []
 
 

@@ -20,7 +20,7 @@ def test_experiment_init_errors(temporary_data_folders):
         Experiment(settings=Settings())
 
     # passing in a filename that is not a .jsonl file should raise a ValueError
-    with pytest.raises(ValueError, match="Experiment file must be a jsonl file"):
+    with pytest.raises(ValueError, match="Experiment file must be a jsonl or csv file"):
         Experiment("test.txt", settings=Settings())
 
     # passing in a filename that is not in settings.input_folder should raise a FileNotFoundError
@@ -56,11 +56,11 @@ def test_experiment_init(temporary_data_folders):
     assert isinstance(experiment.creation_time, str)
     assert isinstance(experiment.start_time, str)
     assert (
-        experiment.output_completed_file_path
+        experiment.output_completed_jsonl_file_path
         == f"data/output/test_in_input/{experiment.start_time}-completed-test_in_input.jsonl"
     )
     assert (
-        experiment.output_input_file_out_path
+        experiment.output_input_jsonl_file_out_path
         == f"data/output/test_in_input/{experiment.start_time}-input-test_in_input.jsonl"
     )
     assert experiment._experiment_prompts == [
