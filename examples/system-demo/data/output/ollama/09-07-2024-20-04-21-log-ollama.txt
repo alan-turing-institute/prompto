@@ -1,0 +1,1 @@
+09-07-2024, 20:08: Completed experiment ollama.jsonl! Experiment processing time: 268.573 seconds, Average time per query: 2.686 seconds
