@@ -34,7 +34,8 @@ def test_experiment_init_errors(temporary_data_folders):
         Experiment("test.jsonl", settings=Settings())
 
 
-def test_experiment_read_input_file_jsonl(temporary_data_folders):
+def test_experiment_read_input_file_jsonl(temporary_data_folders, caplog):
+    caplog.set_level(logging.INFO)
     # create a jsonl file
     with open("test_in_input.jsonl", "w") as f:
         f.write(
@@ -49,9 +50,13 @@ def test_experiment_read_input_file_jsonl(temporary_data_folders):
         {"id": 0, "prompt": "test prompt 0", "api": "test", "model_name": "test_model"},
         {"id": 1, "prompt": "test prompt 1", "api": "test", "model_name": "test_model"},
     ]
+    assert (
+        "Loading experiment prompts from jsonl file test_in_input.jsonl" in caplog.text
+    )
 
 
-def test_experiment_read_input_file_csv(temporary_data_folders):
+def test_experiment_read_input_file_csv(temporary_data_folders, caplog):
+    caplog.set_level(logging.INFO)
     # create a csv file
     with open("test_in_input.csv", "w") as f:
         f.write("id,prompt,api,model_name\n")
@@ -63,6 +68,62 @@ def test_experiment_read_input_file_csv(temporary_data_folders):
         {"id": 0, "prompt": "test prompt 0", "api": "test", "model_name": "test_model"},
         {"id": 1, "prompt": "test prompt 1", "api": "test", "model_name": "test_model"},
     ]
+    assert "Loading experiment prompts from csv file test_in_input.csv" in caplog.text
+
+
+def test_experiment_read_input_file_csv_with_parameters(temporary_data_folders, caplog):
+    caplog.set_level(logging.INFO)
+    # create a csv file
+    with open("test_in_input.csv", "w") as f:
+        f.write(
+            "id,prompt,api,model_name,parameters-temperature,parameters-max-output-tokens\n"
+        )
+        f.write("0,test prompt 0,test,test_model,0.9,100\n")
+        f.write("1,test prompt 1,test,test_model,None,100\n")
+        f.write("2,test prompt 2,test,test_model,,100\n")
+
+    experiment_prompts = Experiment._read_input_file("test_in_input.csv")
+
+    # a hack to compare the dictionaries without worrying about the NaN values
+    # NaNs should occur in experiment_prompts[1]["parameters-temperature"] and experiment_prompts[2]["parameters-temperature"]
+    assert pd.isna(experiment_prompts[1]["parameters-temperature"])
+    assert pd.isna(experiment_prompts[2]["parameters-temperature"])
+    # remove them for now
+    experiment_prompts[1].pop("parameters-temperature")
+    experiment_prompts[2].pop("parameters-temperature")
+
+    assert experiment_prompts == [
+        {
+            "id": 0,
+            "prompt": "test prompt 0",
+            "api": "test",
+            "model_name": "test_model",
+            "parameters-temperature": 0.9,
+            "parameters-max-output-tokens": 100,
+            "parameters": {"temperature": 0.9, "max-output-tokens": 100},
+        },
+        {
+            "id": 1,
+            "prompt": "test prompt 1",
+            "api": "test",
+            "model_name": "test_model",
+            "parameters-max-output-tokens": 100,
+            "parameters": {"max-output-tokens": 100},
+        },
+        {
+            "id": 2,
+            "prompt": "test prompt 2",
+            "api": "test",
+            "model_name": "test_model",
+            "parameters-max-output-tokens": 100,
+            "parameters": {"max-output-tokens": 100},
+        },
+    ]
+    assert (
+        "Found parameters columns: ['parameters-temperature', 'parameters-max-output-tokens']"
+        in caplog.text
+    )
+    assert "Loading experiment prompts from csv file test_in_input.csv" in caplog.text
 
 
 def test_experiment_read_input_file_error(temporary_data_folders):
@@ -3041,6 +3102,87 @@ def test_save_completed_responses_to_csv(temporary_data_folders, caplog):
             "api": ["test", "test"],
             "model_name": ["test_model", "test_model"],
             "response": ["response 0", "response 1"],
+        }
+    )
+    loaded_csv = pd.read_csv("test_out.csv")
+    assert loaded_csv.equals(expected)
+
+    # check logs
+    assert "Saving completed responses as csv to test_out.csv" in caplog.text
+
+    # save the completed responses to a csv file without specifying the file name
+    os.makedirs("data/output/test_in_input/", exist_ok=True)
+    experiment.save_completed_responses_to_csv()
+
+    # check the csv file is created correctly
+    filename = (
+        f"data/output/test_in_input/{experiment.start_time}-completed-test_in_input.csv"
+    )
+    assert os.path.exists(filename)
+
+    # check the csv file content
+    loaded_csv = pd.read_csv(filename)
+    assert loaded_csv.equals(expected)
+
+    # check logs
+    assert f"Saving completed responses as csv to {filename}" in caplog.text
+
+
+def test_save_completed_responses_to_csv_with_parameters(
+    temporary_data_folders, caplog
+):
+    caplog.set_level(logging.INFO)
+
+    settings = Settings(data_folder="data", max_queries=50, max_attempts=5)
+    with open("data/input/test_in_input.jsonl", "w") as f:
+        f.write(
+            '{"id": 0, "prompt": "test prompt 0", "api": "test", "model_name": "test_model"}\n'
+        )
+        f.write(
+            '{"id": 1, "prompt": "test prompt 1", "api": "test", "model_name": "test_model"}\n'
+        )
+
+    experiment = Experiment("test_in_input.jsonl", settings=settings)
+
+    # we will set the completed_responses attribute to a list of dictionaries
+    # and then check that the dataframe is created correctly
+    experiment.completed_responses = [
+        {
+            "id": 0,
+            "prompt": "test prompt 0",
+            "api": "test",
+            "model_name": "test_model",
+            "response": "response 0",
+            "parameters": {"temperature": 0.5, "max_tokens": 100},
+        },
+        {
+            "id": 1,
+            "prompt": "test prompt 1",
+            "api": "test",
+            "model_name": "test_model",
+            "response": "response 1",
+            "parameters": {"max_tokens": 100},
+        },
+    ]
+
+    # save the completed responses to a csv file
+    experiment.save_completed_responses_to_csv("test_out.csv")
+
+    # check the csv file is created correctly
+    assert os.path.exists("test_out.csv")
+
+    # check the csv file content
+    expected = pd.DataFrame(
+        {
+            "id": [0, 1],
+            "prompt": ["test prompt 0", "test prompt 1"],
+            "api": ["test", "test"],
+            "model_name": ["test_model", "test_model"],
+            "response": ["response 0", "response 1"],
+            "parameters": [
+                '{"temperature": 0.5, "max_tokens": 100}',
+                '{"max_tokens": 100}',
+            ],
         }
     )
     loaded_csv = pd.read_csv("test_out.csv")

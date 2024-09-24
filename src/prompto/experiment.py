@@ -115,11 +115,35 @@ class Experiment:
     def _read_input_file(input_file_path) -> list[dict]:
         with open(input_file_path, "r") as f:
             if input_file_path.endswith(".jsonl"):
+                logging.info(
+                    f"Loading experiment prompts from jsonl file {input_file_path}..."
+                )
                 experiment_prompts: list[dict] = [dict(json.loads(line)) for line in f]
             elif input_file_path.endswith(".csv"):
-                experiment_prompts: list[dict] = pd.read_csv(f).to_dict(
-                    orient="records"
+                logging.info(
+                    f"Loading experiment prompts from csv file {input_file_path}..."
                 )
+                loaded_df = pd.read_csv(f)
+                parameters_col_names = [
+                    col for col in loaded_df.columns if "parameters-" in col
+                ]
+                if len(parameters_col_names) > 0:
+                    # take the "parameters-" column names and create new column "parameters"
+                    # with the values as a dictionary of the parameters
+                    logging.info(f"Found parameters columns: {parameters_col_names}")
+                    loaded_df["parameters"] = [
+                        {
+                            parameter.removeprefix("parameters-"): row[parameter]
+                            for parameter in parameters_col_names
+                            if not pd.isna(row[parameter])
+                        }
+                        for _, row in tqdm(
+                            loaded_df.iterrows(),
+                            desc="Parsing parameters columns for data frame",
+                            unit="row",
+                        )
+                    ]
+                experiment_prompts: list[dict] = loaded_df.to_dict(orient="records")
             else:
                 raise ValueError("Experiment file must be a jsonl or csv file")
 
@@ -803,4 +827,13 @@ class Experiment:
             filename = self.output_completed_jsonl_file_path.replace(".jsonl", ".csv")
 
         logging.info(f"Saving completed responses as csv to {filename}...")
-        self.completed_responses_dataframe.to_csv(filename, index=False)
+        if "parameters" in self.completed_responses_dataframe.columns:
+            # make a copy and convert the parameters column (which should be of dict type) to a json string
+            completed_responses_dataframe = self.completed_responses_dataframe.copy()
+            completed_responses_dataframe["parameters"] = completed_responses_dataframe[
+                "parameters"
+            ].apply(json.dumps)
+        else:
+            completed_responses_dataframe = self.completed_responses_dataframe
+
+        completed_responses_dataframe.to_csv(filename, index=False)
