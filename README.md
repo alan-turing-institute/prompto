@@ -33,7 +33,7 @@ A pre-print for this work is available on [arXiv](https://arxiv.org/abs/2408.118
 
 The benefit of  _asynchronous querying_ is that it allows for multiple requests to be sent to an API _without_ having to wait for the LLM's response, which is particularly useful to fully utilise the rate limits of an API. This is especially useful when an experiment file contains a large number of prompts and/or has several models to query. [_Asynchronous programming_](https://docs.python.org/3/library/asyncio.html) is simply a way for programs to avoid getting stuck on long tasks (like waiting for an LLM response from an API) and instead keep running other things at the same time (to send other queries).
 
-With `prompto`, you are able to define your experiments of LLMs in a jsonl file where each line contains the prompt and any parameters to be used for a query of a model from a specific API. The library will process the experiment file and query models and store results. You are also  able to query _multiple_ models from _different_ APIs in a single experiment file and `prompto` will take care of querying the models _asynchronously_ and in _parallel_.
+With `prompto`, you are able to define your experiments of LLMs in a jsonl or csv file where each line/row contains the prompt and any parameters to be used for a query of a model from a specific API. The library will process the experiment file and query models and store results. You are also  able to query _multiple_ models from _different_ APIs in a single experiment file and `prompto` will take care of querying the models _asynchronously_ and in _parallel_.
 
 The library is designed to be extensible and can be used to query different models.
 
