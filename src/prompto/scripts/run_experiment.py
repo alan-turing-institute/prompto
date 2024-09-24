@@ -174,9 +174,9 @@ def parse_file_path_and_check_in_input(
     if not os.path.exists(file_path):
         raise FileNotFoundError(f"File {file_path} not found")
 
-    # check if file is a jsonl file
-    if not file_path.endswith(".jsonl"):
-        raise ValueError("Experiment file must be a jsonl file")
+    # check if file is a jsonl or csv file
+    if not file_path.endswith(".jsonl") and not file_path.endswith(".csv"):
+        raise ValueError("Experiment file must be a jsonl or csv file")
 
     # get experiment file name (without the path)
     experiment_file_name = os.path.basename(file_path)
@@ -397,6 +397,12 @@ async def main():
         type=str,
         default=None,
     )
+    parser.add_argument(
+        "--output-as-csv",
+        help="Output the results as a csv file",
+        action="store_true",
+        default=False,
+    )
     args = parser.parse_args()
 
     # initialise logging
@@ -450,6 +456,9 @@ async def main():
     logging.info(f"Starting processing experiment: {args.file}...")
     await experiment.process(evaluation_funcs=scoring_functions)
 
+    if args.output_as_csv:
+        experiment.save_completed_responses_to_csv()
+
     # create judge experiment
     judge_experiment = create_judge_experiment(
         create_judge_file=create_judge_file,
@@ -465,6 +474,9 @@ async def main():
             f"Starting processing judge of experiment: {judge_experiment.file_name}..."
         )
         await judge_experiment.process()
+
+        if args.output_as_csv:
+            judge_experiment.save_completed_responses_to_csv()
 
     logging.info("Experiment processed successfully!")
 

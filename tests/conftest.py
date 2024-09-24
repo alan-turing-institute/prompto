@@ -44,6 +44,7 @@ def temporary_data_folders(tmp_path: Path):
         ├── media/
     ├── .env
     ├── test.txt
+    ├── test.csv
     └── test.jsonl
     """
     # create data folders
@@ -57,6 +58,11 @@ def temporary_data_folders(tmp_path: Path):
     # create a txt file in the folder
     with open(Path(tmp_path / "test.txt"), "w") as f:
         f.write("test line")
+
+    # create a csv file in the folder
+    with open(Path(tmp_path / "test.csv"), "w") as f:
+        f.write("prompt,api,model_name\n")
+        f.write("test prompt,test,test_model\n")
 
     # create a jsonl file in the folder
     with open(Path(tmp_path / "test.jsonl"), "w") as f:
@@ -443,6 +449,7 @@ def temporary_data_folder_for_processing(tmp_path: Path):
     tmp_path
     ├── data/
         ├── input/
+            ├── test_experiment.csv
             ├── test_experiment.jsonl
             ├── test_experiment_with_groups.jsonl
             └── test_experiment_eval.jsonl
@@ -456,6 +463,18 @@ def temporary_data_folder_for_processing(tmp_path: Path):
     Path(tmp_path / "data" / "input").mkdir()
     Path(tmp_path / "data" / "output").mkdir()
     Path(tmp_path / "data" / "media").mkdir()
+
+    # create a csv file with a few prompts
+    with open(Path(tmp_path / "data" / "input" / "test_experiment.csv"), "w") as f:
+        f.write(
+            "id,prompt,api,model_name,parameters-raise_error,parameters-raise_error_type\n"
+        )
+        f.write('0,test prompt 1,test,model1,"no",\n')
+        f.write(',test prompt 2,test,model1,"yes","Exception"\n')
+        f.write('1,test prompt 3,test,model1,"yes",\n')
+        f.write('2,test prompt 4,test,model2,"no",\n')
+        f.write('3,test prompt 5,test,model2,"no",\n')
+        f.write('4,test prompt 6,test,model2,"no",\n')
 
     # create a file with larger number of prompts with different APIs, models with no groups
     with open(Path(tmp_path / "data" / "input" / "test_experiment.jsonl"), "w") as f:
@@ -505,10 +524,10 @@ def temporary_data_folder_for_processing(tmp_path: Path):
         Path(tmp_path / "data" / "input" / "test_experiment_eval.jsonl"), "w"
     ) as f:
         f.write(
-            '{"id": 0, "api": "test", "model1": "test_model", "prompt": "test prompt 1", "parameters": {"raise_error": "False"}}\n'
+            '{"id": 0, "api": "test", "model_name": "model1", "prompt": "test prompt 1", "parameters": {"raise_error": "False"}}\n'
         )
         f.write(
-            '{"id": 1, "api": "test", "model2": "test_model", "prompt": "test prompt 2", "parameters": {"raise_error": "False"}}\n'
+            '{"id": 1, "api": "test", "model_name": "model2", "prompt": "test prompt 2", "parameters": {"raise_error": "False"}}\n'
         )
 
     # create a file with max queries dictionary
@@ -564,19 +583,25 @@ def temporary_data_folder_judge(tmp_path: Path):
     # create input experiment file not in input folder
     with open(Path(tmp_path / "test-exp-not-in-input.jsonl"), "w") as f:
         f.write(
-            '{"id": 0, "api": "test", "model1": "test_model", "prompt": "test prompt 1", "parameters": {"raise_error": "False"}}\n'
+            '{"id": 0, "api": "test", "model_name": "model1", "prompt": "test prompt 1", "parameters": {"raise_error": "False"}}\n'
         )
         f.write(
-            '{"id": 1, "api": "test", "model2": "test_model", "prompt": "test prompt 2", "parameters": {"raise_error": "False"}}\n'
+            '{"id": 1, "api": "test", "model_name": "model2", "prompt": "test prompt 2", "parameters": {"raise_error": "False"}}\n'
         )
+
+    # create input csv file in input folder
+    with open(Path(tmp_path / "data" / "input" / "test-experiment.csv"), "w") as f:
+        f.write("id,prompt,api,model_name,parameters-raise_error,expected_response\n")
+        f.write('0,test prompt 1,test,model1,"no","This is a test response"\n')
+        f.write('1,test prompt 2,test,model2,"no","something else"\n')
 
     # create input experiment file in input folder
     with open(Path(tmp_path / "data" / "input" / "test-experiment.jsonl"), "w") as f:
         f.write(
-            '{"id": 0, "api": "test", "model1": "test_model", "prompt": "test prompt 1", "parameters": {"raise_error": "False"}, "expected_response": "This is a test response"}\n'
+            '{"id": 0, "api": "test", "model_name": "model1", "prompt": "test prompt 1", "parameters": {"raise_error": "False"}, "expected_response": "This is a test response"}\n'
         )
         f.write(
-            '{"id": 1, "api": "test", "model2": "test_model", "prompt": "test prompt 2", "parameters": {"raise_error": "False"}, "expected_response": "something else"}\n'
+            '{"id": 1, "api": "test", "model_name": "model2", "prompt": "test prompt 2", "parameters": {"raise_error": "False"}, "expected_response": "something else"}\n'
         )
 
     # create a completed experiment file with "response" key in output folder

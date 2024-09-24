@@ -33,9 +33,9 @@ class TestAPI(AsyncAPI):
         raise_error_option = generation_config.get("raise_error", "")
         raise_error_type = generation_config.get("raise_error_type", "")
 
-        if raise_error_option == "True":
+        if raise_error_option.lower() in ["true", "yes"]:
             raise_error = True
-        elif raise_error_option == "False":
+        elif raise_error_option.lower() in ["false", "no"]:
             raise_error = False
         else:
             raise_error = random.randint(1, 5) == 1

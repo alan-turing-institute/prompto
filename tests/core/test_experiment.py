@@ -1,6 +1,9 @@
 import logging
+import os
 
+import pandas as pd
 import pytest
+import regex as re
 
 from prompto.experiment import Experiment
 from prompto.settings import Settings
@@ -19,8 +22,8 @@ def test_experiment_init_errors(temporary_data_folders):
     with pytest.raises(TypeError, match="missing 1 required positional argument"):
         Experiment(settings=Settings())
 
-    # passing in a filename that is not a .jsonl file should raise a ValueError
-    with pytest.raises(ValueError, match="Experiment file must be a jsonl file"):
+    # passing in a filename that is not a .jsonl or a .csv file should raise a ValueError
+    with pytest.raises(ValueError, match="Experiment file must be a jsonl or csv file"):
         Experiment("test.txt", settings=Settings())
 
     # passing in a filename that is not in settings.input_folder should raise a FileNotFoundError
@@ -29,6 +32,104 @@ def test_experiment_init_errors(temporary_data_folders):
         match="Experiment file 'data/input/test.jsonl' does not exist",
     ):
         Experiment("test.jsonl", settings=Settings())
+
+
+def test_experiment_read_input_file_jsonl(temporary_data_folders, caplog):
+    caplog.set_level(logging.INFO)
+    # create a jsonl file
+    with open("test_in_input.jsonl", "w") as f:
+        f.write(
+            '{"id": 0, "prompt": "test prompt 0", "api": "test", "model_name": "test_model"}\n'
+        )
+        f.write(
+            '{"id": 1, "prompt": "test prompt 1", "api": "test", "model_name": "test_model"}\n'
+        )
+
+    experiment_prompts = Experiment._read_input_file("test_in_input.jsonl")
+    assert experiment_prompts == [
+        {"id": 0, "prompt": "test prompt 0", "api": "test", "model_name": "test_model"},
+        {"id": 1, "prompt": "test prompt 1", "api": "test", "model_name": "test_model"},
+    ]
+    assert (
+        "Loading experiment prompts from jsonl file test_in_input.jsonl" in caplog.text
+    )
+
+
+def test_experiment_read_input_file_csv(temporary_data_folders, caplog):
+    caplog.set_level(logging.INFO)
+    # create a csv file
+    with open("test_in_input.csv", "w") as f:
+        f.write("id,prompt,api,model_name\n")
+        f.write("0,test prompt 0,test,test_model\n")
+        f.write("1,test prompt 1,test,test_model\n")
+
+    experiment_prompts = Experiment._read_input_file("test_in_input.csv")
+    assert experiment_prompts == [
+        {"id": 0, "prompt": "test prompt 0", "api": "test", "model_name": "test_model"},
+        {"id": 1, "prompt": "test prompt 1", "api": "test", "model_name": "test_model"},
+    ]
+    assert "Loading experiment prompts from csv file test_in_input.csv" in caplog.text
+
+
+def test_experiment_read_input_file_csv_with_parameters(temporary_data_folders, caplog):
+    caplog.set_level(logging.INFO)
+    # create a csv file
+    with open("test_in_input.csv", "w") as f:
+        f.write(
+            "id,prompt,api,model_name,parameters-temperature,parameters-max-output-tokens\n"
+        )
+        f.write("0,test prompt 0,test,test_model,0.9,100\n")
+        f.write("1,test prompt 1,test,test_model,None,100\n")
+        f.write("2,test prompt 2,test,test_model,,100\n")
+
+    experiment_prompts = Experiment._read_input_file("test_in_input.csv")
+
+    # a hack to compare the dictionaries without worrying about the NaN values
+    # NaNs should occur in experiment_prompts[1]["parameters-temperature"] and experiment_prompts[2]["parameters-temperature"]
+    assert pd.isna(experiment_prompts[1]["parameters-temperature"])
+    assert pd.isna(experiment_prompts[2]["parameters-temperature"])
+    # remove them for now
+    experiment_prompts[1].pop("parameters-temperature")
+    experiment_prompts[2].pop("parameters-temperature")
+
+    assert experiment_prompts == [
+        {
+            "id": 0,
+            "prompt": "test prompt 0",
+            "api": "test",
+            "model_name": "test_model",
+            "parameters-temperature": 0.9,
+            "parameters-max-output-tokens": 100,
+            "parameters": {"temperature": 0.9, "max-output-tokens": 100},
+        },
+        {
+            "id": 1,
+            "prompt": "test prompt 1",
+            "api": "test",
+            "model_name": "test_model",
+            "parameters-max-output-tokens": 100,
+            "parameters": {"max-output-tokens": 100},
+        },
+        {
+            "id": 2,
+            "prompt": "test prompt 2",
+            "api": "test",
+            "model_name": "test_model",
+            "parameters-max-output-tokens": 100,
+            "parameters": {"max-output-tokens": 100},
+        },
+    ]
+    assert (
+        "Found parameters columns: ['parameters-temperature', 'parameters-max-output-tokens']"
+        in caplog.text
+    )
+    assert "Loading experiment prompts from csv file test_in_input.csv" in caplog.text
+
+
+def test_experiment_read_input_file_error(temporary_data_folders):
+    # passing in a filename that is not a .jsonl or a .csv file should raise a ValueError
+    with pytest.raises(ValueError, match="Experiment file must be a jsonl or csv file"):
+        Experiment._read_input_file("test.txt")
 
 
 def test_experiment_init(temporary_data_folders):
@@ -56,11 +157,11 @@ def test_experiment_init(temporary_data_folders):
     assert isinstance(experiment.creation_time, str)
     assert isinstance(experiment.start_time, str)
     assert (
-        experiment.output_completed_file_path
+        experiment.output_completed_jsonl_file_path
         == f"data/output/test_in_input/{experiment.start_time}-completed-test_in_input.jsonl"
     )
     assert (
-        experiment.output_input_file_out_path
+        experiment.output_input_jsonl_file_out_path
         == f"data/output/test_in_input/{experiment.start_time}-input-test_in_input.jsonl"
     )
     assert experiment._experiment_prompts == [
@@ -85,6 +186,249 @@ def test_experiment_init(temporary_data_folders):
     assert experiment._grouped_experiment_prompts == {}
 
     assert experiment.completed_responses == []
+    assert experiment._completed_responses_dataframe is None
+
+
+def test_experiment_init_csv(temporary_data_folders):
+    # create a settings object
+    settings = Settings(data_folder="data", max_queries=50, max_attempts=5)
+
+    # create a csv file in the input folder (which is created when initialising Settings object)
+    with open("data/input/test_in_input.csv", "w") as f:
+        f.write(
+            "id,prompt,api,model_name,parameters-temperature,parameters-max-output-tokens\n"
+        )
+        f.write("0,test prompt 0,test,test_model,0.9,100\n")
+        f.write("1,test prompt 1,test,test_model,0.5,100\n")
+
+    # create an experiment object
+    experiment = Experiment("test_in_input.csv", settings=settings)
+
+    # check the experiment object has the correct attributes
+    assert experiment.file_name == "test_in_input.csv"
+    assert experiment.experiment_name == "test_in_input"
+    assert experiment.settings == settings
+    assert experiment.output_folder == "data/output/test_in_input"
+    assert experiment.input_file_path == "data/input/test_in_input.csv"
+    assert isinstance(experiment.creation_time, str)
+    assert isinstance(experiment.start_time, str)
+    assert (
+        experiment.output_completed_jsonl_file_path
+        == f"data/output/test_in_input/{experiment.start_time}-completed-test_in_input.jsonl"
+    )
+    assert (
+        experiment.output_input_jsonl_file_out_path
+        == f"data/output/test_in_input/{experiment.start_time}-input-test_in_input.jsonl"
+    )
+    assert experiment._experiment_prompts == [
+        {
+            "id": 0,
+            "prompt": "test prompt 0",
+            "api": "test",
+            "model_name": "test_model",
+            "parameters-temperature": 0.9,
+            "parameters-max-output-tokens": 100,
+            "parameters": {"temperature": 0.9, "max-output-tokens": 100},
+        },
+        {
+            "id": 1,
+            "prompt": "test prompt 1",
+            "api": "test",
+            "model_name": "test_model",
+            "parameters-temperature": 0.5,
+            "parameters-max-output-tokens": 100,
+            "parameters": {"temperature": 0.5, "max-output-tokens": 100},
+        },
+    ]
+    # check property getter for experiment_prompts
+    assert experiment.experiment_prompts == [
+        {
+            "id": 0,
+            "prompt": "test prompt 0",
+            "api": "test",
+            "model_name": "test_model",
+            "parameters-temperature": 0.9,
+            "parameters-max-output-tokens": 100,
+            "parameters": {"temperature": 0.9, "max-output-tokens": 100},
+        },
+        {
+            "id": 1,
+            "prompt": "test prompt 1",
+            "api": "test",
+            "model_name": "test_model",
+            "parameters-temperature": 0.5,
+            "parameters-max-output-tokens": 100,
+            "parameters": {"temperature": 0.5, "max-output-tokens": 100},
+        },
+    ]
+    assert experiment.number_queries == 2
+    assert (
+        experiment.log_file
+        == f"data/output/test_in_input/{experiment.start_time}-log-test_in_input.txt"
+    )
+
+    # test str method
+    assert str(experiment) == "test_in_input.csv"
+
+    # test that grouped experiments have not been created yet
+    assert experiment._grouped_experiment_prompts == {}
+
+    assert experiment.completed_responses == []
+    assert experiment._completed_responses_dataframe is None
+
+
+def test_completed_responses_dataframe_getter(temporary_data_folders):
+    # create a settings object
+    settings = Settings(data_folder="data", max_queries=50, max_attempts=5)
+
+    # create a jsonl file in the input folder (which is created when initialising Settings object)
+    with open("data/input/test_in_input.jsonl", "w") as f:
+        f.write(
+            '{"id": 0, "prompt": "test prompt 0", "api": "test", "model_name": "test_model"}\n'
+        )
+        f.write(
+            '{"id": 1, "prompt": "test prompt 1", "api": "test", "model_name": "test_model"}\n'
+        )
+
+    # create an experiment object
+    experiment = Experiment("test_in_input.jsonl", settings=settings)
+
+    # if experiment hasn't been ran yet, the dataframe should be None
+    assert experiment._completed_responses_dataframe is None
+
+    # if trying to obtain it without first running experiment, it should raise an error
+    with pytest.raises(
+        ValueError,
+        match=re.escape(
+            "No completed responses to convert to a DataFrame "
+            "(completed_responses attribute is empty). "
+            "Run the process method to obtain the completed responses"
+        ),
+    ):
+        experiment.completed_responses_dataframe
+
+    # we will set the completed_responses attribute to a list of dictionaries
+    # and then check that the dataframe is created correctly
+    experiment.completed_responses = [
+        {
+            "id": 0,
+            "prompt": "test prompt 0",
+            "api": "test",
+            "model_name": "test_model",
+            "response": "response 0",
+        },
+        {
+            "id": 1,
+            "prompt": "test prompt 1",
+            "api": "test",
+            "model_name": "test_model",
+            "response": "response 1",
+        },
+    ]
+
+    # check the dataframe is created correctly when calling the getter
+    assert isinstance(experiment.completed_responses_dataframe, pd.DataFrame)
+    assert experiment.completed_responses_dataframe.equals(
+        experiment._completed_responses_dataframe
+    )
+    assert experiment.completed_responses_dataframe.equals(
+        pd.DataFrame(
+            {
+                "id": [0, 1],
+                "prompt": ["test prompt 0", "test prompt 1"],
+                "api": ["test", "test"],
+                "model_name": ["test_model", "test_model"],
+                "response": ["response 0", "response 1"],
+            }
+        )
+    )
+
+
+def test_completed_responses_dataframe_getter_different_keys(temporary_data_folders):
+    # create a settings object
+    settings = Settings(data_folder="data", max_queries=50, max_attempts=5)
+
+    # create a jsonl file in the input folder (which is created when initialising Settings object)
+    with open("data/input/test_in_input.jsonl", "w") as f:
+        f.write(
+            '{"id": 0, "prompt": "test prompt 0", "api": "test", "model_name": "test_model"}\n'
+        )
+        f.write(
+            '{"id": 1, "prompt": "test prompt 1", "api": "test", "model_name": "test_model"}\n'
+        )
+
+    # create an experiment object
+    experiment = Experiment("test_in_input.jsonl", settings=settings)
+
+    # if experiment hasn't been ran yet, the dataframe should be None
+    assert experiment._completed_responses_dataframe is None
+
+    # if trying to obtain it without first running experiment, it should raise an error
+    with pytest.raises(
+        ValueError,
+        match=re.escape(
+            "No completed responses to convert to a DataFrame "
+            "(completed_responses attribute is empty). "
+            "Run the process method to obtain the completed responses"
+        ),
+    ):
+        experiment.completed_responses_dataframe
+
+    # we will set the completed_responses attribute to a list of dictionaries
+    # and then check that the dataframe is created correctly
+    experiment.completed_responses = [
+        {
+            "id": 0,
+            "prompt": "test prompt 0",
+            "api": "test",
+            "model_name": "test_model",
+            "response": "response 0",
+        },
+        {
+            "id": 1,
+            "prompt": "test prompt 1",
+            "api": "test",
+            "model_name": "test_model",
+            "response": "response 1",
+            "extra_key": "extra_value",
+        },
+    ]
+
+    # check the dataframe is created correctly when calling the getter
+    assert isinstance(experiment.completed_responses_dataframe, pd.DataFrame)
+    assert experiment.completed_responses_dataframe.equals(
+        experiment._completed_responses_dataframe
+    )
+    assert experiment.completed_responses_dataframe.equals(
+        pd.DataFrame(
+            {
+                "id": [0, 1],
+                "prompt": ["test prompt 0", "test prompt 1"],
+                "api": ["test", "test"],
+                "model_name": ["test_model", "test_model"],
+                "response": ["response 0", "response 1"],
+                "extra_key": [None, "extra_value"],
+            }
+        )
+    )
+
+
+def test_completed_responses_dataframe_setter(temporary_data_folders):
+    # raise an error if trying to set the completed_responses_dataframe attribute
+    settings = Settings(data_folder="data", max_queries=50, max_attempts=5)
+    with open("data/input/test_in_input.jsonl", "w") as f:
+        f.write(
+            '{"id": 0, "prompt": "test prompt 0", "api": "test", "model_name": "test_model"}\n'
+        )
+        f.write(
+            '{"id": 1, "prompt": "test prompt 1", "api": "test", "model_name": "test_model"}\n'
+        )
+
+    experiment = Experiment("test_in_input.jsonl", settings=settings)
+    with pytest.raises(
+        AttributeError, match="Cannot set the completed_responses_dataframe attribute"
+    ):
+        experiment.completed_responses_dataframe = pd.DataFrame()
 
 
 def test_experiment_grouped_prompts_simple(temporary_data_folders, caplog):
@@ -2740,3 +3084,214 @@ def test_rate_limit_docs_example_6(temporary_rate_limit_doc_examples):
         "gemini": "4 queries at 5 queries per minute",
         "openai": "4 queries at 5 queries per minute",
     }
+
+
+def test_obtain_completed_responses_dataframe(temporary_data_folders):
+    settings = Settings(data_folder="data", max_queries=50, max_attempts=5)
+    with open("data/input/test_in_input.jsonl", "w") as f:
+        f.write(
+            '{"id": 0, "prompt": "test prompt 0", "api": "test", "model_name": "test_model"}\n'
+        )
+        f.write(
+            '{"id": 1, "prompt": "test prompt 1", "api": "test", "model_name": "test_model"}\n'
+        )
+
+    experiment = Experiment("test_in_input.jsonl", settings=settings)
+
+    # if experiment note run, calling this method should raise an error
+    with pytest.raises(
+        ValueError,
+        match=re.escape(
+            "No completed responses to convert to a DataFrame "
+            "(completed_responses attribute is empty). "
+            "Run the process method to obtain the completed responses"
+        ),
+    ):
+        experiment._obtain_completed_responses_dataframe()
+
+    # we will set the completed_responses attribute to a list of dictionaries
+    # and then check that the dataframe is created correctly
+    experiment.completed_responses = [
+        {
+            "id": 0,
+            "prompt": "test prompt 0",
+            "api": "test",
+            "model_name": "test_model",
+            "response": "response 0",
+        },
+        {
+            "id": 1,
+            "prompt": "test prompt 1",
+            "api": "test",
+            "model_name": "test_model",
+            "response": "response 1",
+        },
+    ]
+
+    # check the dataframe is created correctly when calling the getter
+    assert isinstance(experiment._obtain_completed_responses_dataframe(), pd.DataFrame)
+    assert experiment._obtain_completed_responses_dataframe().equals(
+        pd.DataFrame(
+            {
+                "id": [0, 1],
+                "prompt": ["test prompt 0", "test prompt 1"],
+                "api": ["test", "test"],
+                "model_name": ["test_model", "test_model"],
+                "response": ["response 0", "response 1"],
+            }
+        )
+    )
+
+
+def test_save_completed_responses_to_csv(temporary_data_folders, caplog):
+    caplog.set_level(logging.INFO)
+
+    settings = Settings(data_folder="data", max_queries=50, max_attempts=5)
+    with open("data/input/test_in_input.jsonl", "w") as f:
+        f.write(
+            '{"id": 0, "prompt": "test prompt 0", "api": "test", "model_name": "test_model"}\n'
+        )
+        f.write(
+            '{"id": 1, "prompt": "test prompt 1", "api": "test", "model_name": "test_model"}\n'
+        )
+
+    experiment = Experiment("test_in_input.jsonl", settings=settings)
+
+    # we will set the completed_responses attribute to a list of dictionaries
+    # and then check that the dataframe is created correctly
+    experiment.completed_responses = [
+        {
+            "id": 0,
+            "prompt": "test prompt 0",
+            "api": "test",
+            "model_name": "test_model",
+            "response": "response 0",
+        },
+        {
+            "id": 1,
+            "prompt": "test prompt 1",
+            "api": "test",
+            "model_name": "test_model",
+            "response": "response 1",
+        },
+    ]
+
+    # save the completed responses to a csv file
+    experiment.save_completed_responses_to_csv("test_out.csv")
+
+    # check the csv file is created correctly
+    assert os.path.exists("test_out.csv")
+
+    # check the csv file content
+    expected = pd.DataFrame(
+        {
+            "id": [0, 1],
+            "prompt": ["test prompt 0", "test prompt 1"],
+            "api": ["test", "test"],
+            "model_name": ["test_model", "test_model"],
+            "response": ["response 0", "response 1"],
+        }
+    )
+    loaded_csv = pd.read_csv("test_out.csv")
+    assert loaded_csv.equals(expected)
+
+    # check logs
+    assert "Saving completed responses as csv to test_out.csv" in caplog.text
+
+    # save the completed responses to a csv file without specifying the file name
+    os.makedirs("data/output/test_in_input/", exist_ok=True)
+    experiment.save_completed_responses_to_csv()
+
+    # check the csv file is created correctly
+    filename = (
+        f"data/output/test_in_input/{experiment.start_time}-completed-test_in_input.csv"
+    )
+    assert os.path.exists(filename)
+
+    # check the csv file content
+    loaded_csv = pd.read_csv(filename)
+    assert loaded_csv.equals(expected)
+
+    # check logs
+    assert f"Saving completed responses as csv to {filename}" in caplog.text
+
+
+def test_save_completed_responses_to_csv_with_parameters(
+    temporary_data_folders, caplog
+):
+    caplog.set_level(logging.INFO)
+
+    settings = Settings(data_folder="data", max_queries=50, max_attempts=5)
+    with open("data/input/test_in_input.jsonl", "w") as f:
+        f.write(
+            '{"id": 0, "prompt": "test prompt 0", "api": "test", "model_name": "test_model"}\n'
+        )
+        f.write(
+            '{"id": 1, "prompt": "test prompt 1", "api": "test", "model_name": "test_model"}\n'
+        )
+
+    experiment = Experiment("test_in_input.jsonl", settings=settings)
+
+    # we will set the completed_responses attribute to a list of dictionaries
+    # and then check that the dataframe is created correctly
+    experiment.completed_responses = [
+        {
+            "id": 0,
+            "prompt": "test prompt 0",
+            "api": "test",
+            "model_name": "test_model",
+            "response": "response 0",
+            "parameters": {"temperature": 0.5, "max_tokens": 100},
+        },
+        {
+            "id": 1,
+            "prompt": "test prompt 1",
+            "api": "test",
+            "model_name": "test_model",
+            "response": "response 1",
+            "parameters": {"max_tokens": 100},
+        },
+    ]
+
+    # save the completed responses to a csv file
+    experiment.save_completed_responses_to_csv("test_out.csv")
+
+    # check the csv file is created correctly
+    assert os.path.exists("test_out.csv")
+
+    # check the csv file content
+    expected = pd.DataFrame(
+        {
+            "id": [0, 1],
+            "prompt": ["test prompt 0", "test prompt 1"],
+            "api": ["test", "test"],
+            "model_name": ["test_model", "test_model"],
+            "response": ["response 0", "response 1"],
+            "parameters": [
+                '{"temperature": 0.5, "max_tokens": 100}',
+                '{"max_tokens": 100}',
+            ],
+        }
+    )
+    loaded_csv = pd.read_csv("test_out.csv")
+    assert loaded_csv.equals(expected)
+
+    # check logs
+    assert "Saving completed responses as csv to test_out.csv" in caplog.text
+
+    # save the completed responses to a csv file without specifying the file name
+    os.makedirs("data/output/test_in_input/", exist_ok=True)
+    experiment.save_completed_responses_to_csv()
+
+    # check the csv file is created correctly
+    filename = (
+        f"data/output/test_in_input/{experiment.start_time}-completed-test_in_input.csv"
+    )
+    assert os.path.exists(filename)
+
+    # check the csv file content
+    loaded_csv = pd.read_csv(filename)
+    assert loaded_csv.equals(expected)
+
+    # check logs
+    assert f"Saving completed responses as csv to {filename}" in caplog.text

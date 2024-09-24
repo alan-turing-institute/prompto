@@ -6,7 +6,7 @@ from prompto.experiment import Experiment
 from prompto.settings import Settings
 from prompto.utils import (
     create_folder,
-    sort_jsonl_files_by_creation_time,
+    sort_input_files_by_creation_time,
     write_log_message,
 )
 
@@ -77,7 +77,7 @@ class ExperimentPipeline:
         Function to update the list of experiment files by sorting
         the files by creation/change time (using `os.path.getctime`).
         """
-        self.experiment_files = sort_jsonl_files_by_creation_time(
+        self.experiment_files = sort_input_files_by_creation_time(
             input_folder=self.settings.input_folder
         )
 

@@ -7,9 +7,9 @@ from datetime import datetime
 FILE_WRITE_LOCK = asyncio.Lock()
 
 
-def sort_jsonl_files_by_creation_time(input_folder: str) -> list[str]:
+def sort_input_files_by_creation_time(input_folder: str) -> list[str]:
     """
-    Function sorts the jsonl files in the input folder by creation/change
+    Function sorts the jsonl or csv files in the input folder by creation/change
     time in a given directory.
 
     Parameters
@@ -20,7 +20,7 @@ def sort_jsonl_files_by_creation_time(input_folder: str) -> list[str]:
     Returns
     -------
     list[str]
-        Ordered list of jsonl filenames in the input folder.
+        Ordered list of jsonl or csv filenames in the input folder.
     """
     if not os.path.isdir(input_folder):
         raise ValueError(
@@ -28,7 +28,11 @@ def sort_jsonl_files_by_creation_time(input_folder: str) -> list[str]:
         )
 
     return sorted(
-        [f for f in os.listdir(input_folder) if f.endswith(".jsonl")],
+        [
+            f
+            for f in os.listdir(input_folder)
+            if (f.endswith(".jsonl") or f.endswith(".csv"))
+        ],
         key=lambda f: os.path.getctime(os.path.join(input_folder, f)),
     )
 

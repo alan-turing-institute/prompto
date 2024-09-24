@@ -53,8 +53,8 @@ async def test_query_model_and_record_response(
     assert log_msg in caplog.text
 
     # check that the response is saved to the output file
-    assert os.path.exists(experiment.output_completed_file_path)
-    with open(experiment.output_completed_file_path, "r") as f:
+    assert os.path.exists(experiment.output_completed_jsonl_file_path)
+    with open(experiment.output_completed_jsonl_file_path, "r") as f:
         responses = [dict(json.loads(line)) for line in f]
 
     assert len(responses) == 1
@@ -158,8 +158,8 @@ async def test_query_model_and_record_response_not_implemented_error(
     )
 
     # check that the response is saved to the output file
-    assert os.path.exists(experiment.output_completed_file_path)
-    with open(experiment.output_completed_file_path, "r") as f:
+    assert os.path.exists(experiment.output_completed_jsonl_file_path)
+    with open(experiment.output_completed_jsonl_file_path, "r") as f:
         responses = [dict(json.loads(line)) for line in f]
 
     assert len(responses) == 1
@@ -213,8 +213,8 @@ async def test_query_model_and_record_response_key_error(
     assert result["response"] == "KeyError - 'some key error'"
 
     # check that the response is saved to the output file
-    assert os.path.exists(experiment.output_completed_file_path)
-    with open(experiment.output_completed_file_path, "r") as f:
+    assert os.path.exists(experiment.output_completed_jsonl_file_path)
+    with open(experiment.output_completed_jsonl_file_path, "r") as f:
         responses = [dict(json.loads(line)) for line in f]
 
     assert len(responses) == 1
@@ -264,8 +264,8 @@ async def test_query_model_and_record_response_value_error(
     assert result["response"] == "ValueError - some value error"
 
     # check that the response is saved to the output file
-    assert os.path.exists(experiment.output_completed_file_path)
-    with open(experiment.output_completed_file_path, "r") as f:
+    assert os.path.exists(experiment.output_completed_jsonl_file_path)
+    with open(experiment.output_completed_jsonl_file_path, "r") as f:
         responses = [dict(json.loads(line)) for line in f]
 
     assert len(responses) == 1
@@ -315,8 +315,8 @@ async def test_query_model_and_record_response_type_error(
     assert result["response"] == "TypeError - some type error"
 
     # check that the response is saved to the output file
-    assert os.path.exists(experiment.output_completed_file_path)
-    with open(experiment.output_completed_file_path, "r") as f:
+    assert os.path.exists(experiment.output_completed_jsonl_file_path)
+    with open(experiment.output_completed_jsonl_file_path, "r") as f:
         responses = [dict(json.loads(line)) for line in f]
 
     assert len(responses) == 1
@@ -366,8 +366,8 @@ async def test_query_model_and_record_response_file_not_found_error(
     assert result["response"] == "FileNotFoundError - some type error"
 
     # check that the response is saved to the output file
-    assert os.path.exists(experiment.output_completed_file_path)
-    with open(experiment.output_completed_file_path, "r") as f:
+    assert os.path.exists(experiment.output_completed_jsonl_file_path)
+    with open(experiment.output_completed_jsonl_file_path, "r") as f:
         responses = [dict(json.loads(line)) for line in f]
 
     assert len(responses) == 1
@@ -460,8 +460,8 @@ async def test_query_model_and_record_response_exception_error_max(
     )
 
     # check that the response is saved to the output file
-    assert os.path.exists(experiment.output_completed_file_path)
-    with open(experiment.output_completed_file_path, "r") as f:
+    assert os.path.exists(experiment.output_completed_jsonl_file_path)
+    with open(experiment.output_completed_jsonl_file_path, "r") as f:
         responses = [dict(json.loads(line)) for line in f]
 
     assert len(responses) == 1
