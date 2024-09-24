@@ -44,6 +44,7 @@ def temporary_data_folders(tmp_path: Path):
         ├── media/
     ├── .env
     ├── test.txt
+    ├── test.csv
     └── test.jsonl
     """
     # create data folders
@@ -57,6 +58,11 @@ def temporary_data_folders(tmp_path: Path):
     # create a txt file in the folder
     with open(Path(tmp_path / "test.txt"), "w") as f:
         f.write("test line")
+
+    # create a csv file in the folder
+    with open(Path(tmp_path / "test.csv"), "w") as f:
+        f.write("prompt,api,model_name\n")
+        f.write("test prompt,test,test_model\n")
 
     # create a jsonl file in the folder
     with open(Path(tmp_path / "test.jsonl"), "w") as f:

@@ -71,7 +71,7 @@ class Experiment:
             )
 
         # read in the experiment data
-        self._experiment_prompts = self._read_input_file()
+        self._experiment_prompts = self._read_input_file(self.input_file_path)
 
         # set the number of queries
         self.number_queries: int = len(self._experiment_prompts)
@@ -111,11 +111,12 @@ class Experiment:
     def __str__(self) -> str:
         return self.file_name
 
-    def _read_input_file(self) -> list[dict]:
-        with open(self.input_file_path, "r") as f:
-            if self.input_file_path.endswith(".jsonl"):
+    @staticmethod
+    def _read_input_file(input_file_path) -> list[dict]:
+        with open(input_file_path, "r") as f:
+            if input_file_path.endswith(".jsonl"):
                 experiment_prompts: list[dict] = [dict(json.loads(line)) for line in f]
-            elif self.input_file_path.endswith(".csv"):
+            elif input_file_path.endswith(".csv"):
                 experiment_prompts: list[dict] = pd.read_csv(f).to_dict(
                     orient="records"
                 )
@@ -801,5 +802,5 @@ class Experiment:
         if filename is None:
             filename = self.output_completed_jsonl_file_path.replace(".jsonl", ".csv")
 
-        logging.info(f"Saving completed responses (as csv) to {filename}...")
+        logging.info(f"Saving completed responses as csv to {filename}...")
         self.completed_responses_dataframe.to_csv(filename, index=False)
