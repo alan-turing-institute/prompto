@@ -50,7 +50,9 @@ class Experiment:
 
         self.file_name: str = file_name
         # obtain experiment name from file name
-        self.experiment_name: str = self.file_name.removesuffix(".jsonl")
+        self.experiment_name: str = self.file_name.removesuffix(".jsonl").removesuffix(
+            ".csv"
+        )
         # settings for the pipeline which includes input, output, and media folder locations
         self.settings: Settings = settings
         # experiment output folder is a subfolder of the output folder
@@ -112,7 +114,7 @@ class Experiment:
         return self.file_name
 
     @staticmethod
-    def _read_input_file(input_file_path) -> list[dict]:
+    def _read_input_file(input_file_path: str) -> list[dict]:
         with open(input_file_path, "r") as f:
             if input_file_path.endswith(".jsonl"):
                 logging.info(
@@ -648,6 +650,10 @@ class Experiment:
             )
         if index is None:
             index = "NA"
+        id = prompt_dict.get("id", "NA")
+        # if id is NaN, set it to "NA"
+        if pd.isna(id):
+            id = "NA"
 
         # query the API
         timeout_seconds = 300
@@ -669,8 +675,7 @@ class Experiment:
         ) as err:
             # don't retry for selected errors, log the error and save an error response
             log_message = (
-                f"Error (i={index}, id={prompt_dict.get('id', 'NA')}): "
-                f"{type(err).__name__} - {err}"
+                f"Error (i={index}, id={id}): " f"{type(err).__name__} - {err}"
             )
             async with FILE_WRITE_LOCK:
                 write_log_message(
@@ -683,7 +688,7 @@ class Experiment:
             if attempt == self.settings.max_attempts:
                 # we've already tried max_attempts times, so log the error and save an error response
                 log_message = (
-                    f"Error (i={index}, id={prompt_dict.get('id', 'NA')}) "
+                    f"Error (i={index}, id={id}) "
                     f"after maximum {self.settings.max_attempts} attempts: "
                     f"{type(err).__name__} - {err}"
                 )
@@ -701,7 +706,7 @@ class Experiment:
             else:
                 # we haven't tried max_attempts times yet, so log the error and return an Exception
                 log_message = (
-                    f"Error (i={index}, id={prompt_dict.get('id', 'NA')}) on attempt "
+                    f"Error (i={index}, id={id}) on attempt "
                     f"{attempt} of {self.settings.max_attempts}: "
                     f"{type(err).__name__} - {err}. Adding to the queue to try again later..."
                 )

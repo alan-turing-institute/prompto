@@ -153,6 +153,146 @@ async def test_process(
 
 
 @pytest.mark.asyncio
+async def test_process_using_csv(
+    temporary_data_folder_for_processing: None,
+    caplog: pytest.LogCaptureFixture,
+    capsys: pytest.CaptureFixture[str],
+):
+    caplog.set_level(logging.INFO)
+    settings = Settings(data_folder="data", max_attempts=2, max_queries=200)
+    experiment = Experiment("test_experiment.csv", settings=settings)
+
+    assert experiment.completed_responses == []
+    assert not os.path.isdir(experiment.output_folder)
+
+    result, avg_query_proc_time = await experiment.process()
+
+    # assert that the output folder was created and input file was moved to it
+    assert os.path.isdir(experiment.output_folder)
+    assert not os.path.isfile("data/input/test_experiment.csv")
+    assert len(os.listdir("data/output/test_experiment")) == 4
+    # assert created files in output
+    assert os.path.isfile(
+        f"data/output/test_experiment/{experiment.start_time}-input-test_experiment.csv"
+    )
+    assert os.path.isfile(
+        f"data/output/test_experiment/{experiment.start_time}-completed-test_experiment.jsonl"
+    )
+    assert os.path.isfile(
+        f"data/output/test_experiment/{experiment.start_time}-input-test_experiment.jsonl"
+    )
+    assert os.path.isfile(
+        f"data/output/test_experiment/{experiment.start_time}-log-test_experiment.txt"
+    )
+
+    # check processing time
+    assert isinstance(avg_query_proc_time, float)
+    assert avg_query_proc_time > 0
+
+    # check result
+    assert len(result) == 6
+    assert experiment.completed_responses == result
+
+    # check that the response is saved to the output file
+    assert os.path.exists(experiment.output_completed_jsonl_file_path)
+    with open(experiment.output_completed_jsonl_file_path, "r") as f:
+        responses = [dict(json.loads(line)) for line in f]
+
+    assert responses == result
+
+    # check the content printed to the console (tqdm progress bar)
+    captured = capsys.readouterr()
+    print_msg = "Sending 6 queries at 200 QPM with RI of 0.3s (attempt 1/2)"
+    assert print_msg in captured.err
+    print_msg = "Waiting for responses (attempt 1/2)"
+    assert print_msg in captured.err
+    print_msg = "Sending 1 queries at 200 QPM with RI of 0.3s (attempt 2/2)"
+    assert print_msg in captured.err
+    print_msg = "Waiting for responses (attempt 2/2)"
+    assert print_msg in captured.err
+
+    # check log messages
+    log_msg = "Processing experiment: test_experiment.csv.."
+    assert log_msg in caplog.text
+    log_msg = (
+        "Moving data/input/test_experiment.csv to "
+        "data/output/test_experiment as "
+        "data/output/test_experiment/"
+        f"{experiment.start_time}-input-test_experiment.csv"
+    )
+    assert log_msg in caplog.text
+    log_msg = (
+        "Converting data/input/test_experiment.csv to jsonl file for processing..."
+    )
+    assert log_msg in caplog.text
+    log_msg = (
+        "Moving data/input/test_experiment.jsonl to "
+        "data/output/test_experiment as "
+        "data/output/test_experiment/"
+        f"{experiment.start_time}-input-test_experiment.jsonl"
+    )
+    log_msg = "Sending 6 queries..."
+    assert log_msg in caplog.text
+    log_msg = (
+        "Response received for model test (i=1, id=0.0)\n"
+        "Prompt: test prompt 1...\n"
+        "Response: This is a test response...\n"
+    )
+    assert log_msg in caplog.text
+    log_msg = (
+        "Error (i=2, id=NA) on attempt 1 of 2: "
+        "Exception - This is a test error which we should handle and return. "
+        "Adding to the queue to try again later..."
+    )
+    assert log_msg in caplog.text
+    log_msg = "Error (i=3, id=1.0): ValueError - This is a test error which we should handle and return"
+    assert log_msg in caplog.text
+    log_msg = (
+        "Error with model test (i=3, id=1.0)\n"
+        "Prompt: test prompt 3...\n"
+        "Error: This is a test error which we should handle and return\n"
+    )
+    log_msg = (
+        "Response received for model test (i=4, id=2.0)\n"
+        "Prompt: test prompt 4...\n"
+        "Response: This is a test response...\n"
+    )
+    assert log_msg in caplog.text
+    log_msg = (
+        "Response received for model test (i=5, id=3.0)\n"
+        "Prompt: test prompt 5...\n"
+        "Response: This is a test response...\n"
+    )
+    assert log_msg in caplog.text
+    log_msg = (
+        "Response received for model test (i=6, id=4.0)\n"
+        "Prompt: test prompt 6...\n"
+        "Response: This is a test response...\n"
+    )
+    assert log_msg in caplog.text
+    log_msg = "Retrying 1 failed queries - attempt 2 of 2..."
+    assert log_msg in caplog.text
+    log_msg = (
+        "Error (i=1, id=NA) after maximum 2 attempts: "
+        "Exception - This is a test error which we should handle and return"
+    )
+    assert log_msg in caplog.text
+    log_msg = (
+        "Error with model test (i=1, id=NA)\n"
+        "Prompt: test prompt 2...\n"
+        "Error: This is a test error which we should handle and return\n"
+    )
+    log_msg = "Maximum attempts reached. Exiting..."
+    assert log_msg in caplog.text
+    log_msg = "Completed experiment: test_experiment.csv! "
+    assert log_msg in caplog.text
+    log_msg = "Experiment processing time: "
+    assert log_msg in caplog.text
+    log_msg = "Average time per query: "
+    assert log_msg in caplog.text
+
+
+@pytest.mark.asyncio
 async def test_process_with_max_queries_dict(
     temporary_data_folder_for_processing: None, caplog, capsys
 ):
@@ -777,6 +917,5 @@ async def test_process_with_evaluation(
 
     # check that the evaluation function has been applied
     assert responses == result
-    print(responses)
     assert all(["evaluation" in response for response in responses])
     assert all([response["evaluation"] is True for response in responses])

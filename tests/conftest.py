@@ -449,6 +449,7 @@ def temporary_data_folder_for_processing(tmp_path: Path):
     tmp_path
     ├── data/
         ├── input/
+            ├── test_experiment.csv
             ├── test_experiment.jsonl
             ├── test_experiment_with_groups.jsonl
             └── test_experiment_eval.jsonl
@@ -462,6 +463,18 @@ def temporary_data_folder_for_processing(tmp_path: Path):
     Path(tmp_path / "data" / "input").mkdir()
     Path(tmp_path / "data" / "output").mkdir()
     Path(tmp_path / "data" / "media").mkdir()
+
+    # create a csv file with a few prompts
+    with open(Path(tmp_path / "data" / "input" / "test_experiment.csv"), "w") as f:
+        f.write(
+            "id,prompt,api,model_name,parameters-raise_error,parameters-raise_error_type\n"
+        )
+        f.write('0,test prompt 1,test,model1,"no",\n')
+        f.write(',test prompt 2,test,model1,"yes","Exception"\n')
+        f.write('1,test prompt 3,test,model1,"yes",\n')
+        f.write('2,test prompt 4,test,model2,"no",\n')
+        f.write('3,test prompt 5,test,model2,"no",\n')
+        f.write('4,test prompt 6,test,model2,"no",\n')
 
     # create a file with larger number of prompts with different APIs, models with no groups
     with open(Path(tmp_path / "data" / "input" / "test_experiment.jsonl"), "w") as f:

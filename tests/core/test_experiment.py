@@ -189,6 +189,94 @@ def test_experiment_init(temporary_data_folders):
     assert experiment._completed_responses_dataframe is None
 
 
+def test_experiment_init_csv(temporary_data_folders):
+    # create a settings object
+    settings = Settings(data_folder="data", max_queries=50, max_attempts=5)
+
+    # create a csv file in the input folder (which is created when initialising Settings object)
+    with open("data/input/test_in_input.csv", "w") as f:
+        f.write(
+            "id,prompt,api,model_name,parameters-temperature,parameters-max-output-tokens\n"
+        )
+        f.write("0,test prompt 0,test,test_model,0.9,100\n")
+        f.write("1,test prompt 1,test,test_model,0.5,100\n")
+
+    # create an experiment object
+    experiment = Experiment("test_in_input.csv", settings=settings)
+
+    # check the experiment object has the correct attributes
+    assert experiment.file_name == "test_in_input.csv"
+    assert experiment.experiment_name == "test_in_input"
+    assert experiment.settings == settings
+    assert experiment.output_folder == "data/output/test_in_input"
+    assert experiment.input_file_path == "data/input/test_in_input.csv"
+    assert isinstance(experiment.creation_time, str)
+    assert isinstance(experiment.start_time, str)
+    assert (
+        experiment.output_completed_jsonl_file_path
+        == f"data/output/test_in_input/{experiment.start_time}-completed-test_in_input.jsonl"
+    )
+    assert (
+        experiment.output_input_jsonl_file_out_path
+        == f"data/output/test_in_input/{experiment.start_time}-input-test_in_input.jsonl"
+    )
+    assert experiment._experiment_prompts == [
+        {
+            "id": 0,
+            "prompt": "test prompt 0",
+            "api": "test",
+            "model_name": "test_model",
+            "parameters-temperature": 0.9,
+            "parameters-max-output-tokens": 100,
+            "parameters": {"temperature": 0.9, "max-output-tokens": 100},
+        },
+        {
+            "id": 1,
+            "prompt": "test prompt 1",
+            "api": "test",
+            "model_name": "test_model",
+            "parameters-temperature": 0.5,
+            "parameters-max-output-tokens": 100,
+            "parameters": {"temperature": 0.5, "max-output-tokens": 100},
+        },
+    ]
+    # check property getter for experiment_prompts
+    assert experiment.experiment_prompts == [
+        {
+            "id": 0,
+            "prompt": "test prompt 0",
+            "api": "test",
+            "model_name": "test_model",
+            "parameters-temperature": 0.9,
+            "parameters-max-output-tokens": 100,
+            "parameters": {"temperature": 0.9, "max-output-tokens": 100},
+        },
+        {
+            "id": 1,
+            "prompt": "test prompt 1",
+            "api": "test",
+            "model_name": "test_model",
+            "parameters-temperature": 0.5,
+            "parameters-max-output-tokens": 100,
+            "parameters": {"temperature": 0.5, "max-output-tokens": 100},
+        },
+    ]
+    assert experiment.number_queries == 2
+    assert (
+        experiment.log_file
+        == f"data/output/test_in_input/{experiment.start_time}-log-test_in_input.txt"
+    )
+
+    # test str method
+    assert str(experiment) == "test_in_input.csv"
+
+    # test that grouped experiments have not been created yet
+    assert experiment._grouped_experiment_prompts == {}
+
+    assert experiment.completed_responses == []
+    assert experiment._completed_responses_dataframe is None
+
+
 def test_completed_responses_dataframe_getter(temporary_data_folders):
     # create a settings object
     settings = Settings(data_folder="data", max_queries=50, max_attempts=5)
