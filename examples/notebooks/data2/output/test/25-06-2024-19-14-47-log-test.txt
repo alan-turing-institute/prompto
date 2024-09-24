@@ -1,4 +1,0 @@
-25-06-2024, 19:18: Error (i=1) [id=9]. NotImplementedError - API unknown-api not recognised or implemented
-25-06-2024, 19:18: Error (i=2) [id=10]. NotImplementedError - API unknown-api not recognised or implemented
-25-06-2024, 19:18: Error (i=3) [id=11]. NotImplementedError - API unknown-api not recognised or implemented
-25-06-2024, 19:18: Completed experiment test.jsonl! Experiment processing time: 3.713 seconds, Average time per query: 1.238 seconds

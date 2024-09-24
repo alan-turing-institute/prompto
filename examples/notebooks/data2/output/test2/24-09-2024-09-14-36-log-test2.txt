@@ -1,0 +1,2 @@
+24-09-2024, 09:14: Error (i=3, id=11): ValueError - This is a test error which we should handle and return
+24-09-2024, 09:14: Completed experiment: test2.jsonl! Experiment processing time: 3.615 seconds, Average time per query: 1.205 seconds
