@@ -766,3 +766,110 @@ def test_run_experiment_judge_and_scorer(temporary_data_folder_judge):
             assert response["input-includes"] is False
         else:
             assert False
+
+
+def test_run_experiment_judge_and_scorer_with_csv_input_and_output(
+    temporary_data_folder_judge,
+):
+    result = shell(
+        "prompto_run_experiment "
+        "--file data/input/test-experiment.csv "
+        "--max-queries=200 "
+        "--judge-folder judge_loc "
+        "--templates template.txt,template2.txt "
+        "--judge judge2 "
+        "--scorer 'match, includes' "
+        "--output-as-csv"
+    )
+    assert result.exit_code == 0
+    assert "No environment file found at .env" in result.stderr
+    assert "Judge folder loaded from judge_loc" in result.stderr
+    assert "Templates to be used: ['template.txt', 'template2.txt']" in result.stderr
+    assert "Judges to be used: ['judge2']" in result.stderr
+    assert "Scoring functions to be used: ['match', 'includes']" in result.stderr
+    assert (
+        "Settings: "
+        "data_folder=data, "
+        "max_queries=200, "
+        "max_attempts=5, "
+        "parallel=False\n"
+        "Subfolders: "
+        "input_folder=data/input, "
+        "output_folder=data/output, "
+        "media_folder=data/media"
+    ) in result.stderr
+    assert (
+        "Starting processing experiment: data/input/test-experiment.csv..."
+        in result.stderr
+    )
+    assert "Completed experiment: test-experiment.csv" in result.stderr
+    assert (
+        "Starting processing judge of experiment: judge-test-experiment.jsonl..."
+        in result.stderr
+    )
+    assert "Completed experiment: judge-test-experiment.jsonl" in result.stderr
+    assert "Experiment processed successfully!" in result.stderr
+    assert os.path.isdir("data/output/test-experiment")
+    assert os.path.isdir("data/output/judge-test-experiment")
+
+    # check the output files for the test-experiment
+    completed_files = [
+        x for x in os.listdir("data/output/test-experiment") if "completed" in x
+    ]
+    # should be 2 (one jsonl and one csv)
+    assert len(completed_files) == 2
+    completed_jsonl_file = [
+        file for file in completed_files if file.endswith(".jsonl")
+    ][0]
+    completed_csv_files = [file for file in completed_files if file.endswith(".csv")]
+    assert len(completed_csv_files) == 1
+
+    # load the output to check the scores have been added
+    with open(f"data/output/test-experiment/{completed_jsonl_file}", "r") as f:
+        responses = [dict(json.loads(line)) for line in f]
+
+    # test that the scorers got added to the completed file
+    assert len(responses) == 2
+    for response in responses:
+        if response["id"] == 0:
+            assert response["match"] is True
+            assert response["includes"] is True
+        elif response["id"] == 1:
+            assert response["match"] is False
+            assert response["includes"] is False
+        else:
+            assert False
+
+    # check the output files for the judge-test-experiment
+    completed_files = [
+        x for x in os.listdir("data/output/judge-test-experiment") if "completed" in x
+    ]
+    # should be 2 (one jsonl and one csv)
+    assert len(completed_files) == 2
+    completed_jsonl_file = [
+        file for file in completed_files if file.endswith(".jsonl")
+    ][0]
+    completed_csv_files = [file for file in completed_files if file.endswith(".csv")]
+    assert len(completed_csv_files) == 1
+
+    # load the output to check the scores have been added
+    with open(f"data/output/judge-test-experiment/{completed_jsonl_file}", "r") as f:
+        responses = [dict(json.loads(line)) for line in f]
+
+    # test that the scorers got added to the completed judge file
+    assert len(responses) == 4
+    for response in responses:
+        if response["id"] == "judge-judge2-template-0":
+            assert response["input-match"] is True
+            assert response["input-includes"] is True
+        elif response["id"] == "judge-judge2-template-1":
+            assert response["input-match"] is False
+            assert response["input-includes"] is False
+        elif response["id"] == "judge-judge2-template2-0":
+            assert response["input-match"] is True
+            assert response["input-includes"] is True
+        elif response["id"] == "judge-judge2-template2-1":
+            assert response["input-match"] is False
+            assert response["input-includes"] is False
+        else:
+            assert False
