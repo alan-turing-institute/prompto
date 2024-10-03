@@ -156,7 +156,7 @@ def is_valid_jsonl(
                         data["multimedia"], media_folder
                     )
                     issues.extend(multimedia_issues)
-                    multimedia_path_errors.add(path_errors)
+                    multimedia_path_errors.union(path_errors)
 
                 if "api" in data:
                     if data["api"] not in ASYNC_APIS:
