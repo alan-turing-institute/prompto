@@ -220,10 +220,8 @@ class Judge:
                             INPUT_PROMPT=response["prompt"],
                             OUTPUT_RESPONSE=response["response"],
                         ),
-                        "api": self.judge_settings[j]["api"],
-                        "model_name": self.judge_settings[j]["model_name"],
-                        "parameters": self.judge_settings[j]["parameters"],
                     }
+                    | self.judge_settings[j]
                     | {f"input-{k}": v for k, v in response.items()}
                     for response in tqdm(
                         self.completed_responses,
