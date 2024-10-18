@@ -135,7 +135,6 @@ async def test_vertexai_query_history_check_chat_init(
         ),
         DEFAULT_SAFETY_SETTINGS,
         prompt_dict_chat["parameters"],
-        None,
     )
 
     # error will be raised as we've mocked the start_chat method

@@ -7,8 +7,8 @@ from google.generativeai.types import GenerationConfig, HarmBlockThreshold, Harm
 
 from prompto.apis.base import AsyncAPI
 from prompto.apis.gemini.gemini_utils import (
+    convert_dict_to_input,
     gemini_chat_roles,
-    parse_multimedia,
     process_response,
     process_safety_attributes,
 )
@@ -263,16 +263,7 @@ class GeminiAPI(AsyncAPI):
                 f"parameters must be a dictionary, not {type(generation_config)}"
             )
 
-        # parse multimedia data (if any)
-        multimedia_dict = prompt_dict.get("multimedia", None)
-        if multimedia_dict is not None:
-            multimedia = parse_multimedia(
-                multimedia_dict, media_folder=self.settings.media_folder
-            )
-        else:
-            multimedia = None
-
-        return prompt, model_name, model, safety_settings, generation_config, multimedia
+        return prompt, model_name, model, safety_settings, generation_config
 
     async def _query_string(self, prompt_dict: dict, index: int | str):
         """
@@ -280,22 +271,15 @@ class GeminiAPI(AsyncAPI):
         (prompt_dict["prompt"] is a string),
         i.e. single-turn completion or chat.
         """
-        prompt, model_name, model, safety_settings, generation_config, multimedia = (
+        prompt, model_name, model, safety_settings, generation_config = (
             await self._obtain_model_inputs(
                 prompt_dict=prompt_dict, system_instruction=None
             )
         )
 
-        # prepare the contents to send to the model
-        if multimedia is not None:
-            # prepend the multimedia to the prompt
-            contents = multimedia + [prompt]
-        else:
-            contents = [prompt]
-
         try:
             response = await model.generate_content_async(
-                contents=contents,
+                contents=prompt,
                 generation_config=generation_config,
                 safety_settings=safety_settings,
                 stream=False,
@@ -368,14 +352,13 @@ class GeminiAPI(AsyncAPI):
         (prompt_dict["prompt"] is a list of strings to sequentially send to the model),
         i.e. multi-turn chat with history.
         """
-        prompt, model_name, model, safety_settings, generation_config, _ = (
+        prompt, model_name, model, safety_settings, generation_config = (
             await self._obtain_model_inputs(
                 prompt_dict=prompt_dict, system_instruction=None
             )
         )
 
         chat = model.start_chat(history=[])
-
         response_list = []
         safety_attributes_list = []
         try:
@@ -472,24 +455,40 @@ class GeminiAPI(AsyncAPI):
         i.e. multi-turn chat with history.
         """
         if prompt_dict["prompt"][0]["role"] == "system":
-            prompt, model_name, model, safety_settings, generation_config, _ = (
+            prompt, model_name, model, safety_settings, generation_config = (
                 await self._obtain_model_inputs(
                     prompt_dict=prompt_dict,
                     system_instruction=prompt_dict["prompt"][0]["parts"],
                 )
             )
-            chat = model.start_chat(history=prompt[1:-1])
+            chat = model.start_chat(
+                history=[
+                    convert_dict_to_input(
+                        content_dict=x, media_folder=self.settings.media_folder
+                    )
+                    for x in prompt[1:-1]
+                ]
+            )
         else:
-            prompt, model_name, model, safety_settings, generation_config, _ = (
+            prompt, model_name, model, safety_settings, generation_config = (
                 await self._obtain_model_inputs(
                     prompt_dict=prompt_dict, system_instruction=None
                 )
             )
-            chat = model.start_chat(history=prompt[:-1])
+            chat = model.start_chat(
+                history=[
+                    convert_dict_to_input(
+                        content_dict=x, media_folder=self.settings.media_folder
+                    )
+                    for x in prompt[:-1]
+                ]
+            )
 
         try:
             response = await chat.send_message_async(
-                content=prompt[-1],
+                content=convert_dict_to_input(
+                    content_dict=prompt[-1], media_folder=self.settings.media_folder
+                ),
                 generation_config=generation_config,
                 safety_settings=safety_settings,
                 stream=False,
