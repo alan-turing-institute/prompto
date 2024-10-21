@@ -77,7 +77,7 @@ async def test_gemini_query_history(
     mock_gemini_call.assert_called_once()
     mock_gemini_call.assert_awaited_once()
     mock_gemini_call.assert_awaited_once_with(
-        content=prompt_dict_history["prompt"][1],
+        content={"role": "user", "parts": [prompt_dict_history["prompt"][1]["parts"]]},
         generation_config=prompt_dict_history["parameters"],
         safety_settings=DEFAULT_SAFETY_SETTINGS,
         stream=False,
@@ -119,7 +119,7 @@ async def test_gemini_query_history_error(
     mock_gemini_call.assert_called_once()
     mock_gemini_call.assert_awaited_once()
     mock_gemini_call.assert_awaited_once_with(
-        content=prompt_dict_history["prompt"][1],
+        content={"role": "user", "parts": [prompt_dict_history["prompt"][1]["parts"]]},
         generation_config=prompt_dict_history["parameters"],
         safety_settings=DEFAULT_SAFETY_SETTINGS,
         stream=False,
@@ -160,7 +160,7 @@ async def test_gemini_query_history_index_error(
     mock_gemini_call.assert_called_once()
     mock_gemini_call.assert_awaited_once()
     mock_gemini_call.assert_awaited_once_with(
-        content=prompt_dict_history["prompt"][1],
+        content={"role": "user", "parts": [prompt_dict_history["prompt"][1]["parts"]]},
         generation_config=prompt_dict_history["parameters"],
         safety_settings=DEFAULT_SAFETY_SETTINGS,
         stream=False,
@@ -206,7 +206,6 @@ async def test_gemini_query_history_check_chat_init(
         ),
         DEFAULT_SAFETY_SETTINGS,
         prompt_dict_history["parameters"],
-        None,
     )
 
     # error will be raised as we've mocked the start_chat method
@@ -263,7 +262,10 @@ async def test_gemini_query_history_no_system(
     mock_gemini_call.assert_called_once()
     mock_gemini_call.assert_awaited_once()
     mock_gemini_call.assert_awaited_once_with(
-        content=prompt_dict_history_no_system["prompt"][2],
+        content={
+            "role": "user",
+            "parts": [prompt_dict_history_no_system["prompt"][2]["parts"]],
+        },
         generation_config=prompt_dict_history_no_system["parameters"],
         safety_settings=DEFAULT_SAFETY_SETTINGS,
         stream=False,
@@ -309,7 +311,10 @@ async def test_gemini_query_history_error_no_system(
     mock_gemini_call.assert_called_once()
     mock_gemini_call.assert_awaited_once()
     mock_gemini_call.assert_awaited_once_with(
-        content=prompt_dict_history_no_system["prompt"][2],
+        content={
+            "role": "user",
+            "parts": [prompt_dict_history_no_system["prompt"][2]["parts"]],
+        },
         generation_config=prompt_dict_history_no_system["parameters"],
         safety_settings=DEFAULT_SAFETY_SETTINGS,
         stream=False,
@@ -356,7 +361,10 @@ async def test_gemini_query_history_index_error_no_system(
     mock_gemini_call.assert_called_once()
     mock_gemini_call.assert_awaited_once()
     mock_gemini_call.assert_awaited_once_with(
-        content=prompt_dict_history_no_system["prompt"][2],
+        content={
+            "role": "user",
+            "parts": [prompt_dict_history_no_system["prompt"][2]["parts"]],
+        },
         generation_config=prompt_dict_history_no_system["parameters"],
         safety_settings=DEFAULT_SAFETY_SETTINGS,
         stream=False,
@@ -402,7 +410,6 @@ async def test_gemini_query_history_no_system_check_chat_init(
         ),
         DEFAULT_SAFETY_SETTINGS,
         prompt_dict_history_no_system["parameters"],
-        None,
     )
 
     # error will be raised as we've mocked the start_chat method
@@ -415,7 +422,13 @@ async def test_gemini_query_history_no_system_check_chat_init(
     )
     mock_start_chat.assert_called_once_with(
         history=[
-            prompt_dict_history_no_system["prompt"][0],
-            prompt_dict_history_no_system["prompt"][1],
+            {
+                "role": "user",
+                "parts": [prompt_dict_history_no_system["prompt"][0]["parts"]],
+            },
+            {
+                "role": "model",
+                "parts": [prompt_dict_history_no_system["prompt"][1]["parts"]],
+            },
         ]
     )

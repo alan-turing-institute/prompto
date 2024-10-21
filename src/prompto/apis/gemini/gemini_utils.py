@@ -6,7 +6,7 @@ from google.generativeai import get_file
 gemini_chat_roles = set(["user", "model"])
 
 
-def parse_multimedia_dict(multimedia_dict: dict, media_folder: str) -> any:
+def parse_parts_value(part: dict | str, media_folder: str) -> any:
     """
     Parse multimedia dictionary and create Vertex AI Part object.
     Expected keys:
@@ -15,20 +15,23 @@ def parse_multimedia_dict(multimedia_dict: dict, media_folder: str) -> any:
 
     Parameters
     ----------
-    multimedia_dict : dict
-        Dictionary with multimedia data to parse and create Part object
+    part : dict | str
+        Either a dictionary or a string which defines a multimodal object.
 
     Returns
     -------
     any
         Multimedia data object
     """
+    if isinstance(part, str):
+        return part
+
     # read multimedia type
-    type = multimedia_dict.get("type")
+    type = part.get("type")
     if type is None:
         raise ValueError("Multimedia type is not specified")
     # read file location
-    media = multimedia_dict.get("media")
+    media = part.get("media")
     if media is None:
         raise ValueError("File location is not specified")
 
@@ -50,7 +53,7 @@ def parse_multimedia_dict(multimedia_dict: dict, media_folder: str) -> any:
             raise ValueError(f"Unsupported multimedia type: {type}")
 
 
-def parse_multimedia(multimedia: list[dict] | dict, media_folder: str) -> list[any]:
+def parse_parts(parts: list[dict | str] | dict | str, media_folder: str) -> list[any]:
     """
     Parse multimedia data and create a list of multimedia data objects.
     If multimedia is a single dictionary, a list with a single multimedia data object is returned.
@@ -66,10 +69,43 @@ def parse_multimedia(multimedia: list[dict] | dict, media_folder: str) -> list[a
     list[any] | any
         List of multimedia data object(s) created from the input multimedia data
     """
-    if isinstance(multimedia, dict):
-        return [parse_multimedia_dict(multimedia, media_folder=media_folder)]
-    else:
-        return [parse_multimedia_dict(m, media_folder=media_folder) for m in multimedia]
+    # convert to list[dict | str]
+    if isinstance(parts, dict) or isinstance(parts, str):
+        parts = [parts]
+
+    return [parse_parts_value(p, media_folder=media_folder) for p in parts]
+
+
+def convert_dict_to_input(content_dict: dict, media_folder: str) -> dict:
+    """
+    Convert dictionary to an input that can be used by the Gemini API.
+    The output is a dictionary with keys "role" and "parts".
+
+    Parameters
+    ----------
+    content_dict : dict
+        Content dictionary with keys "role" and "parts"strings.
+
+    Returns
+    -------
+    dict
+        dict with keys "role" and "parts"  where the value of
+        role is either "user" or "model" and the value of
+        parts is a list of inputs to make up an input (which can include
+        text or image/video inputs).
+    """
+    if "role" not in content_dict:
+        raise KeyError("Role key is missing in content dictionary")
+    if "parts" not in content_dict:
+        raise KeyError("Parts key is missing in content dictionary")
+
+    return {
+        "role": content_dict["role"],
+        "parts": parse_parts(
+            content_dict["parts"],
+            media_folder=media_folder,
+        ),
+    }
 
 
 def process_response(response: dict) -> str:

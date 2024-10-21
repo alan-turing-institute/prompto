@@ -74,7 +74,7 @@ async def test_gemini_query_string(
     mock_gemini_call.assert_called_once()
     mock_gemini_call.assert_awaited_once()
     mock_gemini_call.assert_awaited_once_with(
-        contents=[prompt_dict_string["prompt"]],
+        contents=prompt_dict_string["prompt"],
         generation_config=prompt_dict_string["parameters"],
         safety_settings=DEFAULT_SAFETY_SETTINGS,
         stream=False,
@@ -123,7 +123,7 @@ async def test_gemini_query_string__index_error(
     mock_gemini_call.assert_called_once()
     mock_gemini_call.assert_awaited_once()
     mock_gemini_call.assert_awaited_once_with(
-        contents=[prompt_dict_string["prompt"]],
+        contents=prompt_dict_string["prompt"],
         generation_config=prompt_dict_string["parameters"],
         safety_settings=DEFAULT_SAFETY_SETTINGS,
         stream=False,
@@ -164,7 +164,7 @@ async def test_gemini_query_string_error(
     mock_gemini_call.assert_called_once()
     mock_gemini_call.assert_awaited_once()
     mock_gemini_call.assert_awaited_once_with(
-        contents=[prompt_dict_string["prompt"]],
+        contents=prompt_dict_string["prompt"],
         generation_config=prompt_dict_string["parameters"],
         safety_settings=DEFAULT_SAFETY_SETTINGS,
         stream=False,

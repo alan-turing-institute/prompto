@@ -56,25 +56,12 @@ async def test_vertexai_query_string(
 
     mock_vertexai_call.assert_called_once()
     mock_vertexai_call.assert_awaited_once()
-    await_kwargs = mock_vertexai_call.await_args.kwargs
-    # assert await arguments - slightly more complicated since "contents" is a
-    # list of Part objects which are not directly comparable so we convert to dict and compare
-    assert (
-        "contents" in await_kwargs.keys()
-        and isinstance(await_kwargs["contents"], list)
-        and len(await_kwargs["contents"]) == 1
-        and await_kwargs["contents"][0].to_dict()
-        == {"text": prompt_dict_string["prompt"]}
+    mock_vertexai_call.assert_awaited_once_with(
+        contents=prompt_dict_string["prompt"],
+        generation_config=prompt_dict_string["parameters"],
+        safety_settings=DEFAULT_SAFETY_SETTINGS,
+        stream=False,
     )
-    assert (
-        "generation_config" in await_kwargs.keys()
-        and await_kwargs["generation_config"] == prompt_dict_string["parameters"]
-    )
-    assert (
-        "safety_settings" in await_kwargs.keys()
-        and await_kwargs["safety_settings"] == DEFAULT_SAFETY_SETTINGS
-    )
-    assert "stream" in await_kwargs.keys() and await_kwargs["stream"] is False
 
     mock_process_response.assert_called_once_with(mock_vertexai_call.return_value)
     mock_process_safety_attr.assert_called_once_with(mock_vertexai_call.return_value)
@@ -120,25 +107,12 @@ async def test_vertexai_query_string__index_error(
 
     mock_vertexai_call.assert_called_once()
     mock_vertexai_call.assert_awaited_once()
-    await_kwargs = mock_vertexai_call.await_args.kwargs
-    # assert await arguments - slightly more complicated since "contents" is a
-    # list of Part objects which are not directly comparable so we convert to dict and compare
-    assert (
-        "contents" in await_kwargs.keys()
-        and isinstance(await_kwargs["contents"], list)
-        and len(await_kwargs["contents"]) == 1
-        and await_kwargs["contents"][0].to_dict()
-        == {"text": prompt_dict_string["prompt"]}
+    mock_vertexai_call.assert_awaited_once_with(
+        contents=prompt_dict_string["prompt"],
+        generation_config=prompt_dict_string["parameters"],
+        safety_settings=DEFAULT_SAFETY_SETTINGS,
+        stream=False,
     )
-    assert (
-        "generation_config" in await_kwargs.keys()
-        and await_kwargs["generation_config"] == prompt_dict_string["parameters"]
-    )
-    assert (
-        "safety_settings" in await_kwargs.keys()
-        and await_kwargs["safety_settings"] == DEFAULT_SAFETY_SETTINGS
-    )
-    assert "stream" in await_kwargs.keys() and await_kwargs["stream"] is False
 
     expected_log_message = (
         f"Error with model VertexAI ({prompt_dict_string['model_name']}) "
@@ -176,25 +150,12 @@ async def test_vertexai_query_string_error(
 
     mock_vertexai_call.assert_called_once()
     mock_vertexai_call.assert_awaited_once()
-    await_kwargs = mock_vertexai_call.await_args.kwargs
-    # assert await arguments - slightly more complicated since "contents" is a
-    # list of Part objects which are not directly comparable so we convert to dict and compare
-    assert (
-        "contents" in await_kwargs.keys()
-        and isinstance(await_kwargs["contents"], list)
-        and len(await_kwargs["contents"]) == 1
-        and await_kwargs["contents"][0].to_dict()
-        == {"text": prompt_dict_string["prompt"]}
+    mock_vertexai_call.assert_awaited_once_with(
+        contents=prompt_dict_string["prompt"],
+        generation_config=prompt_dict_string["parameters"],
+        safety_settings=DEFAULT_SAFETY_SETTINGS,
+        stream=False,
     )
-    assert (
-        "generation_config" in await_kwargs.keys()
-        and await_kwargs["generation_config"] == prompt_dict_string["parameters"]
-    )
-    assert (
-        "safety_settings" in await_kwargs.keys()
-        and await_kwargs["safety_settings"] == DEFAULT_SAFETY_SETTINGS
-    )
-    assert "stream" in await_kwargs.keys() and await_kwargs["stream"] is False
 
     expected_log_message = (
         f"Error with model VertexAI ({prompt_dict_string['model_name']}) "

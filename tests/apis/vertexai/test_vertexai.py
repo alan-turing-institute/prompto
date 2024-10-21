@@ -399,7 +399,7 @@ async def test_vertexai_obtain_model_inputs(temporary_data_folders, monkeypatch)
         }
     )
     assert isinstance(test_case, tuple)
-    assert len(test_case) == 6
+    assert len(test_case) == 5
     assert test_case[0] == "test prompt"
     assert test_case[1] == "vertexai_model_name"
     assert isinstance(test_case[2], GenerativeModel)
@@ -407,7 +407,6 @@ async def test_vertexai_obtain_model_inputs(temporary_data_folders, monkeypatch)
     assert test_case[2]._system_instruction is None
     assert isinstance(test_case[3], dict)
     assert test_case[4] == {"temperature": 1, "max_output_tokens": 100}
-    assert test_case[5] is None
 
     # test for case where no parameters in prompt_dict
     test_case = await vertexai_api._obtain_model_inputs(
@@ -419,7 +418,7 @@ async def test_vertexai_obtain_model_inputs(temporary_data_folders, monkeypatch)
         },
     )
     assert isinstance(test_case, tuple)
-    assert len(test_case) == 6
+    assert len(test_case) == 5
     assert test_case[0] == "test prompt"
     assert test_case[1] == "vertexai_model_name"
     assert isinstance(test_case[2], GenerativeModel)
@@ -427,7 +426,6 @@ async def test_vertexai_obtain_model_inputs(temporary_data_folders, monkeypatch)
     assert test_case[2]._system_instruction is None
     assert isinstance(test_case[3], dict)
     assert test_case[4] == {}
-    assert test_case[5] is None
 
     # test for case where system_instruction is provided
     test_case = await vertexai_api._obtain_model_inputs(
@@ -440,7 +438,7 @@ async def test_vertexai_obtain_model_inputs(temporary_data_folders, monkeypatch)
         system_instruction="hello",
     )
     assert isinstance(test_case, tuple)
-    assert len(test_case) == 6
+    assert len(test_case) == 5
     assert test_case[0] == "test prompt"
     assert test_case[1] == "vertexai_model_name"
     assert isinstance(test_case[2], GenerativeModel)
@@ -448,7 +446,6 @@ async def test_vertexai_obtain_model_inputs(temporary_data_folders, monkeypatch)
     assert test_case[2]._system_instruction is not None
     assert isinstance(test_case[3], dict)
     assert test_case[4] == {}
-    assert test_case[5] is None
 
     # test error catching when parameters are not a dictionary
     with pytest.raises(
@@ -507,7 +504,7 @@ async def test_vertexai_obtain_model_inputs_safety_filters(
             }
         )
         assert isinstance(test_case, tuple)
-        assert len(test_case) == 6
+        assert len(test_case) == 5
         assert test_case[0] == "test prompt"
         assert test_case[1] == "vertexai_model_name"
         assert isinstance(test_case[2], GenerativeModel)
@@ -517,7 +514,6 @@ async def test_vertexai_obtain_model_inputs_safety_filters(
         assert test_case[2]._system_instruction is None
         assert isinstance(test_case[3], dict)
         assert test_case[4] == {"temperature": 1, "max_output_tokens": 100}
-        assert test_case[5] is None
 
     # test error if safety filter is not recognised
     with pytest.raises(
