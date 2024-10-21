@@ -1,0 +1,5 @@
+10-07-2024, 18:06: Error with model gemini (gemini-1.5-flash) (i=68, id=167)
+Prompt: Below is an instruction that describes a task. Wri...
+Error: Response is empty and blocked (IndexError - list index out of range)
+
+10-07-2024, 18:10: Completed experiment all_experiments.jsonl! Experiment processing time: 269.026 seconds, Average time per query: 0.897 seconds

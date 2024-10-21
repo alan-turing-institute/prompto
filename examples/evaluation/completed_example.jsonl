@@ -1,0 +1,3 @@
+{"id": 0, "api": "some-api", "model_name": "some-model", "prompt": "tell me a joke", "response": "I tried starting a hot air balloon business, but it never took off."}
+{"id": 1, "api": "some-api", "model_name": "some-model",  "prompt": "tell me a joke about cats", "response": "Why was the cat sitting on the computer? To keep an eye on the mouse!"}
+{"id": 2, "api": "some-api", "model_name": "some-model",  "prompt": "tell me a fact about cats", "response": "Cats have five toes on their front paws, but only four on their back paws."}

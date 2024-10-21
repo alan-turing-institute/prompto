@@ -1,0 +1,1 @@
+16-07-2024, 11:24: Completed experiment anthropic-example.jsonl! Experiment processing time: 11.246 seconds, Average time per query: 2.249 seconds
