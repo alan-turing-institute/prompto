@@ -11,7 +11,7 @@ prompto_run_experiment --file data/input/vertexai-example.jsonl --max-queries 30
 
 ## Multimodal prompting
 
-Multimodal prompting is available with the VertexAI API. We provide an example notebook in the [Multimodal prompting with Vertex AI notebook](./vertexai-multimodal.ipynb) and example experiment file in [data/input/vertexai-multimodal-example.jsonl](https://github.com/alan-turing-institute/prompto/blob/main/examples/vertexai/data/input/vertexai-multimodal-example.jsonl). You can run it with the following command:
+Multimodal prompting is available with the Vertex AI API. We provide an example notebook in the [Multimodal prompting with Vertex AI notebook](./vertexai-multimodal.ipynb) and example experiment file in [data/input/vertexai-multimodal-example.jsonl](https://github.com/alan-turing-institute/prompto/blob/main/examples/vertexai/data/input/vertexai-multimodal-example.jsonl). You can run it with the following command:
 ```bash
 prompto_run_experiment --file data/input/vertexai-multimodal-example.jsonl --max-queries 30
 ```

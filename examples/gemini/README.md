@@ -9,6 +9,15 @@ We provide an example experiment file in [data/input/gemini-example.jsonl](https
 prompto_run_experiment --file data/input/gemini-example.jsonl --max-queries 30
 ```
 
+## Multimodal prompting
+
+Multimodal prompting is available with the Gemini API. We provide an example notebook in the [Multimodal prompting with Vertex AI notebook](./gemini-multimodal.ipynb) and example experiment file in [data/input/gemini-multimodal-example.jsonl](https://github.com/alan-turing-institute/prompto/blob/main/examples/gemini/data/input/gemini-multimodal-example.jsonl). You can run it with the following command:
+```bash
+prompto_run_experiment --file data/input/gemini-multimodal-example.jsonl --max-queries 30
+```
+
+## Environment variables
+
 To run the experiment, you will need to set the following environment variables first:
 ```bash
 export GEMINI_API_KEY=<YOUR-GEMINI-KEY>

@@ -30,6 +30,7 @@ nav:
       - Gemini:
           - Example: examples/gemini/README.md
           - Notebook: examples/gemini/gemini.ipynb
+          - Multimodal: examples/gemini/gemini-multimodal.ipynb
       - Vertex AI:
           - Example: examples/vertexai/README.md
           - Notebook: examples/vertexai/vertexai.ipynb
