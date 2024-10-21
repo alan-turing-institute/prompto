@@ -9,6 +9,15 @@ We provide an example experiment file in [data/input/vertexai-example.jsonl](htt
 prompto_run_experiment --file data/input/vertexai-example.jsonl --max-queries 30
 ```
 
+## Multimodal prompting
+
+Multimodal prompting is available with the VertexAI API. We provide an example notebook in the [Multimodal prompting with Vertex AI notebook](./vertexai-multimodal.ipynb) and example experiment file in [data/input/vertexai-multimodal-example.jsonl](https://github.com/alan-turing-institute/prompto/blob/main/examples/vertexai/data/input/vertexai-multimodal-example.jsonl). You can run it with the following command:
+```bash
+prompto_run_experiment --file data/input/vertexai-multimodal-example.jsonl --max-queries 30
+```
+
+## Environment variables
+
 To run the experiment, you will need to set the following environment variables first:
 ```bash
 export VERTEXAI_PROJECT_ID=<YOUR-VERTEXAI-PROJECT-ID>

@@ -33,6 +33,7 @@ nav:
       - Vertex AI:
           - Example: examples/vertexai/README.md
           - Notebook: examples/vertexai/vertexai.ipynb
+          - Multimodal: examples/vertexai/vertexai-multimodal.ipynb
       - Ollama:
           - Example: examples/ollama/README.md
           - Notebook: examples/ollama/ollama.ipynb
