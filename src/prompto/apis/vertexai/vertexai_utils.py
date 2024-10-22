@@ -6,8 +6,8 @@ from vertexai.generative_models import Content, Image, Part
 def parse_parts_value(part: dict | str, media_folder: str) -> Part:
     """
     Create Vertex AI Part objects from a dictionary or string.
-    If the parts is a string, a Part object with text is created.
-    Otherwise, parts is a dictionary with the following keys:
+    If parts is a string, a Part object with text is created.
+    If parts is a dictionary, expected keys are:
     - type: str, multimedia type, one of ["image", "video", "uri" "text"]
     - media: str, file location (if type is image or video) or text (if type is text).
       This can be either a local file path (relative to the media folder) or a GCS URI.
@@ -18,6 +18,8 @@ def parse_parts_value(part: dict | str, media_folder: str) -> Part:
     ----------
     part : dict | str
         Either a dictionary or a string which defines a Part object.
+    media_folder : str
+        Folder where media files are stored ({data_folder}/media).
 
     Returns
     -------
@@ -81,6 +83,8 @@ def parse_parts(parts: list[dict | str] | dict | str, media_folder: str) -> list
     parts : list[dict | str] | dict | str
         Corresponding to the "parts" value in the prompt.
         Can be a list of dictionaries and strings, or a single dictionary or string.
+    media_folder : str
+        Folder where media files are stored ({data_folder}/media).
 
     Returns
     -------
@@ -103,6 +107,8 @@ def convert_dict_to_input(content_dict: dict, media_folder: str) -> Content:
     content_dict : dict
         Content dictionary with keys "role" and "parts" where
         the values are strings.
+    media_folder : str
+        Folder where media files are stored ({data_folder}/media).
 
     Returns
     -------
