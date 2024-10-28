@@ -103,9 +103,9 @@ def convert_dict_to_input(content_dict: dict, media_folder: str) -> dict:
         text or image/video inputs).
     """
     if "role" not in content_dict:
-        raise KeyError("Role key is missing in content dictionary")
+        raise KeyError("role key is missing in content dictionary")
     if "parts" not in content_dict:
-        raise KeyError("Parts key is missing in content dictionary")
+        raise KeyError("parts key is missing in content dictionary")
 
     return {
         "role": content_dict["role"],

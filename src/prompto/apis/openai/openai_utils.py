@@ -12,7 +12,7 @@ def encode_image(image_path):
         return base64.b64encode(image_file.read()).decode("utf-8")
 
 
-def parse_contents_value(content: dict | str, media_folder: str) -> dict:
+def parse_content_value(content: dict | str, media_folder: str) -> dict:
     """
     Parse multimedia dictionary and create a dictionary input for OpenAI API.
     If content is a string, a dictionary to represent a text object is returned.
@@ -95,7 +95,7 @@ def parse_contents_value(content: dict | str, media_folder: str) -> dict:
             raise ValueError(f"Unsupported multimedia type: {type}")
 
 
-def parse_contents(
+def parse_content(
     contents: list[dict | str] | dict | str, media_folder: str
 ) -> list[dict]:
     """
@@ -119,7 +119,7 @@ def parse_contents(
     if isinstance(contents, dict) or isinstance(contents, str):
         contents = [contents]
 
-    return [parse_contents_value(p, media_folder=media_folder) for p in contents]
+    return [parse_content_value(p, media_folder=media_folder) for p in contents]
 
 
 def convert_dict_to_input(content_dict: dict, media_folder: str) -> dict:
@@ -143,13 +143,13 @@ def convert_dict_to_input(content_dict: dict, media_folder: str) -> dict:
         text or image/video inputs).
     """
     if "role" not in content_dict:
-        raise KeyError("Role key is missing in content dictionary")
-    if "contents" not in content_dict:
-        raise KeyError("Parts key is missing in content dictionary")
+        raise KeyError("role key is missing in content dictionary")
+    if "content" not in content_dict:
+        raise KeyError("content key is missing in content dictionary")
 
     return {
         "role": content_dict["role"],
-        "content": parse_contents(
+        "content": parse_content(
             content_dict["content"],
             media_folder=media_folder,
         ),

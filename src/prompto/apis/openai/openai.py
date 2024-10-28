@@ -5,7 +5,11 @@ import openai
 from openai import AsyncOpenAI
 
 from prompto.apis.base import AsyncAPI
-from prompto.apis.openai.openai_utils import openai_chat_roles, process_response
+from prompto.apis.openai.openai_utils import (
+    convert_dict_to_input,
+    openai_chat_roles,
+    process_response,
+)
 from prompto.settings import Settings
 from prompto.utils import (
     FILE_WRITE_LOCK,
@@ -330,7 +334,7 @@ class OpenAIAPI(AsyncAPI):
         try:
             response = await client.chat.completions.create(
                 model=model_name,
-                messages=prompt,
+                messages=[convert_dict_to_input(x) for x in prompt],
                 **generation_config,
             )
 
