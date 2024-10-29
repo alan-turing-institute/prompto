@@ -334,7 +334,12 @@ class OpenAIAPI(AsyncAPI):
         try:
             response = await client.chat.completions.create(
                 model=model_name,
-                messages=[convert_dict_to_input(x) for x in prompt],
+                messages=[
+                    convert_dict_to_input(
+                        content_dict=x, media_folder=self.settings.media_folder
+                    )
+                    for x in prompt
+                ],
                 **generation_config,
             )
 

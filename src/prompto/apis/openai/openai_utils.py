@@ -63,6 +63,9 @@ def parse_content_value(content: dict | str, media_folder: str) -> dict:
                     "Got type == 'image_url', but 'image_url' is not a key in the content dictionary"
                 )
 
+            if isinstance(image_url, str):
+                image_url = {"url": image_url}
+
             # get url (can be either a local path or a URL starting with "https://")
             url = image_url.get("url")
             if url is None:
