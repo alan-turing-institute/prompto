@@ -29,6 +29,7 @@ nav:
       - Anthropic:
           - Example: examples/anthropic/README.md
           - Notebook: examples/anthropic/anthropic.ipynb
+          - Multimodal: examples/anthropic/anthropic-multimodal.ipynb
       - Gemini:
           - Example: examples/gemini/README.md
           - Notebook: examples/gemini/gemini.ipynb
