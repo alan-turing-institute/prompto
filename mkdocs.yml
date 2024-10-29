@@ -21,9 +21,11 @@ nav:
       - Azure OpenAI:
           - Example: examples/azure-openai/README.md
           - Notebook: examples/azure-openai/azure-openai.ipynb
+          - Multimodal: examples/azure-openai/azure-openai-multimodal.ipynb
       - OpenAI:
           - Example: examples/openai/README.md
           - Notebook: examples/openai/openai.ipynb
+          - Multimodal: examples/openai/openai-multimodal.ipynb
       - Anthropic:
           - Example: examples/anthropic/README.md
           - Notebook: examples/anthropic/anthropic.ipynb

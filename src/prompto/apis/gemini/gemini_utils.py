@@ -8,8 +8,9 @@ gemini_chat_roles = set(["user", "model"])
 
 def parse_parts_value(part: dict | str, media_folder: str) -> any:
     """
-    Parse multimedia dictionary and create Vertex AI Part object.
-    Expected keys:
+    Parse part dictionary and create a dictionary input for Gemini API.
+    If part is a string, a dictionary to represent a text object is returned.
+    If part is a dictionary, expected keys are:
     - type: str, multimedia type, one of ["text", "image", "file"]
     - media: str, file location (if type is image or file), text (if type is text)
 
@@ -17,6 +18,8 @@ def parse_parts_value(part: dict | str, media_folder: str) -> any:
     ----------
     part : dict | str
         Either a dictionary or a string which defines a multimodal object.
+    media_folder : str
+        Folder where media files are stored ({data_folder}/media).
 
     Returns
     -------
@@ -55,18 +58,20 @@ def parse_parts_value(part: dict | str, media_folder: str) -> any:
 
 def parse_parts(parts: list[dict | str] | dict | str, media_folder: str) -> list[any]:
     """
-    Parse multimedia data and create a list of multimedia data objects.
-    If multimedia is a single dictionary, a list with a single multimedia data object is returned.
+    Parse parts data and create a list of multimedia data objects.
+    If parts is a single dictionary, a list with a single multimedia data object is returned.
 
     Parameters
     ----------
-    multimedia : list[dict] | dict
-        Multimedia data to parse and create Part object(s).
-        Can be a list of multimedia dictionaries or a single multimedia dictionary.
+    parts : list[dict | str] | dict | str
+        Parts data to parse and create Part object(s).
+        Can be a list of dictionaries and strings, or a single dictionary or string.
+    media_folder : str
+        Folder where media files are stored ({data_folder}/media).
 
     Returns
     -------
-    list[any] | any
+    list[any]
         List of multimedia data object(s) created from the input multimedia data
     """
     # convert to list[dict | str]
@@ -84,7 +89,10 @@ def convert_dict_to_input(content_dict: dict, media_folder: str) -> dict:
     Parameters
     ----------
     content_dict : dict
-        Content dictionary with keys "role" and "parts"strings.
+        Content dictionary with keys "role" and "parts" where
+        the values are strings.
+    media_folder : str
+        Folder where media files are stored ({data_folder}/media).
 
     Returns
     -------
@@ -95,9 +103,9 @@ def convert_dict_to_input(content_dict: dict, media_folder: str) -> dict:
         text or image/video inputs).
     """
     if "role" not in content_dict:
-        raise KeyError("Role key is missing in content dictionary")
+        raise KeyError("role key is missing in content dictionary")
     if "parts" not in content_dict:
-        raise KeyError("Parts key is missing in content dictionary")
+        raise KeyError("parts key is missing in content dictionary")
 
     return {
         "role": content_dict["role"],
