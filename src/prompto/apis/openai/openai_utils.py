@@ -14,7 +14,7 @@ def encode_image(image_path):
 
 def parse_content_value(content: dict | str, media_folder: str) -> dict:
     """
-    Parse multimedia dictionary and create a dictionary input for OpenAI API.
+    Parse content dictionary and create a dictionary input for OpenAI API.
     If content is a string, a dictionary to represent a text object is returned.
     If content is a dictionary, expected keys are:
     - type: str, multimedia type, one of ["text", "image_url"]
@@ -102,13 +102,13 @@ def parse_content(
     contents: list[dict | str] | dict | str, media_folder: str
 ) -> list[dict]:
     """
-    Parse multimedia data and create a list of multimedia data objects.
-    If multimedia is a single dictionary, a list with a single multimedia data object is returned.
+    Parse contents data and create a list of multimedia data objects.
+    If contents is a single dictionary, a list with a single multimedia data object is returned.
 
     Parameters
     ----------
-    multimedia : list[dict | str] | dict | str
-        Multimedia data to parse and create Part object(s).
+    contents : list[dict | str] | dict | str
+        Contents data to parse and create Part object(s).
         Can be a list of dictionaries and strings, or a single dictionary or string.
     media_folder : str
         Folder where media files are stored ({data_folder}/media).
@@ -132,7 +132,8 @@ def convert_dict_to_input(content_dict: dict, media_folder: str) -> dict:
 
     Parameters
     ----------
-    Content dictionary with keys "role" and "content" where
+    content_dict : dict
+        Content dictionary with keys "role" and "content" where
         the values are strings.
     media_folder : str
         Folder where media files are stored ({data_folder}/media).

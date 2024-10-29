@@ -8,7 +8,7 @@ gemini_chat_roles = set(["user", "model"])
 
 def parse_parts_value(part: dict | str, media_folder: str) -> any:
     """
-    Parse multimedia dictionary and create a dictionary input for Gemini API.
+    Parse part dictionary and create a dictionary input for Gemini API.
     If part is a string, a dictionary to represent a text object is returned.
     If part is a dictionary, expected keys are:
     - type: str, multimedia type, one of ["text", "image", "file"]
@@ -58,13 +58,13 @@ def parse_parts_value(part: dict | str, media_folder: str) -> any:
 
 def parse_parts(parts: list[dict | str] | dict | str, media_folder: str) -> list[any]:
     """
-    Parse multimedia data and create a list of multimedia data objects.
-    If multimedia is a single dictionary, a list with a single multimedia data object is returned.
+    Parse parts data and create a list of multimedia data objects.
+    If parts is a single dictionary, a list with a single multimedia data object is returned.
 
     Parameters
     ----------
-    multimedia : list[dict | str] | dict | str
-        Multimedia data to parse and create Part object(s).
+    parts : list[dict | str] | dict | str
+        Parts data to parse and create Part object(s).
         Can be a list of dictionaries and strings, or a single dictionary or string.
     media_folder : str
         Folder where media files are stored ({data_folder}/media).
