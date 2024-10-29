@@ -120,7 +120,15 @@ async def test_anthropic_query_history(
     mock_anthropic.assert_awaited_once_with(
         model=prompt_dict_history["model_name"],
         messages=[
-            {"role": "user", "content": prompt_dict_history["prompt"][1]["content"]}
+            {
+                "role": "user",
+                "content": [
+                    {
+                        "type": "text",
+                        "text": prompt_dict_history["prompt"][1]["content"],
+                    }
+                ],
+            }
         ],
         system=prompt_dict_history["prompt"][0]["content"],
         **prompt_dict_history["parameters"],
@@ -162,7 +170,15 @@ async def test_anthropic_query_history_error(
     mock_anthropic.assert_awaited_once_with(
         model=prompt_dict_history["model_name"],
         messages=[
-            {"role": "user", "content": prompt_dict_history["prompt"][1]["content"]}
+            {
+                "role": "user",
+                "content": [
+                    {
+                        "type": "text",
+                        "text": prompt_dict_history["prompt"][1]["content"],
+                    }
+                ],
+            }
         ],
         system=prompt_dict_history["prompt"][0]["content"],
         **prompt_dict_history["parameters"],
@@ -221,18 +237,33 @@ async def test_anthropic_query_history_no_system(
         messages=[
             {
                 "role": "user",
-                "content": prompt_dict_history_no_system["prompt"][0]["content"],
+                "content": [
+                    {
+                        "type": "text",
+                        "text": prompt_dict_history_no_system["prompt"][0]["content"],
+                    }
+                ],
             },
             {
                 "role": "assistant",
-                "content": prompt_dict_history_no_system["prompt"][1]["content"],
+                "content": [
+                    {
+                        "type": "text",
+                        "text": prompt_dict_history_no_system["prompt"][1]["content"],
+                    }
+                ],
             },
             {
                 "role": "user",
-                "content": prompt_dict_history_no_system["prompt"][2]["content"],
+                "content": [
+                    {
+                        "type": "text",
+                        "text": prompt_dict_history_no_system["prompt"][2]["content"],
+                    }
+                ],
             },
         ],
-        system=None,
+        system="",
         **prompt_dict_history_no_system["parameters"],
     )
 
@@ -278,18 +309,33 @@ async def test_anthropic_query_history_error_no_system(
         messages=[
             {
                 "role": "user",
-                "content": prompt_dict_history_no_system["prompt"][0]["content"],
+                "content": [
+                    {
+                        "type": "text",
+                        "text": prompt_dict_history_no_system["prompt"][0]["content"],
+                    }
+                ],
             },
             {
                 "role": "assistant",
-                "content": prompt_dict_history_no_system["prompt"][1]["content"],
+                "content": [
+                    {
+                        "type": "text",
+                        "text": prompt_dict_history_no_system["prompt"][1]["content"],
+                    }
+                ],
             },
             {
                 "role": "user",
-                "content": prompt_dict_history_no_system["prompt"][2]["content"],
+                "content": [
+                    {
+                        "type": "text",
+                        "text": prompt_dict_history_no_system["prompt"][2]["content"],
+                    }
+                ],
             },
         ],
-        system=None,
+        system="",
         **prompt_dict_history_no_system["parameters"],
     )
 
