@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "prompto"
-version = "0.2.0"
+version = "0.2.1"
 description = "Library for asynchronous querying of LLM API endpoints and logging progress"
 authors = [
     "rchan <rchan@turing.ac.uk>",
