@@ -44,7 +44,7 @@ def parse_content_value(content: dict | str, media_folder: str) -> dict:
     if type is None:
         raise ValueError("Multimedia type is not specified")
 
-    # create Part object based on multimedia type
+    # create dictionary based on multimedia type
     if type == "text":
         # read file location
         text = content.get("text")

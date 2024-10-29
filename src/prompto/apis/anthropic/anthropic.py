@@ -5,6 +5,7 @@ from anthropic import AsyncAnthropic
 
 from prompto.apis.anthropic.anthropic_utils import (
     anthropic_chat_roles,
+    convert_dict_to_input,
     process_response,
 )
 from prompto.apis.base import AsyncAPI
@@ -331,7 +332,7 @@ class AnthropicAPI(AsyncAPI):
 
         # if system message is present, then it must be the only one
         if len(system) == 0:
-            system = None
+            system = ""
         elif len(system) == 1:
             system = system[0]
         else:
@@ -342,7 +343,12 @@ class AnthropicAPI(AsyncAPI):
         try:
             response = await client.messages.create(
                 model=model_name,
-                messages=messages,
+                messages=[
+                    convert_dict_to_input(
+                        content_dict=x, media_folder=self.settings.media_folder
+                    )
+                    for x in messages
+                ],
                 system=system,
                 **generation_config,
             )
