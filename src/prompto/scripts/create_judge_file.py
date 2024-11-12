@@ -27,7 +27,7 @@ def main():
     )
     parser.add_argument(
         "--judge-folder",
-        "-l",
+        "-jf",
         help=(
             "Location of the judge folder storing the template.txt "
             "and settings.json to be used"
@@ -36,8 +36,8 @@ def main():
         required=True,
     )
     parser.add_argument(
-        "--templates",
-        "-t",
+        "--judge-templates",
+        "-jt",
         help=(
             "Template file(s) to be used for the judge separated by commas. "
             "These must be .txt files in the judge folder. "
@@ -76,7 +76,7 @@ def main():
         ) from exc
 
     # parse template, judge folder and judge arguments
-    templates = parse_list_arg(argument=args.templates)
+    templates = parse_list_arg(argument=args.judge_templates)
     template_prompts, judge_settings = load_judge_folder(
         judge_folder=args.judge_folder, templates=templates
     )

@@ -71,7 +71,9 @@ def test_load_max_queries_json(temporary_data_folder_judge):
 def test_load_judge_args_all_none(temporary_data_folder_judge, caplog):
     caplog.set_level(logging.INFO)
     # if either argument is None, return (False, None, None, None)
-    result = load_judge_args(judge_folder_arg=None, judge_arg=None, templates_arg=None)
+    result = load_judge_args(
+        judge_folder_arg=None, judge_arg=None, judge_templates_arg=None
+    )
     assert result == (False, None, None, None)
     assert (
         "Not creating judge file as one of judge_folder, judge or templates is None"
@@ -83,7 +85,7 @@ def test_load_judge_args_judge_arg_none(temporary_data_folder_judge, caplog):
     caplog.set_level(logging.INFO)
     # if either argument is None, return (False, None, None, None)
     result = load_judge_args(
-        judge_folder_arg="judge_loc", judge_arg=None, templates_arg="template.txt"
+        judge_folder_arg="judge_loc", judge_arg=None, judge_templates_arg="template.txt"
     )
     assert result == (False, None, None, None)
     assert (
@@ -96,7 +98,7 @@ def test_load_judge_args_judge_folder_arg_none(temporary_data_folder_judge, capl
     caplog.set_level(logging.INFO)
     # if either argument is None, return (False, None, None, None)
     result = load_judge_args(
-        judge_folder_arg=None, judge_arg="judge1", templates_arg="template.txt"
+        judge_folder_arg=None, judge_arg="judge1", judge_templates_arg="template.txt"
     )
     assert result == (False, None, None, None)
     assert (
@@ -109,7 +111,7 @@ def test_load_judge_args_templates_arg_none(temporary_data_folder_judge, caplog)
     caplog.set_level(logging.INFO)
     # if either argument is None, return (False, None, None, None)
     result = load_judge_args(
-        judge_folder_arg="judge_loc", judge_arg="judge1", templates_arg=None
+        judge_folder_arg="judge_loc", judge_arg="judge1", judge_templates_arg=None
     )
     assert result == (False, None, None, None)
     assert (
@@ -124,7 +126,7 @@ def test_load_judge_args(temporary_data_folder_judge, caplog):
     result = load_judge_args(
         judge_folder_arg="judge_loc",
         judge_arg="judge1,judge2",
-        templates_arg="template.txt",
+        judge_templates_arg="template.txt",
     )
     assert result == (
         True,
@@ -572,7 +574,7 @@ def test_run_experiment_judge(temporary_data_folder_judge):
         "--file data/input/test-experiment.jsonl "
         "--max-queries=200 "
         "--judge-folder judge_loc "
-        "--templates template.txt "
+        "--judge-templates template.txt "
         "--judge judge1,judge2"
     )
     assert result.exit_code == 0
@@ -680,7 +682,7 @@ def test_run_experiment_judge_and_scorer(temporary_data_folder_judge):
         "--file data/input/test-experiment.jsonl "
         "--max-queries=200 "
         "--judge-folder judge_loc "
-        "--templates template.txt,template2.txt "
+        "--judge-templates template.txt,template2.txt "
         "--judge judge2 "
         "--scorer 'match, includes'"
     )
@@ -776,7 +778,7 @@ def test_run_experiment_judge_and_scorer_with_csv_input_and_output(
         "--file data/input/test-experiment.csv "
         "--max-queries=200 "
         "--judge-folder judge_loc "
-        "--templates template.txt,template2.txt "
+        "--judge-templates template.txt,template2.txt "
         "--judge judge2 "
         "--scorer 'match, includes' "
         "--output-as-csv"

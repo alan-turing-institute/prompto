@@ -1,4 +1,5 @@
 import json
+import logging
 import os
 
 from tqdm import tqdm
@@ -108,6 +109,7 @@ class Judge:
         self.completed_responses = completed_responses
         self.template_prompts = template_prompts
         self.judge_settings = judge_settings
+        self.judge_prompts: list[dict] = []
 
     @staticmethod
     def check_judge_settings(judge_settings: dict[str, dict]) -> bool:
@@ -209,10 +211,10 @@ class Judge:
 
         assert self.check_judge_in_judge_settings(judge, self.judge_settings)
 
-        judge_inputs = []
+        self.judge_prompts = []
         for j in judge:
             for template_name, template_prompt in self.template_prompts.items():
-                judge_inputs += [
+                self.judge_prompts += [
                     {
                         "id": f"judge-{j}-{template_name}-{str(response.get('id', 'NA'))}",
                         "template_name": template_name,
@@ -230,7 +232,7 @@ class Judge:
                     )
                 ]
 
-        return judge_inputs
+        return self.judge_prompts
 
     def create_judge_file(
         self, judge: list[str] | str, out_filepath: str
@@ -248,14 +250,28 @@ class Judge:
         out_filepath : str
             The path to the output file where the judge inputs
             will be saved as a jsonl file
+
+        Returns
+        -------
+        list[dict]
+            A list of dictionaries containing the input prompt
+            for the judge LLM(s). Each dictionary will contain a
+            new prompt for each prompt/response pair in the
+            completed_responses list using the template_prompt
         """
         if not out_filepath.endswith(".jsonl"):
             raise ValueError("out_filepath must end with '.jsonl'")
 
-        judge_inputs = self.create_judge_inputs(judge=judge)
+        judge_prompts = self.create_judge_inputs(judge=judge)
+
+        logging.info(f"Creating judge file at {out_filepath}...")
         with open(out_filepath, "w", encoding="utf-8") as f:
-            for j_input in judge_inputs:
+            for j_input in tqdm(
+                judge_prompts,
+                desc=f"Writing judge prompts to {out_filepath}",
+                unit="prompts",
+            ):
                 json.dump(j_input, f)
                 f.write("\n")
 
-        return judge_inputs
+        return judge_prompts

@@ -81,7 +81,7 @@ To create a judge experiment file for a particular experiment file with a judge-
 prompto_create_judge_file \
     --experiment-file path/to/experiment.jsonl \
     --judge-folder judge \
-    --templates template.txt \
+    --judge-templates template.txt \
     --judge gemini-1.0-pro
 ```
 
@@ -92,7 +92,7 @@ As noted above, it's possible to use multiple templates and multiple judges by s
 prompto_create_judge_file \
     --experiment-file path/to/experiment.jsonl \
     --judge-folder judge \
-    --templates template.txt,template2.txt \
+    --judge-templates template.txt,template2.txt \
     --judge gemini-1.0-pro,gpt-4
 ```
 
@@ -108,7 +108,7 @@ prompto_run_experiment \
     --file path/to/experiment.jsonl \
     --data-folder data \
     --judge-folder judge \
-    --templates template.txt,template2.txt \
+    --judge-templates template.txt,template2.txt \
     --judge gemini-1.0-pro
 ```
 

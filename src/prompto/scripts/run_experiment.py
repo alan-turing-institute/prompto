@@ -8,9 +8,10 @@ from dotenv import load_dotenv
 
 from prompto.experiment import Experiment
 from prompto.judge import Judge, load_judge_folder
+from prompto.rephrasal import Rephraser, load_rephrase_folder
 from prompto.scorer import SCORING_FUNCTIONS, obtain_scoring_functions
 from prompto.settings import Settings
-from prompto.utils import copy_file, move_file, parse_list_arg
+from prompto.utils import copy_file, create_folder, move_file, parse_list_arg
 
 
 def load_env_file(env_file: str) -> bool:
@@ -82,59 +83,112 @@ def load_max_queries_json(max_queries_json: str | None) -> dict:
     return max_queries_dict
 
 
-def load_judge_args(
-    judge_folder_arg: str | None,
-    judge_arg: str | None,
-    templates_arg: str | None,
-) -> tuple[bool, str, dict, list[str]]:
-    """
-    Load the judge arguments and parse them to get the
-    template prompt, judge settings and judge.
+def load_rephrase_args(
+    rephrase_folder_arg: str | None,
+    rephrase_model_arg: str | None,
+    rephrase_templates_arg: str | None,
+):
+    if (
+        rephrase_folder_arg is not None
+        and rephrase_model_arg is not None
+        and rephrase_templates_arg is not None
+    ):
+        create_rephrase_file = True
+        # parse template, rephrase folder and rephrase arguments
+        template_prompts, rephrase_settings = load_rephrase_folder(
+            rephrase_folder=rephrase_folder_arg, templates=rephrase_templates_arg
+        )
+        rephrase_model = parse_list_arg(argument=rephrase_model_arg)
+        # check if the rephrase is in the rephrase settings dictionary
+        Rephraser.check_rephrase_model_in_rephrase_settings(
+            rephrase_model=rephrase_model, rephrase_settings=rephrase_settings
+        )
+        logging.info(f"Rephrase folder loaded from {rephrase_folder_arg}")
+        logging.info(f"Templates to be loaded from: {rephrase_templates_arg}")
+        logging.info(f"Rephrase models to be used: {rephrase_model}")
+    else:
+        logging.info(
+            "Not creating rephrase file as one of rephrase_folder, rephrase or templates is None"
+        )
+        create_rephrase_file = False
+        template_prompts, rephrase_settings, rephrase_model = None, None, None
 
-    Also returns a boolean indicating if a judge file
-    should be created and processed.
+    return create_rephrase_file, template_prompts, rephrase_settings, rephrase_model
+
+
+def create_rephrase_experiment(
+    create_rephrase_file: bool,
+    experiment: Experiment,
+    template_prompts: dict[str, str] | None,
+    rephrase_settings: dict | None,
+    rephrase_model: list[str] | str | None,
+) -> tuple[Experiment | None, Rephraser]:
+    """
+    Create a rephrase experiment if the create_rephrase_file flag is True.
+
+    This experiment object should have been processed before,
+    so that the completed responses are available.
+    If the experiment has not been processed, an error is raised.
 
     Parameters
     ----------
-    judge_folder_arg : str | None
-        Path to judge folder containing the template.txt
-        and settings.json files
-    judge_arg : str | None
-        Judge(s) to be used separated by commas. These must be keys
-        in the judge settings dictionary
+    create_rephrase_file : bool
+        Flag to indicate if a rephrase experiment should be created
+    experiment : Experiment
+        The experiment object to create the rephrase experiment from.
+        This is used to obtain the list of completed responses
+        and to create the rephrase experiment and file name.
+    template_prompts : str | None
+        The template prompt string to be used for the rephrase
+    rephrase_settings : dict | None
+        The rephrase settings dictionary to be used for the rephrase
+    rephrase : list[str] | str | None
+        The rephrase(s) to be used for the rephrase experiment. These
+        must be keys in the rephrase settings dictionary
 
     Returns
     -------
-    tuple[bool, str, dict, list[str]]
-        A tuple containing the boolean indicating if a judge file
-        should be created, the template prompt string, the judge
-        settings dictionary and the judge list
+    tuple[Experiment | None, Rephraser]
+        A tuple containing the rephrase experiment object and the Rephraser
+        object if create_rephrase_file is True, otherwise a tuple of two None
     """
-    if (
-        judge_folder_arg is not None
-        and judge_arg is not None
-        and templates_arg is not None
-    ):
-        create_judge_file = True
-        # parse template, judge folder and judge arguments
-        templates = parse_list_arg(argument=templates_arg)
-        template_prompts, judge_settings = load_judge_folder(
-            judge_folder=judge_folder_arg, templates=templates
-        )
-        judge = parse_list_arg(argument=judge_arg)
-        # check if the judge is in the judge settings dictionary
-        Judge.check_judge_in_judge_settings(judge=judge, judge_settings=judge_settings)
-        logging.info(f"Judge folder loaded from {judge_folder_arg}")
-        logging.info(f"Templates to be used: {templates}")
-        logging.info(f"Judges to be used: {judge}")
-    else:
-        logging.info(
-            "Not creating judge file as one of judge_folder, judge or templates is None"
-        )
-        create_judge_file = False
-        template_prompts, judge_settings, judge = None, None, None
+    if create_rephrase_file:
+        if not isinstance(template_prompts, dict):
+            raise TypeError(
+                "If create_rephrase_file is True, template_prompts must be a dictionary"
+            )
+        if not isinstance(rephrase_settings, dict):
+            raise TypeError(
+                "If create_rephrase_file is True, rephrase_settings must be a dictionary"
+            )
+        if not isinstance(rephrase_model, list) and not isinstance(rephrase_model, str):
+            raise TypeError(
+                "If create_rephrase_file is True, rephrase must be a list of strings or a string"
+            )
 
-    return create_judge_file, template_prompts, judge_settings, judge
+        # create rephrase object from the parsed arguments
+        rephraser = Rephraser(
+            input_prompts=experiment.experiment_prompts,
+            template_prompts=template_prompts,
+            rephrase_settings=rephrase_settings,
+        )
+
+        # create rephrase file
+        rephrase_file_path = f"rephrase-{experiment.experiment_name}.jsonl"
+        rephraser.create_rephrase_file(
+            rephrase_model=rephrase_model,
+            out_filepath=f"{experiment.settings.input_folder}/{rephrase_file_path}",
+        )
+
+        # create Experiment object
+        rephrase_experiment = Experiment(
+            file_name=rephrase_file_path, settings=experiment.settings
+        )
+    else:
+        rephrase_experiment = None
+        rephraser = None
+
+    return rephrase_experiment, rephraser
 
 
 def parse_file_path_and_check_in_input(
@@ -200,6 +254,61 @@ def parse_file_path_and_check_in_input(
     return experiment_file_name
 
 
+def load_judge_args(
+    judge_folder_arg: str | None,
+    judge_arg: str | None,
+    judge_templates_arg: str | None,
+) -> tuple[bool, str, dict, list[str]]:
+    """
+    Load the judge arguments and parse them to get the
+    template prompt, judge settings and judge.
+
+    Also returns a boolean indicating if a judge file
+    should be created and processed.
+
+    Parameters
+    ----------
+    judge_folder_arg : str | None
+        Path to judge folder containing the template.txt
+        and settings.json files
+    judge_arg : str | None
+        Judge(s) to be used separated by commas. These must be keys
+        in the judge settings dictionary
+
+    Returns
+    -------
+    tuple[bool, str, dict, list[str]]
+        A tuple containing the boolean indicating if a judge file
+        should be created, the template prompt string, the judge
+        settings dictionary and the judge list
+    """
+    if (
+        judge_folder_arg is not None
+        and judge_arg is not None
+        and judge_templates_arg is not None
+    ):
+        create_judge_file = True
+        # parse template, judge folder and judge arguments
+        templates = parse_list_arg(argument=judge_templates_arg)
+        template_prompts, judge_settings = load_judge_folder(
+            judge_folder=judge_folder_arg, templates=templates
+        )
+        judge = parse_list_arg(argument=judge_arg)
+        # check if the judge is in the judge settings dictionary
+        Judge.check_judge_in_judge_settings(judge=judge, judge_settings=judge_settings)
+        logging.info(f"Judge folder loaded from {judge_folder_arg}")
+        logging.info(f"Templates to be used: {templates}")
+        logging.info(f"Judges to be used: {judge}")
+    else:
+        logging.info(
+            "Not creating judge file as one of judge_folder, judge or templates is None"
+        )
+        create_judge_file = False
+        template_prompts, judge_settings, judge = None, None, None
+
+    return create_judge_file, template_prompts, judge_settings, judge
+
+
 def create_judge_experiment(
     create_judge_file: bool,
     experiment: Experiment,
@@ -260,8 +369,8 @@ def create_judge_experiment(
         # create judge object from the parsed arguments
         j = Judge(
             completed_responses=experiment.completed_responses,
-            judge_settings=judge_settings,
             template_prompts=template_prompts,
+            judge_settings=judge_settings,
         )
 
         # create judge file
@@ -357,8 +466,51 @@ async def main():
         default=None,
     )
     parser.add_argument(
+        "--rephrase-folder",
+        "-rf",
+        help=(
+            "Location of the rephrase folder storing the template.txt "
+            "and settings.json to be used"
+        ),
+        type=str,
+        default=None,
+    )
+    parser.add_argument(
+        "--rephrase-templates",
+        "-rt",
+        help=(
+            "Template file to be used for the rephrasals. "
+            "This must be .txt files in the rephrase folder. "
+            "By default, the template file is 'template.txt'"
+        ),
+        type=str,
+        default="template.txt",
+    )
+    parser.add_argument(
+        "--rephrase-model",
+        "-r",
+        help=(
+            "Rephrase models(s) to be used separated by commas. "
+            "These must be keys in the rephrase settings dictionary"
+        ),
+        type=str,
+        default=None,
+    )
+    parser.add_argument(
+        "--remove-original",
+        "-ro",
+        help=(
+            "For rephrasing, whether or not to remove the original input "
+            "prompts in the new input file. If True, the new input file will "
+            "only contain the rephrased prompts, otherwise it will also "
+            "contain the original prompts"
+        ),
+        action="store_true",
+        default=False,
+    )
+    parser.add_argument(
         "--judge-folder",
-        "-l",
+        "-jf",
         help=(
             "Location of the judge folder storing the template.txt "
             "and settings.json to be used"
@@ -367,8 +519,8 @@ async def main():
         default=None,
     )
     parser.add_argument(
-        "--templates",
-        "-t",
+        "--judge-templates",
+        "-jt",
         help=(
             "Template file(s) to be used for the judge separated by commas. "
             "These must be .txt files in the judge folder. "
@@ -418,11 +570,20 @@ async def main():
     # load the max queries json file
     max_queries_dict = load_max_queries_json(args.max_queries_json)
 
+    # check if rephrase arguments are provided
+    create_rephrase_file, template_prompts, rephrase_settings, rephrase_model = (
+        load_rephrase_args(
+            rephrase_folder_arg=args.rephrase_folder,
+            rephrase_model_arg=args.rephrase_model,
+            rephrase_templates_arg=args.rephrase_templates,
+        )
+    )
+
     # check if judge arguments are provided
     create_judge_file, template_prompts, judge_settings, judge = load_judge_args(
         judge_folder_arg=args.judge_folder,
         judge_arg=args.judge,
-        templates_arg=args.templates,
+        judge_templates_arg=args.judge_templates,
     )
 
     # check if scorer is provided, and if it is in the SCORING_FUNCTIONS dictionary
@@ -451,6 +612,54 @@ async def main():
 
     # create Experiment object
     experiment = Experiment(file_name=experiment_file_name, settings=settings)
+
+    # create and run the rephrase experiment first
+    rephrase_experiment, rephraser = create_rephrase_experiment(
+        create_rephrase_file=create_rephrase_file,
+        experiment=experiment,
+        template_prompts=template_prompts,
+        rephrase_settings=rephrase_settings,
+        rephrase_model=rephrase_model,
+    )
+
+    if rephrase_experiment is not None:
+        # process the experiment
+        logging.info(
+            f"Starting processing rephrase of experiment: {rephrase_experiment.file_name}..."
+        )
+        await rephrase_experiment.process()
+
+        # create new input file from the rephrase experiment
+        rephrased_experiment_file_name = (
+            f"{settings.input_folder}/post-rephrase-{experiment.experiment_name}.jsonl"
+        )
+        rephraser.create_new_input_file(
+            keep_original=not args.remove_original,
+            completed_rephrase_responses=rephrase_experiment.completed_responses,
+            out_filepath=rephrased_experiment_file_name,
+        )
+
+        original_experiment_file = experiment.input_file_path
+
+        # overwrite the experiment object as the rephrased experiment
+        experiment = Experiment(
+            file_name=rephrased_experiment_file_name, settings=settings
+        )
+
+        # as we are not processing the original experiment,
+        # we need to move the original input file to the output folder
+        # create the output folder for the experiment
+        create_folder(experiment.output_folder)
+
+        # move the input experiment jsonl file to the output folder
+        logging.info(
+            f"Moving {original_experiment_file} to {experiment.output_folder} as "
+            f"{experiment.output_input_jsonl_file_out_path}..."
+        )
+        move_file(
+            source=original_experiment_file,
+            destination=experiment.output_input_jsonl_file_out_path,
+        )
 
     # process the experiment
     logging.info(f"Starting processing experiment: {args.file}...")

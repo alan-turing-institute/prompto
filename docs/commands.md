@@ -82,7 +82,7 @@ To create a judge file for a particular experiment file with a judge-folder as `
 prompto_create_judge_file \
     --experiment-file path/to/experiment.jsonl \
     --judge-folder judge \
-    --templates template.txt \
+    --judge-templates template.txt \
     --judge gemini-1.0-pro
 ```
 
@@ -91,7 +91,7 @@ In `judge`, you must have the following files:
 * `settings.json`: this is the settings json file which contains the settings for the judge(s). The keys are judge identifiers and the values dictionaries with "api", "model_name", "parameters" keys to specify the LLM to use as a judge (see the [experiment file documentation](experiment_file.md) for more details on these keys).
 * template `.txt` file(s) which specifies the template to use for the judge. The inputs and outputs of the completed experiment file are used to generate the prompts for the judge. This file should contain the placeholders `{INPUT_PROMPT}` and `{OUTPUT_RESPONSE}` which will be replaced with the inputs and outputs of the completed experiment file (i.e. the corresponding values to the `prompt` and `response` keys in the prompt dictionaries of the completed experiment file).
 
-For the template file(s), we allow for specifying multiple templates (for different evaluation prompts), in which case the `--templates` argument should be a comma-separated list of template files. By default, this is set to `template.txt` if not specified. In the above example, we explicitly pass in `template.txt` to the `--templates` argument, so the command will look for a `template.txt` file in the judge folder.
+For the template file(s), we allow for specifying multiple templates (for different evaluation prompts), in which case the `--judge-templates` argument should be a comma-separated list of template files. By default, this is set to `template.txt` if not specified. In the above example, we explicitly pass in `template.txt` to the `--judge-templates` argument, so the command will look for a `template.txt` file in the judge folder.
 
 See for example [this judge example](https://github.com/alan-turing-institute/prompto/tree/main/examples/evaluation/judge) which contains example template and settings files.
 

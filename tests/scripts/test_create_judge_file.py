@@ -201,7 +201,7 @@ def test_create_judge_file_full_single_templates(temporary_data_folder_judge):
         "prompto_create_judge_file "
         "--input-file data/output/completed-test-experiment.jsonl "
         "--judge-folder judge_loc "
-        "--templates template2.txt "
+        "--judge-templates template2.txt "
         "--judge judge1 "
         "--output-folder ."
     )
@@ -263,7 +263,7 @@ def test_create_judge_file_full_multiple_templates_and_judges(
         "prompto_create_judge_file "
         "--input-file data/output/completed-test-experiment.jsonl "
         "--judge-folder judge_loc "
-        "--templates template2.txt,template.txt "
+        "--judge-templates template2.txt,template.txt "
         "--judge judge1,judge2 "
         "--output-folder ."
     )
