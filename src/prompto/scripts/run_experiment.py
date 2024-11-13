@@ -87,7 +87,33 @@ def load_rephrase_args(
     rephrase_folder_arg: str | None,
     rephrase_model_arg: str | None,
     rephrase_templates_arg: str | None,
-):
+) -> tuple[bool, list[str], dict, list[str]]:
+    """
+    Load the rephrase arguments and parse them to get the
+    template prompts, rephrase settings and models for rephrasal.
+
+    Also returns a boolean indicating if a rephrase file
+    should be created and processed.
+
+    Parameters
+    ----------
+    rephrase_folder_arg : str | None
+        Path to judge folder containing the template.txt
+        and settings.json files
+    rephrase_model_arg : str | None
+        Rephrase model(s) to be used separated by commas. These must be keys
+        in the rephrase settings dictionary
+    rephrase_templates_arg : str | None
+        Template file to be used for the rephrasals. This must be .txt
+        files in the rephrase folder
+
+    Returns
+    -------
+    tuple[bool, list[str], dict, list[str]]
+        A tuple containing the boolean indicating if a judge file
+        should be created, the template prompt string, the judge
+        settings dictionary and the judge list
+    """
     if (
         rephrase_folder_arg is not None
         and rephrase_model_arg is not None
@@ -258,10 +284,10 @@ def load_judge_args(
     judge_folder_arg: str | None,
     judge_arg: str | None,
     judge_templates_arg: str | None,
-) -> tuple[bool, str, dict, list[str]]:
+) -> tuple[bool, dict[str, str], dict, list[str]]:
     """
     Load the judge arguments and parse them to get the
-    template prompt, judge settings and judge.
+    template prompt(s), judge settings and judges to use.
 
     Also returns a boolean indicating if a judge file
     should be created and processed.
@@ -274,13 +300,15 @@ def load_judge_args(
     judge_arg : str | None
         Judge(s) to be used separated by commas. These must be keys
         in the judge settings dictionary
+    judge_templates_arg : str | None
+        Template file(s) to be used for the judge separated by commas
 
     Returns
     -------
-    tuple[bool, str, dict, list[str]]
+    tuple[bool, list[str], dict, list[str]]
         A tuple containing the boolean indicating if a judge file
         should be created, the template prompt string, the judge
-        settings dictionary and the judge list
+        settings dictionary and the list of judges to use
     """
     if (
         judge_folder_arg is not None
@@ -509,6 +537,16 @@ async def main():
         default=False,
     )
     parser.add_argument(
+        "--only-rephrase",
+        "-or",
+        help=(
+            "Only rephrase the experiment file and do not process it. "
+            "The rephrased prompts will be saved to a new input file."
+        ),
+        action="store_true",
+        default=False,
+    )
+    parser.add_argument(
         "--judge-folder",
         "-jf",
         help=(
@@ -638,6 +676,12 @@ async def main():
             completed_rephrase_responses=rephrase_experiment.completed_responses,
             out_filepath=rephrased_experiment_file_name,
         )
+
+        if args.only_rephrase:
+            logging.info(
+                "Only rephrasing the experiment, not processing it. "
+                f"See rephrased prompts in {rephrased_experiment_file_name}!"
+            )
 
         original_experiment_file = experiment.input_file_path
 

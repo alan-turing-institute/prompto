@@ -671,3 +671,127 @@ def temporary_data_folder_judge(tmp_path: Path):
 
     # change back to original directory
     os.chdir(cwd)
+
+
+@pytest.fixture()
+def temporary_data_folder_rephrase(tmp_path: Path):
+    """
+    Creates a temporary folder structure for testing rephrase files.
+
+    Has the following structure:
+    tmp_path
+    ├── data/
+        ├── input/
+            └── test-experiment.jsonl
+        ├── output/
+        ├── media/
+    ├── pipeline_data/
+    ├── rephrase_loc/
+        └── template.txt
+        └── settings.json
+    ├── rephrase_loc_no_template/
+        └── settings.json
+    ├── rephrase_loc_no_settings/
+        └── template.txt
+    ├── test-exp-not-in-input.jsonl
+    └── max_queries_dict.json
+    """
+    # create a folder for testing the experiment pipeline
+    data_dir = Path(tmp_path / "data").mkdir()
+    # create subfolders for the experiment pipeline
+    Path(tmp_path / "data" / "input").mkdir()
+    Path(tmp_path / "data" / "output").mkdir()
+    Path(tmp_path / "data" / "media").mkdir()
+
+    # create another empty folder for pipeline data
+    pipeline_data_folder = Path(tmp_path / "pipeline_data").mkdir()
+
+    # create input experiment file not in input folder
+    with open(Path(tmp_path / "test-exp-not-in-input.jsonl"), "w") as f:
+        f.write(
+            '{"id": 0, "api": "test", "model_name": "model1", "prompt": "test prompt 1", "parameters": {"raise_error": "False"}}\n'
+        )
+        f.write(
+            '{"id": 1, "api": "test", "model_name": "model2", "prompt": "test prompt 2", "parameters": {"raise_error": "False"}}\n'
+        )
+
+    # create input csv file in input folder
+    with open(Path(tmp_path / "data" / "input" / "test-experiment.csv"), "w") as f:
+        f.write("id,prompt,api,model_name,parameters-raise_error,expected_response\n")
+        f.write('0,test prompt 1,test,model1,"no","This is a test response"\n')
+        f.write('1,test prompt 2,test,model2,"no","something else"\n')
+
+    # create input experiment file in input folder
+    with open(Path(tmp_path / "data" / "input" / "test-experiment.jsonl"), "w") as f:
+        f.write(
+            '{"id": 0, "api": "test", "model_name": "model1", "prompt": "test prompt 1", "parameters": {"raise_error": "False"}, "expected_response": "This is a test response"}\n'
+        )
+        f.write(
+            '{"id": 1, "api": "test", "model_name": "model2", "prompt": "test prompt 2", "parameters": {"raise_error": "False"}, "expected_response": "something else"}\n'
+        )
+
+    # create a completed experiment file with "response" key in output folder
+    with open(
+        Path(tmp_path / "data" / "output" / "completed-test-experiment.jsonl"), "w"
+    ) as f:
+        f.write(
+            '{"id": 0, "api": "test", "model": "test_model", "prompt": "test prompt 1", "response": "test response 1"}\n'
+        )
+        f.write(
+            '{"id": 1, "api": "test", "model": "test_model", "prompt": "test prompt 2", "response": "test response 2"}\n'
+        )
+        f.write(
+            '{"id": 2, "api": "test", "model": "test_model", "prompt": "test prompt 3", "response": "test response 3"}\n'
+        )
+
+    # create a rephrase folder
+    rephrase_loc = Path(tmp_path / "rephrase_loc").mkdir()
+
+    # create a template.txt file
+    with open(Path(tmp_path / "rephrase_loc" / "template.txt"), "w") as f:
+        f.write("Template 1: {INPUT_PROMPT}\n")
+        f.write("Template 2: {INPUT_PROMPT}")
+
+    # create a settings.json file
+    with open(Path(tmp_path / "rephrase_loc" / "settings.json"), "w") as f:
+        f.write("{\n")
+        f.write(
+            '    "rephrase1": {"api": "test", "model_name": "model1", "parameters": {"temperature": 0.5}},\n'
+        )
+        f.write(
+            '    "rephrase2": {"api": "test", "model_name": "model2", "parameters": {"temperature": 0.2, "top_k": 0.9}}\n'
+        )
+        f.write("}")
+
+    # create a rephrase folder without template.txt
+    rephrase_loc_no_template = Path(tmp_path / "rephrase_loc_no_template").mkdir()
+    with open(Path(tmp_path / "rephrase_loc_no_template" / "settings.json"), "w") as f:
+        f.write("{\n")
+        f.write(
+            '    "rephrase1": {"api": "test", "model_name": "model1", "parameters": {"temperature": 0.5}},\n'
+        )
+        f.write(
+            '    "rephrase2": {"api": "test", "model_name": "model2", "parameters": {"temperature": 0.2, "top_k": 0.9}}\n'
+        )
+        f.write("}")
+
+    # create a rephrase folder without settings.json
+    rephrase_loc_no_settings = Path(tmp_path / "rephrase_loc_no_settings").mkdir()
+    with open(Path(tmp_path / "rephrase_loc_no_settings" / "template.txt"), "w") as f:
+        f.write("Template 1: {INPUT_PROMPT}\n")
+        f.write("Template 2: {INPUT_PROMPT}")
+
+    # create a file with max queries dictionary
+    with open(Path(tmp_path / "max_queries_dict.json"), "w") as f:
+        f.write('{"test": {"model1": 100, "model2": 120}}')
+
+    # store current working directory
+    cwd = os.getcwd()
+
+    # change to temporary directory
+    os.chdir(tmp_path)
+
+    yield data_dir, pipeline_data_folder, rephrase_loc, rephrase_loc_no_template, rephrase_loc_no_settings
+
+    # change back to original directory
+    os.chdir(cwd)
