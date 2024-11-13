@@ -209,7 +209,9 @@ class Judge:
         if isinstance(judge, str):
             judge = [judge]
 
-        assert self.check_judge_in_judge_settings(judge, self.judge_settings)
+        assert self.check_judge_in_judge_settings(
+            judge=judge, judge_settings=self.judge_settings
+        )
 
         self.judge_prompts = []
         for j in judge:

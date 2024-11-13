@@ -80,7 +80,7 @@ class Rephraser:
     input_prompts : list[dict]
         A list of dictionaries containing the input prompt dictionaries
         to rephrase.
-    template_prompts : dict[str, str]
+    template_prompts : list[str]
         A dictionary containing the template prompt strings
         to be used for the rephrase LLMs. The keys should be the
         name of the template and the value should be the template.
@@ -97,11 +97,9 @@ class Rephraser:
     def __init__(
         self,
         input_prompts: list[dict],
-        template_prompts: dict[str, str],
+        template_prompts: list[str],
         rephrase_settings: dict,
     ):
-        if not isinstance(template_prompts, dict):
-            raise TypeError("template_prompts must be a dictionary")
         self.check_rephrase_settings(rephrase_settings)
         self.input_prompts = input_prompts
         self.template_prompts = template_prompts
@@ -136,19 +134,19 @@ class Rephraser:
                 )
             if "api" not in settings:
                 raise KeyError(
-                    f"'api' key not found in settings for rephrase '{rephrase}'"
+                    f"'api' key not found in settings for rephrase model '{rephrase}'"
                 )
             if "model_name" not in settings:
                 raise KeyError(
-                    f"'model_name' key not found in settings for rephrase '{rephrase}'"
+                    f"'model_name' key not found in settings for rephrase model '{rephrase}'"
                 )
             if "parameters" not in settings:
                 raise KeyError(
-                    f"'parameters' key not found in settings for rephrase '{rephrase}'"
+                    f"'parameters' key not found in settings for rephrase model '{rephrase}'"
                 )
             if not isinstance(settings["parameters"], dict):
                 raise TypeError(
-                    f"Value for 'parameters' key must be a dictionary for rephrase '{rephrase}'"
+                    f"Value for 'parameters' key must be a dictionary for rephrase model '{rephrase}'"
                 )
 
         return True
@@ -213,8 +211,8 @@ class Rephraser:
         if isinstance(rephrase_model, str):
             rephrase_model = [rephrase_model]
 
-        assert self.check_rephrase_in_rephrase_settings(
-            rephrase_model, self.rephrase_settings
+        assert self.check_rephrase_model_in_rephrase_settings(
+            rephrase_model=rephrase_model, rephrase_settings=self.rephrase_settings
         )
 
         self.rephrased_prompts = []

@@ -750,7 +750,7 @@ def temporary_data_folder_rephrase(tmp_path: Path):
     # create a template.txt file
     with open(Path(tmp_path / "rephrase_loc" / "template.txt"), "w") as f:
         f.write("Template 1: {INPUT_PROMPT}\n")
-        f.write("Template 2: {INPUT_PROMPT}")
+        f.write("Template 2: \\n{INPUT_PROMPT}")
 
     # create a settings.json file
     with open(Path(tmp_path / "rephrase_loc" / "settings.json"), "w") as f:
@@ -779,7 +779,7 @@ def temporary_data_folder_rephrase(tmp_path: Path):
     rephrase_loc_no_settings = Path(tmp_path / "rephrase_loc_no_settings").mkdir()
     with open(Path(tmp_path / "rephrase_loc_no_settings" / "template.txt"), "w") as f:
         f.write("Template 1: {INPUT_PROMPT}\n")
-        f.write("Template 2: {INPUT_PROMPT}")
+        f.write("Template 2: \\n{INPUT_PROMPT}")
 
     # create a file with max queries dictionary
     with open(Path(tmp_path / "max_queries_dict.json"), "w") as f:

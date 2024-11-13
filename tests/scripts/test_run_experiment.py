@@ -216,7 +216,7 @@ def test_load_rephrase_args(temporary_data_folder_rephrase, caplog):
     )
     assert result == (
         True,
-        ["Template 1: {INPUT_PROMPT}", "Template 2: {INPUT_PROMPT}"],
+        ["Template 1: {INPUT_PROMPT}", "Template 2: \n{INPUT_PROMPT}"],
         {
             "rephrase1": {
                 "api": "test",
