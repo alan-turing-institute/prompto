@@ -193,11 +193,11 @@ def load_rephrase_args(
             rephrase_model=rephrase_model, rephrase_settings=rephrase_settings
         )
         logging.info(f"Rephrase folder loaded from {rephrase_folder_arg}")
-        logging.info(f"Templates to be loaded from: {rephrase_templates_arg}")
+        logging.info(f"Templates to be loaded from {rephrase_templates_arg}")
         logging.info(f"Rephrase models to be used: {rephrase_model}")
     else:
         logging.info(
-            "Not creating rephrase file as one of rephrase_folder, rephrase or templates is None"
+            "Not creating rephrase file as one of rephrase-folder, rephrase or rephrase-templates is None"
         )
         create_rephrase_file = False
         template_prompts, rephrase_settings, rephrase_model = None, None, None
@@ -329,7 +329,7 @@ def load_judge_args(
         logging.info(f"Judges to be used: {judge}")
     else:
         logging.info(
-            "Not creating judge file as one of judge_folder, judge or templates is None"
+            "Not creating judge file as one of judge-folder, judge or judge-templates is None"
         )
         create_judge_file = False
         template_prompts, judge_settings, judge = None, None, None
@@ -609,16 +609,19 @@ async def main():
     max_queries_dict = load_max_queries_json(args.max_queries_json)
 
     # check if rephrase arguments are provided
-    create_rephrase_file, template_prompts, rephrase_settings, rephrase_model = (
-        load_rephrase_args(
-            rephrase_folder_arg=args.rephrase_folder,
-            rephrase_model_arg=args.rephrase_model,
-            rephrase_templates_arg=args.rephrase_templates,
-        )
+    (
+        create_rephrase_file,
+        rephrase_template_prompts,
+        rephrase_settings,
+        rephrase_model,
+    ) = load_rephrase_args(
+        rephrase_folder_arg=args.rephrase_folder,
+        rephrase_model_arg=args.rephrase_model,
+        rephrase_templates_arg=args.rephrase_templates,
     )
 
     # check if judge arguments are provided
-    create_judge_file, template_prompts, judge_settings, judge = load_judge_args(
+    create_judge_file, judge_template_prompts, judge_settings, judge = load_judge_args(
         judge_folder_arg=args.judge_folder,
         judge_arg=args.judge,
         judge_templates_arg=args.judge_templates,
@@ -655,7 +658,7 @@ async def main():
     rephrase_experiment, rephraser = create_rephrase_experiment(
         create_rephrase_file=create_rephrase_file,
         experiment=experiment,
-        template_prompts=template_prompts,
+        template_prompts=rephrase_template_prompts,
         rephrase_settings=rephrase_settings,
         rephrase_model=rephrase_model,
     )
@@ -663,27 +666,31 @@ async def main():
     if rephrase_experiment is not None:
         # process the experiment
         logging.info(
-            f"Starting processing rephrase of experiment: {rephrase_experiment.file_name}..."
+            f"Starting processing rephrase of experiment: {rephrase_experiment.input_file_path}..."
         )
         await rephrase_experiment.process()
 
         # create new input file from the rephrase experiment
         rephrased_experiment_file_name = (
-            f"{settings.input_folder}/post-rephrase-{experiment.experiment_name}.jsonl"
+            f"post-rephrase-{experiment.experiment_name}.jsonl"
+        )
+        rephrased_experiment_path = (
+            f"{settings.input_folder}/{rephrased_experiment_file_name}"
         )
         rephraser.create_new_input_file(
             keep_original=not args.remove_original,
             completed_rephrase_responses=rephrase_experiment.completed_responses,
-            out_filepath=rephrased_experiment_file_name,
+            out_filepath=rephrased_experiment_path,
         )
 
         if args.only_rephrase:
             logging.info(
                 "Only rephrasing the experiment, not processing it. "
-                f"See rephrased prompts in {rephrased_experiment_file_name}!"
+                f"See rephrased prompts in {rephrased_experiment_path}!"
             )
 
-        original_experiment_file = experiment.input_file_path
+        original_experiment_file_path = experiment.input_file_path
+        original_experiment_name = experiment.experiment_name
 
         # overwrite the experiment object as the rephrased experiment
         experiment = Experiment(
@@ -696,17 +703,18 @@ async def main():
         create_folder(experiment.output_folder)
 
         # move the input experiment jsonl file to the output folder
+        destination = f"{experiment.output_folder}/{original_experiment_name}.jsonl"
         logging.info(
-            f"Moving {original_experiment_file} to {experiment.output_folder} as "
-            f"{experiment.output_input_jsonl_file_out_path}..."
+            f"Moving {original_experiment_file_path} to {experiment.output_folder} as "
+            f"{destination}..."
         )
         move_file(
-            source=original_experiment_file,
-            destination=experiment.output_input_jsonl_file_out_path,
+            source=original_experiment_file_path,
+            destination=destination,
         )
 
     # process the experiment
-    logging.info(f"Starting processing experiment: {args.file}...")
+    logging.info(f"Starting processing experiment: {experiment.input_file_path}...")
     await experiment.process(evaluation_funcs=scoring_functions)
 
     if args.output_as_csv:
@@ -716,7 +724,7 @@ async def main():
     judge_experiment = create_judge_experiment(
         create_judge_file=create_judge_file,
         experiment=experiment,
-        template_prompts=template_prompts,
+        template_prompts=judge_template_prompts,
         judge_settings=judge_settings,
         judge=judge,
     )
@@ -724,7 +732,7 @@ async def main():
     if judge_experiment is not None:
         # process the experiment
         logging.info(
-            f"Starting processing judge of experiment: {judge_experiment.file_name}..."
+            f"Starting processing judge of experiment: {judge_experiment.input_file_path}..."
         )
         await judge_experiment.process()
 

@@ -172,7 +172,7 @@ def test_load_rephrase_args_all_none(temporary_data_folder_rephrase, caplog):
     )
     assert result == (False, None, None, None)
     assert (
-        "Not creating rephrase file as one of rephrase_folder, rephrase or templates is None"
+        "Not creating rephrase file as one of rephrase-folder, rephrase or rephrase-templates is None"
         in caplog.text
     )
 
@@ -187,7 +187,7 @@ def test_load_rephrase_args_rephrase_arg_none(temporary_data_folder_rephrase, ca
     )
     assert result == (False, None, None, None)
     assert (
-        "Not creating rephrase file as one of rephrase_folder, rephrase or templates is None"
+        "Not creating rephrase file as one of rephrase-folder, rephrase or rephrase-templates is None"
         in caplog.text
     )
 
@@ -204,7 +204,7 @@ def test_load_rephrase_args_rephrase_folder_arg_none(
     )
     assert result == (False, None, None, None)
     assert (
-        "Not creating rephrase file as one of rephrase_folder, rephrase or templates is None"
+        "Not creating rephrase file as one of rephrase-folder, rephrase or rephrase-templates is None"
         in caplog.text
     )
 
@@ -219,7 +219,7 @@ def test_load_rephrase_args_templates_arg_none(temporary_data_folder_rephrase, c
     )
     assert result == (False, None, None, None)
     assert (
-        "Not creating rephrase file as one of rephrase_folder, rephrase or templates is None"
+        "Not creating rephrase file as one of rephrase-folder, rephrase or rephrase-templates is None"
         in caplog.text
     )
 
@@ -232,6 +232,10 @@ def test_load_rephrase_args(temporary_data_folder_rephrase, caplog):
         rephrase_model_arg="rephrase1,rephrase2",
         rephrase_templates_arg="template.txt",
     )
+    assert "Rephrase folder loaded from rephrase_loc" in caplog.text
+    assert "Templates to be loaded from template.txt" in caplog.text
+    assert "Rephrase models to be used: ['rephrase1', 'rephrase2']" in caplog.text
+
     assert result == (
         True,
         ["Template 1: {INPUT_PROMPT}", "Template 2: \n{INPUT_PROMPT}"],
@@ -547,7 +551,7 @@ def test_load_judge_args_all_none(temporary_data_folder_judge, caplog):
     )
     assert result == (False, None, None, None)
     assert (
-        "Not creating judge file as one of judge_folder, judge or templates is None"
+        "Not creating judge file as one of judge-folder, judge or judge-templates is None"
         in caplog.text
     )
 
@@ -560,7 +564,7 @@ def test_load_judge_args_judge_arg_none(temporary_data_folder_judge, caplog):
     )
     assert result == (False, None, None, None)
     assert (
-        "Not creating judge file as one of judge_folder, judge or templates is None"
+        "Not creating judge file as one of judge-folder, judge or judge-templates is None"
         in caplog.text
     )
 
@@ -573,7 +577,7 @@ def test_load_judge_args_judge_folder_arg_none(temporary_data_folder_judge, capl
     )
     assert result == (False, None, None, None)
     assert (
-        "Not creating judge file as one of judge_folder, judge or templates is None"
+        "Not creating judge file as one of judge-folder, judge or judge-templates is None"
         in caplog.text
     )
 
@@ -586,7 +590,7 @@ def test_load_judge_args_templates_arg_none(temporary_data_folder_judge, caplog)
     )
     assert result == (False, None, None, None)
     assert (
-        "Not creating judge file as one of judge_folder, judge or templates is None"
+        "Not creating judge file as one of judge-folder, judge or judge-templates is None"
         in caplog.text
     )
 
@@ -599,6 +603,10 @@ def test_load_judge_args(temporary_data_folder_judge, caplog):
         judge_arg="judge1,judge2",
         judge_templates_arg="template.txt",
     )
+    assert "Judge folder loaded from judge_loc" in caplog.text
+    assert "Templates to be used: ['template.txt']" in caplog.text
+    assert "Judges to be used: ['judge1', 'judge2']" in caplog.text
+
     assert result == (
         True,
         {"template": "Template: input={INPUT_PROMPT}, output={OUTPUT_RESPONSE}"},

@@ -563,6 +563,9 @@ def temporary_data_folder_judge(tmp_path: Path):
         └── template.txt
         └── template2.txt
         └── settings.json
+    ├── rephrase_loc/
+        └── template.txt
+        └── settings.json
     ├── judge_loc_no_template/
         └── settings.json
     ├── judge_loc_no_settings/
@@ -640,6 +643,25 @@ def temporary_data_folder_judge(tmp_path: Path):
         )
         f.write("}")
 
+    # create a rephrase folder
+    rephrase_loc = Path(tmp_path / "rephrase_loc").mkdir()
+
+    # create a template.txt file
+    with open(Path(tmp_path / "rephrase_loc" / "template.txt"), "w") as f:
+        f.write("Template 1: {INPUT_PROMPT}\n")
+        f.write("Template 2: \\n{INPUT_PROMPT}")
+
+    # create a settings.json file
+    with open(Path(tmp_path / "rephrase_loc" / "settings.json"), "w") as f:
+        f.write("{\n")
+        f.write(
+            '    "rephrase1": {"api": "test", "model_name": "model1", "parameters": {"temperature": 0.5}},\n'
+        )
+        f.write(
+            '    "rephrase2": {"api": "test", "model_name": "model2", "parameters": {"temperature": 0.2, "top_k": 0.9}}\n'
+        )
+        f.write("}")
+
     # create a judge folder without template.txt
     judge_loc_no_template = Path(tmp_path / "judge_loc_no_template").mkdir()
     with open(Path(tmp_path / "judge_loc_no_template" / "settings.json"), "w") as f:
@@ -667,7 +689,7 @@ def temporary_data_folder_judge(tmp_path: Path):
     # change to temporary directory
     os.chdir(tmp_path)
 
-    yield data_dir, pipeline_data_folder, judge_loc, judge_loc_no_template, judge_loc_no_settings
+    yield data_dir, pipeline_data_folder, judge_loc, rephrase_loc, judge_loc_no_template, judge_loc_no_settings
 
     # change back to original directory
     os.chdir(cwd)
