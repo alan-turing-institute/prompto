@@ -703,7 +703,10 @@ async def main():
         create_folder(experiment.output_folder)
 
         # move the input experiment jsonl file to the output folder
-        destination = f"{experiment.output_folder}/{original_experiment_name}.jsonl"
+        if original_experiment_file_path.endswith(".csv"):
+            destination = f"{experiment.output_folder}/{original_experiment_name}.csv"
+        else:
+            destination = f"{experiment.output_folder}/{original_experiment_name}.jsonl"
         logging.info(
             f"Moving {original_experiment_file_path} to {experiment.output_folder} as "
             f"{destination}..."

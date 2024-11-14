@@ -193,7 +193,10 @@ def test_run_experiment_rephrase(temporary_data_folder_rephrase):
         "Moving data/input/test-experiment.jsonl to data/output/post-rephrase-test-experiment "
         "as data/output/post-rephrase-test-experiment/test-experiment.jsonl"
     ) in result.stderr
-    assert "Moving file from data/input/test-experiment.jsonl to data/output/post-rephrase-test-experiment/test-experiment.jsonl"
+    assert (
+        "Moving file from data/input/test-experiment.jsonl to data/output/post-rephrase-test-experiment/test-experiment.jsonl"
+        in result.stderr
+    )
     assert (
         "Starting processing experiment: data/input/post-rephrase-test-experiment.jsonl..."
         in result.stderr
@@ -349,7 +352,10 @@ def test_run_experiment_rephrase_and_judge(temporary_data_folder_judge):
         "Moving data/input/test-experiment.jsonl to data/output/post-rephrase-test-experiment "
         "as data/output/post-rephrase-test-experiment/test-experiment.jsonl"
     ) in result.stderr
-    assert "Moving file from data/input/test-experiment.jsonl to data/output/post-rephrase-test-experiment/test-experiment.jsonl"
+    assert (
+        "Moving file from data/input/test-experiment.jsonl to data/output/post-rephrase-test-experiment/test-experiment.jsonl"
+        in result.stderr
+    )
     assert (
         "Starting processing experiment: data/input/post-rephrase-test-experiment.jsonl..."
         in result.stderr
@@ -359,6 +365,88 @@ def test_run_experiment_rephrase_and_judge(temporary_data_folder_judge):
     assert not os.path.isdir("data/output/test-experiment")
     assert os.path.isfile(
         "data/output/post-rephrase-test-experiment/test-experiment.jsonl"
+    )
+    assert os.path.isdir("data/output/post-rephrase-test-experiment")
+
+    # judge part
+    assert (
+        "Creating judge file at data/input/judge-post-rephrase-test-experiment.jsonl..."
+        in result.stderr
+    )
+    assert (
+        "Starting processing judge of experiment: data/input/judge-post-rephrase-test-experiment.jsonl..."
+        in result.stderr
+    )
+    assert (
+        "Completed experiment: judge-post-rephrase-test-experiment.jsonl"
+        in result.stderr
+    )
+    assert "Experiment processed successfully!" in result.stderr
+    assert not os.path.isdir("data/output/test-experiment")
+    assert os.path.isdir("data/output/judge-post-rephrase-test-experiment")
+
+
+def test_run_experiment_rephrase_and_judge_input_csv(temporary_data_folder_judge):
+    result = shell(
+        "prompto_run_experiment "
+        "--file data/input/test-experiment.csv "
+        "--max-queries=200 "
+        "--rephrase-folder rephrase_loc "
+        "--rephrase-templates template.txt "
+        "--rephrase-model rephrase1,rephrase2 "
+        "--judge-folder judge_loc "
+        "--judge-templates template.txt "
+        "--judge judge1,judge2"
+    )
+    assert result.exit_code == 0
+    assert "No environment file found at .env" in result.stderr
+    assert "Rephrase folder loaded from rephrase_loc" in result.stderr
+    assert "Templates to be loaded from template.txt" in result.stderr
+    assert "Rephrase models to be used: ['rephrase1', 'rephrase2']" in result.stderr
+    assert "Judge folder loaded from judge_loc" in result.stderr
+    assert "Templates to be used: ['template.txt']" in result.stderr
+    assert "Judges to be used: ['judge1', 'judge2']" in result.stderr
+    assert (
+        "Settings: "
+        "data_folder=data, "
+        "max_queries=200, "
+        "max_attempts=5, "
+        "parallel=False\n"
+        "Subfolders: "
+        "input_folder=data/input, "
+        "output_folder=data/output, "
+        "media_folder=data/media"
+    ) in result.stderr
+
+    # rephrasal part
+    assert (
+        "Starting processing rephrase of experiment: data/input/rephrase-test-experiment.jsonl..."
+        in result.stderr
+    )
+    assert "Completed experiment: rephrase-test-experiment.jsonl" in result.stderr
+    assert os.path.isdir("data/output/rephrase-test-experiment")
+
+    assert (
+        "Creating new input file with rephrased prompts at data/input/post-rephrase-test-experiment.jsonl..."
+        in result.stderr
+    )
+    assert (
+        "Moving data/input/test-experiment.csv to data/output/post-rephrase-test-experiment "
+        "as data/output/post-rephrase-test-experiment/test-experiment.csv"
+    ) in result.stderr
+    assert (
+        "Moving file from data/input/test-experiment.csv to data/output/post-rephrase-test-experiment/test-experiment.csv"
+        in result.stderr
+    )
+    assert (
+        "Starting processing experiment: data/input/post-rephrase-test-experiment.jsonl..."
+        in result.stderr
+    )
+    assert "Completed experiment: post-rephrase-test-experiment.jsonl" in result.stderr
+    assert "Experiment processed successfully!" in result.stderr
+    assert not os.path.isdir("data/output/test-experiment")
+    assert os.path.isfile(
+        "data/output/post-rephrase-test-experiment/test-experiment.csv"
     )
     assert os.path.isdir("data/output/post-rephrase-test-experiment")
 
