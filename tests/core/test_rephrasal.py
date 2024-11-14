@@ -1,4 +1,5 @@
 import json
+import logging
 import os
 
 import pytest
@@ -690,14 +691,242 @@ def test_rephrase_create_rephrase_file(temporary_data_folder_rephrase, capsys):
 
 
 def test_rephrase_convert_rephrased_prompt_dict_to_input():
-    pass
+    rephrased_prompt = {
+        "id": "rephrase-rephrase1-0-0",
+        "template_index": 0,
+        "prompt": "Template 1: test prompt 1",
+        "response": "Rephrased test prompt 1.0",
+        "api": "test",
+        "model_name": "model1",
+        "parameters": {"temperature": 0.5},
+        "input-id": 0,
+        "input-prompt": "test prompt 1",
+        "input-api": "some_api",
+        "input-model_name": "some_model",
+        "input-parameters": {"temperature": 0.9},
+    }
+
+    assert Rephraser._convert_rephrased_prompt_dict_to_input(rephrased_prompt) == {
+        "id": "rephrase-rephrase1-0-0",
+        "prompt": "Rephrased test prompt 1.0",
+        "input-prompt": "test prompt 1",
+        "input-id": 0,
+        "api": rephrased_prompt["input-api"],
+        "model_name": rephrased_prompt["input-model_name"],
+        "parameters": rephrased_prompt["input-parameters"],
+    }
 
 
-def test_rephrase_create_new_input_file_keep_original():
-    # test case where the original prompts are kept
-    pass
+def test_rephrase_create_new_input_file_keep_original(
+    temporary_data_folder_rephrase, caplog, capsys
+):
+    caplog.set_level(logging.INFO)
+
+    # case where template_prompt has multiple templates
+    tp = ["Template 1: {INPUT_PROMPT}", "Template 2: \n{INPUT_PROMPT}"]
+    rephrase = Rephraser(
+        input_prompts=INPUT_PROMPTS,
+        template_prompts=tp,
+        rephrase_settings=REPHRASE_SETTINGS,
+    )
+
+    rephrased_prompts = rephrase.create_rephrase_inputs("rephrase1")
+    for i in range(len(rephrased_prompts)):
+        rephrased_prompts[i] = {
+            **rephrased_prompts[i],
+            "response": f"Rephrased test prompt {i}.0",
+        }
+
+    # raise error if out_filepath is not a string that ends with ".jsonl"
+    with pytest.raises(
+        ValueError,
+        match="out_filepath must end with '.jsonl'",
+    ):
+        rephrase.create_new_input_file(
+            keep_original=True,
+            completed_rephrase_responses=rephrased_prompts,
+            out_filepath="new_input_file",
+        )
+
+    rephrase.create_new_input_file(
+        keep_original=True,
+        completed_rephrase_responses=rephrased_prompts,
+        out_filepath="new_input_file.jsonl",
+    )
+
+    assert (
+        "Creating new input file with rephrased prompts at new_input_file.jsonl..."
+        in caplog.text
+    )
+    captured = capsys.readouterr()
+    assert "Writing new input prompts to new_input_file.jsonl" in captured.err
+
+    # check the new input file was created
+    assert os.path.isfile("new_input_file.jsonl")
+
+    # read and check the contents of the new input file
+    with open("new_input_file.jsonl", "r") as f:
+        new_inputs = [dict(json.loads(line)) for line in f]
+
+    expected_result = [
+        {
+            "id": "rephrase-rephrase1-0-0",
+            "prompt": rephrased_prompts[0]["response"],
+            "input-id": 0,
+            "input-prompt": "test prompt 1",
+            "api": "some_api",
+            "model_name": "some_model",
+        },
+        {
+            "id": "rephrase-rephrase1-0-1",
+            "prompt": rephrased_prompts[1]["response"],
+            "input-id": 1,
+            "input-prompt": "test prompt 2",
+            "api": "some_api",
+            "model_name": "some_model",
+        },
+        {
+            "id": "rephrase-rephrase1-1-0",
+            "prompt": rephrased_prompts[2]["response"],
+            "input-id": 0,
+            "input-prompt": "test prompt 1",
+            "api": "some_api",
+            "model_name": "some_model",
+        },
+        {
+            "id": "rephrase-rephrase1-1-1",
+            "prompt": rephrased_prompts[3]["response"],
+            "input-id": 1,
+            "input-prompt": "test prompt 2",
+            "api": "some_api",
+            "model_name": "some_model",
+        },
+        INPUT_PROMPTS[0] | {"input-id": INPUT_PROMPTS[0]["id"]},
+        INPUT_PROMPTS[1] | {"input-id": INPUT_PROMPTS[1]["id"]},
+    ]
+
+    assert len(new_inputs) == 6
+    assert new_inputs == expected_result
 
 
-def test_rephrase_create_new_input_file_remove_original():
+def test_rephrase_create_new_input_file_remove_original(
+    temporary_data_folder_rephrase, caplog, capsys
+):
     # test case where the original prompts are not kept (only rephrased prompts are taken)
-    pass
+    caplog.set_level(logging.INFO)
+
+    # case where template_prompt has multiple templates
+    tp = ["Template 1: {INPUT_PROMPT}", "Template 2: \n{INPUT_PROMPT}"]
+    rephrase = Rephraser(
+        input_prompts=INPUT_PROMPTS,
+        template_prompts=tp,
+        rephrase_settings=REPHRASE_SETTINGS,
+    )
+
+    rephrased_prompts = rephrase.create_rephrase_inputs(["rephrase1", "rephrase2"])
+    for i in range(len(rephrased_prompts)):
+        rephrased_prompts[i] = {
+            **rephrased_prompts[i],
+            "response": f"Rephrased test prompt {i}.0",
+        }
+
+    # raise error if out_filepath is not a string that ends with ".jsonl"
+    with pytest.raises(
+        ValueError,
+        match="out_filepath must end with '.jsonl'",
+    ):
+        rephrase.create_new_input_file(
+            keep_original=False,
+            completed_rephrase_responses=rephrased_prompts,
+            out_filepath="new_input_file",
+        )
+
+    rephrase.create_new_input_file(
+        keep_original=False,
+        completed_rephrase_responses=rephrased_prompts,
+        out_filepath="new_input_file.jsonl",
+    )
+
+    assert (
+        "Creating new input file with rephrased prompts at new_input_file.jsonl..."
+        in caplog.text
+    )
+    captured = capsys.readouterr()
+    assert "Writing new input prompts to new_input_file.jsonl" in captured.err
+
+    # check the new input file was created
+    assert os.path.isfile("new_input_file.jsonl")
+
+    # read and check the contents of the new input file
+    with open("new_input_file.jsonl", "r") as f:
+        new_inputs = [dict(json.loads(line)) for line in f]
+
+    expected_result = [
+        {
+            "id": "rephrase-rephrase1-0-0",
+            "prompt": rephrased_prompts[0]["response"],
+            "input-id": 0,
+            "input-prompt": "test prompt 1",
+            "api": "some_api",
+            "model_name": "some_model",
+        },
+        {
+            "id": "rephrase-rephrase1-0-1",
+            "prompt": rephrased_prompts[1]["response"],
+            "input-id": 1,
+            "input-prompt": "test prompt 2",
+            "api": "some_api",
+            "model_name": "some_model",
+        },
+        {
+            "id": "rephrase-rephrase1-1-0",
+            "prompt": rephrased_prompts[2]["response"],
+            "input-id": 0,
+            "input-prompt": "test prompt 1",
+            "api": "some_api",
+            "model_name": "some_model",
+        },
+        {
+            "id": "rephrase-rephrase1-1-1",
+            "prompt": rephrased_prompts[3]["response"],
+            "input-id": 1,
+            "input-prompt": "test prompt 2",
+            "api": "some_api",
+            "model_name": "some_model",
+        },
+        {
+            "id": "rephrase-rephrase2-0-0",
+            "prompt": rephrased_prompts[4]["response"],
+            "input-id": 0,
+            "input-prompt": "test prompt 1",
+            "api": "some_api",
+            "model_name": "some_model",
+        },
+        {
+            "id": "rephrase-rephrase2-0-1",
+            "prompt": rephrased_prompts[5]["response"],
+            "input-id": 1,
+            "input-prompt": "test prompt 2",
+            "api": "some_api",
+            "model_name": "some_model",
+        },
+        {
+            "id": "rephrase-rephrase2-1-0",
+            "prompt": rephrased_prompts[6]["response"],
+            "input-id": 0,
+            "input-prompt": "test prompt 1",
+            "api": "some_api",
+            "model_name": "some_model",
+        },
+        {
+            "id": "rephrase-rephrase2-1-1",
+            "prompt": rephrased_prompts[7]["response"],
+            "input-id": 1,
+            "input-prompt": "test prompt 2",
+            "api": "some_api",
+            "model_name": "some_model",
+        },
+    ]
+
+    assert len(new_inputs) == 8
+    assert new_inputs == expected_result

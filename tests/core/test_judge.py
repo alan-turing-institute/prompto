@@ -529,6 +529,7 @@ def test_judge_create_judge_file(temporary_data_folder_judge, capsys):
     assert (
         "Creating judge inputs for judge 'judge1' and template 'temp2'" in captured.err
     )
+    assert "Writing judge prompts to judge_file.jsonl" in captured.err
 
     # check the judge file was created
     assert os.path.isfile("judge_file.jsonl")
