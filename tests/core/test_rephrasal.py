@@ -266,7 +266,7 @@ def test_check_rephrase_init():
             rephrase_settings="not_a_dict",
         )
 
-    tp = {"temp": "prompt: {INPUT_PROMPT} || response: {OUTPUT_RESPONSE}"}
+    tp = ["Template 1: {INPUT_PROMPT}", "Template 2: \n{INPUT_PROMPT}"]
     rephrase = Rephraser(
         input_prompts=INPUT_PROMPTS,
         template_prompts=tp,
@@ -275,7 +275,7 @@ def test_check_rephrase_init():
     assert rephrase.input_prompts == INPUT_PROMPTS
     assert rephrase.rephrase_settings == REPHRASE_SETTINGS
     assert rephrase.template_prompts == tp
-    assert rephrase.rephrased_prompts == []
+    assert rephrase.rephrase_prompts == []
 
 
 def test_rephrase_create_rephrase_inputs_errors():
@@ -377,7 +377,7 @@ def test_rephrase_create_rephrase_inputs(capsys):
     ]
     assert len(rephrase_1_inputs) == 4
     assert rephrase_1_inputs == expected_result
-    assert rephrase.rephrased_prompts == expected_result
+    assert rephrase.rephrase_prompts == expected_result
 
     captured = capsys.readouterr()
     assert (
@@ -443,7 +443,7 @@ def test_rephrase_create_rephrase_inputs(capsys):
     ]
     assert len(rephrase_2_inputs) == 4
     assert rephrase_2_inputs == expected_result_2
-    assert rephrase.rephrased_prompts == expected_result_2
+    assert rephrase.rephrase_prompts == expected_result_2
 
     captured = capsys.readouterr()
     assert (
@@ -566,7 +566,7 @@ def test_rephrase_create_rephrase_inputs_multiple_rephrase_models(capsys):
     ]
     assert len(rephrase_1_2_inputs) == 8
     assert rephrase_1_2_inputs == expected_result
-    assert rephrase.rephrased_prompts == expected_result
+    assert rephrase.rephrase_prompts == expected_result
 
     captured = capsys.readouterr()
     assert (
@@ -687,7 +687,7 @@ def test_rephrase_create_rephrase_file(temporary_data_folder_rephrase, capsys):
 
     assert len(rephrase_inputs) == 4
     assert rephrase_inputs == expected_result
-    assert rephrase.rephrased_prompts == expected_result
+    assert rephrase.rephrase_prompts == expected_result
 
 
 def test_rephrase_convert_rephrased_prompt_dict_to_input():

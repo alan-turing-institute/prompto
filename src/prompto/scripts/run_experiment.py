@@ -83,6 +83,69 @@ def load_max_queries_json(max_queries_json: str | None) -> dict:
     return max_queries_dict
 
 
+def parse_file_path_and_check_in_input(
+    file_path: str, settings: Settings, move_to_input: bool = False
+) -> str:
+    """
+    Parse the file path to get the experiment file name.
+
+    If the file is not in the input folder, it is either
+    moved or copied there for processing depending on the
+    move_to_input flag.
+
+    Raises errors if either the file does not exist
+    or if it is not a jsonl file.
+
+    Parameters
+    ----------
+    file_path : str
+        Path to the experiment file
+    settings : Settings
+        Settings object for the experiment which contains
+        the input folder path
+    move_to_input : bool, optional
+        Flag to indicate if the file should be moved to the input
+        folder. If False, the file is copied to the input folder.
+        If the file is already in the input folder, this flag has
+        no effect but the file will still be processed which would
+        lead it to be moved to the output folder in the end.
+        Default is False
+
+    Returns
+    -------
+    str
+        Experiment file name (without the full directories in the path)
+    """
+    # check if file exists
+    if not os.path.exists(file_path):
+        raise FileNotFoundError(f"File {file_path} not found")
+
+    # check if file is a jsonl or csv file
+    if not file_path.endswith(".jsonl") and not file_path.endswith(".csv"):
+        raise ValueError("Experiment file must be a jsonl or csv file")
+
+    # get experiment file name (without the path)
+    experiment_file_name = os.path.basename(file_path)
+
+    # if the experiment file is not in the input folder, move it there
+    if experiment_file_name not in os.listdir(settings.input_folder):
+        logging.info(
+            f"File {file_path} is not in the input folder {settings.input_folder}"
+        )
+        if move_to_input:
+            move_file(
+                source=file_path,
+                destination=f"{settings.input_folder}/{experiment_file_name}",
+            )
+        else:
+            copy_file(
+                source=file_path,
+                destination=f"{settings.input_folder}/{experiment_file_name}",
+            )
+
+    return experiment_file_name
+
+
 def load_rephrase_args(
     rephrase_folder_arg: str | None,
     rephrase_model_arg: str | None,
@@ -145,10 +208,10 @@ def load_rephrase_args(
 def create_rephrase_experiment(
     create_rephrase_file: bool,
     experiment: Experiment,
-    template_prompts: dict[str, str] | None,
+    template_prompts: list[str] | None,
     rephrase_settings: dict | None,
     rephrase_model: list[str] | str | None,
-) -> tuple[Experiment | None, Rephraser]:
+) -> tuple[Experiment | None, Rephraser | None]:
     """
     Create a rephrase experiment if the create_rephrase_file flag is True.
 
@@ -164,7 +227,7 @@ def create_rephrase_experiment(
         The experiment object to create the rephrase experiment from.
         This is used to obtain the list of completed responses
         and to create the rephrase experiment and file name.
-    template_prompts : str | None
+    template_prompts : list[str] | None
         The template prompt string to be used for the rephrase
     rephrase_settings : dict | None
         The rephrase settings dictionary to be used for the rephrase
@@ -174,14 +237,14 @@ def create_rephrase_experiment(
 
     Returns
     -------
-    tuple[Experiment | None, Rephraser]
+    tuple[Experiment | None, Rephraser | None]
         A tuple containing the rephrase experiment object and the Rephraser
         object if create_rephrase_file is True, otherwise a tuple of two None
     """
     if create_rephrase_file:
-        if not isinstance(template_prompts, dict):
+        if not isinstance(template_prompts, list):
             raise TypeError(
-                "If create_rephrase_file is True, template_prompts must be a dictionary"
+                "If create_rephrase_file is True, template_prompts must be a list of strings"
             )
         if not isinstance(rephrase_settings, dict):
             raise TypeError(
@@ -189,7 +252,7 @@ def create_rephrase_experiment(
             )
         if not isinstance(rephrase_model, list) and not isinstance(rephrase_model, str):
             raise TypeError(
-                "If create_rephrase_file is True, rephrase must be a list of strings or a string"
+                "If create_rephrase_file is True, rephrase_model must be a list of strings or a string"
             )
 
         # create rephrase object from the parsed arguments
@@ -215,69 +278,6 @@ def create_rephrase_experiment(
         rephraser = None
 
     return rephrase_experiment, rephraser
-
-
-def parse_file_path_and_check_in_input(
-    file_path: str, settings: Settings, move_to_input: bool = False
-) -> str:
-    """
-    Parse the file path to get the experiment file name.
-
-    If the file is not in the input folder, it is either
-    moved or copied there for processing depending on the
-    move_to_input flag.
-
-    Raises errors if either the file does not exist
-    or if it is not a jsonl file.
-
-    Parameters
-    ----------
-    file_path : str
-        Path to the experiment file
-    settings : Settings
-        Settings object for the experiment which contains
-        the input folder path
-    move_to_input : bool, optional
-        Flag to indicate if the file should be moved to the input
-        folder. If False, the file is copied to the input folder.
-        If the file is already in the input folder, this flag has
-        no effect but the file will still be processed which would
-        lead it to be moved to the output folder in the end.
-        Default is False
-
-    Returns
-    -------
-    str
-        Experiment file name (without the full directories in the path)
-    """
-    # check if file exists
-    if not os.path.exists(file_path):
-        raise FileNotFoundError(f"File {file_path} not found")
-
-    # check if file is a jsonl or csv file
-    if not file_path.endswith(".jsonl") and not file_path.endswith(".csv"):
-        raise ValueError("Experiment file must be a jsonl or csv file")
-
-    # get experiment file name (without the path)
-    experiment_file_name = os.path.basename(file_path)
-
-    # if the experiment file is not in the input folder, move it there
-    if experiment_file_name not in os.listdir(settings.input_folder):
-        logging.info(
-            f"File {file_path} is not in the input folder {settings.input_folder}"
-        )
-        if move_to_input:
-            move_file(
-                source=file_path,
-                destination=f"{settings.input_folder}/{experiment_file_name}",
-            )
-        else:
-            copy_file(
-                source=file_path,
-                destination=f"{settings.input_folder}/{experiment_file_name}",
-            )
-
-    return experiment_file_name
 
 
 def load_judge_args(

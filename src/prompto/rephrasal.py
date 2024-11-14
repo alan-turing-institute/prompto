@@ -104,7 +104,7 @@ class Rephraser:
         self.input_prompts = input_prompts
         self.template_prompts = template_prompts
         self.rephrase_settings = rephrase_settings
-        self.rephrased_prompts: list[dict] = []
+        self.rephrase_prompts: list[dict] = []
 
     @staticmethod
     def check_rephrase_settings(rephrase_settings: dict[str, dict]) -> bool:
@@ -215,10 +215,10 @@ class Rephraser:
             rephrase_model=rephrase_model, rephrase_settings=self.rephrase_settings
         )
 
-        self.rephrased_prompts = []
+        self.rephrase_prompts = []
         for r in rephrase_model:
             for i, template_prompt in enumerate(self.template_prompts):
-                self.rephrased_prompts += [
+                self.rephrase_prompts += [
                     {
                         "id": f"rephrase-{r}-{i}-{str(input.get('id', 'NA'))}",
                         "template_index": i,
@@ -235,7 +235,7 @@ class Rephraser:
                     )
                 ]
 
-        return self.rephrased_prompts
+        return self.rephrase_prompts
 
     def create_rephrase_file(
         self, rephrase_model: list[str] | str, out_filepath: str
@@ -265,19 +265,19 @@ class Rephraser:
         if not out_filepath.endswith(".jsonl"):
             raise ValueError("out_filepath must end with '.jsonl'")
 
-        rephrased_prompts = self.create_rephrase_inputs(rephrase_model=rephrase_model)
+        rephrase_prompts = self.create_rephrase_inputs(rephrase_model=rephrase_model)
 
         logging.info(f"Creating rephrase experiment file at {out_filepath}...")
         with open(out_filepath, "w", encoding="utf-8") as f:
             for j_input in tqdm(
-                rephrased_prompts,
+                rephrase_prompts,
                 desc=f"Writing rephrase prompts to {out_filepath}",
                 unit="prompts",
             ):
                 json.dump(j_input, f)
                 f.write("\n")
 
-        return rephrased_prompts
+        return rephrase_prompts
 
     @staticmethod
     def _convert_rephrased_prompt_dict_to_input(rephrased_prompt: dict) -> dict:
