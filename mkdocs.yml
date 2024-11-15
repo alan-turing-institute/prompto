@@ -18,6 +18,7 @@ nav:
       - Using prompto for evaluation:
           - Notebook: examples/evaluation/running_llm_as_judge_experiment.ipynb
           - Notebook: examples/evaluation/running_experiments_with_custom_evaluations.ipynb
+          - Notebook: examples/evaluation/rephrase_prompts.ipynb
       - Azure OpenAI:
           - Example: examples/azure-openai/README.md
           - Notebook: examples/azure-openai/azure-openai.ipynb

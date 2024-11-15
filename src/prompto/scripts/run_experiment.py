@@ -231,7 +231,7 @@ def create_rephrase_experiment(
         The template prompt string to be used for the rephrase
     rephrase_settings : dict | None
         The rephrase settings dictionary to be used for the rephrase
-    rephrase : list[str] | str | None
+    rephrase_model : list[str] | str | None
         The rephrase(s) to be used for the rephrase experiment. These
         must be keys in the rephrase settings dictionary
 

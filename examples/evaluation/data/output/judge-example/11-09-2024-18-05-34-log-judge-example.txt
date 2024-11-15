@@ -1,1 +1,0 @@
-11-09-2024, 18:05: Completed experiment: judge-example.jsonl! Experiment processing time: 12.467 seconds, Average time per query: 2.078 seconds
