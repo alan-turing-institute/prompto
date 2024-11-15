@@ -98,7 +98,7 @@ prompto_create_judge_file \
 
 Here, for each prompt dictionary in the completed experiment file, there would be 4 prompts generated (from the 2 templates and 2 judges). The full number of prompts generated would be `num_templates * num_judges * num_prompts_in_experiment_file`.
 
-This will create a new experiment file
+This will create a new experiment file which can be run using `prompto_run_experiment` to obtain the judge evaluation responses for each prompt/response.
 
 ### Running a LLM-as-judge evaluation automatically using `prompto_run_experiment`
 

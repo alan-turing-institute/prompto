@@ -48,6 +48,7 @@ nav:
       - Running experiments and the pipeline: docs/pipeline.md
       - prompto commands: docs/commands.md
       - Specifying rate limits: docs/rate_limits.md
+      - Rephrasing prompts: docs/rephrasals.md
       - Using prompto for evaluation: docs/evaluation.md
   - Implemented APIs:
       - APIs overview: docs/models.md

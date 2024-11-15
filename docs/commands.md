@@ -29,9 +29,23 @@ prompto_run_experiment \
 
 Note that if the experiment file is already in the input folder, we will not make a copy of the file and process the file in place.
 
+### Rephrasing prompts with `prompto`
+
+It is possible to have a pre-processing step to rephrase prompts before sending them to a model. This is useful if you first want to generate a more diverse set of prompts and then use them to generate a more diverse set of completions. See the [Rephrasing prompts](./rephrasals.md) documentation for more details on how to set up a rephrasal experiment.
+
+For instance, to run an experiment by first rephrasing prompts, you can use the following command:
+```
+prompto_run_experiment \
+    --file path/to/experiment.jsonl \
+    --data-folder data \
+    --rephrase-folder rephrase \
+    --rephrase-templates template.txt \
+    --rephrase-model gemini-1.0-pro
+```
+
 ### Automatic evaluation using an LLM-as-judge
 
-It is possible to automatically run a LLM-as-judge evaluation of the responses by using the `--judge-folder` and `--judge` arguments of the CLI. See the [Create judge file](#create-judge-file) section for more details on these arguments.
+It is possible to automatically run a LLM-as-judge evaluation of the responses by using the `--judge-folder` and `--judge` arguments of the CLI. See the [Create judge file](#create-judge-file) section for more details on these arguments and see the [Evaluation](./evaluation.md) documentation for more details on how to set up an LLM-as-judge evaluation.
 
 For instance, to run an experiment file with automatic evaluation using a judge, you can use the following command:
 ```
