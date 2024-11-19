@@ -210,9 +210,12 @@ class AzureOpenAIAPI(AsyncAPI):
         api_endpoint = get_environment_variable(
             env_variable=API_ENDPOINT_VAR_NAME, model_name=model_name
         )
-        api_version = get_environment_variable(
-            env_variable=API_VERSION_VAR_NAME, model_name=model_name
-        )
+        try:
+            api_version = get_environment_variable(
+                env_variable=API_VERSION_VAR_NAME, model_name=model_name
+            )
+        except KeyError:
+            api_version = AZURE_API_VERSION_DEFAULT
 
         openai.api_key = api_key
         openai.azure_endpoint = api_endpoint
