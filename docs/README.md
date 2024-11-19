@@ -15,6 +15,7 @@ To view this documentation in a more readable format, visit the [prompto documen
 * [Configuring environment variables](./environment_variables.md)
 * [prompto commands](./commands.md)
 * [Specifying rate limits](./rate_limits.md)
+* [Rephrasing prompts](./rephrasals.md)
 * [Using prompto for evaluation](./evaluation.md)
 
 ## Reference

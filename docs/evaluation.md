@@ -81,7 +81,7 @@ To create a judge experiment file for a particular experiment file with a judge-
 prompto_create_judge_file \
     --experiment-file path/to/experiment.jsonl \
     --judge-folder judge \
-    --templates template.txt \
+    --judge-templates template.txt \
     --judge gemini-1.0-pro
 ```
 
@@ -92,13 +92,13 @@ As noted above, it's possible to use multiple templates and multiple judges by s
 prompto_create_judge_file \
     --experiment-file path/to/experiment.jsonl \
     --judge-folder judge \
-    --templates template.txt,template2.txt \
+    --judge-templates template.txt,template2.txt \
     --judge gemini-1.0-pro,gpt-4
 ```
 
 Here, for each prompt dictionary in the completed experiment file, there would be 4 prompts generated (from the 2 templates and 2 judges). The full number of prompts generated would be `num_templates * num_judges * num_prompts_in_experiment_file`.
 
-This will create a new experiment file
+This will create a new experiment file which can be run using `prompto_run_experiment` to obtain the judge evaluation responses for each prompt/response.
 
 ### Running a LLM-as-judge evaluation automatically using `prompto_run_experiment`
 
@@ -108,7 +108,7 @@ prompto_run_experiment \
     --file path/to/experiment.jsonl \
     --data-folder data \
     --judge-folder judge \
-    --templates template.txt,template2.txt \
+    --judge-templates template.txt,template2.txt \
     --judge gemini-1.0-pro
 ```
 

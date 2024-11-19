@@ -29,9 +29,23 @@ prompto_run_experiment \
 
 Note that if the experiment file is already in the input folder, we will not make a copy of the file and process the file in place.
 
+### Rephrasing prompts with `prompto`
+
+It is possible to have a pre-processing step to rephrase prompts before sending them to a model. This is useful if you first want to generate a more diverse set of prompts and then use them to generate a more diverse set of completions. See the [Rephrasing prompts](./rephrasals.md) documentation for more details on how to set up a rephrasal experiment.
+
+For instance, to run an experiment by first rephrasing prompts, you can use the following command:
+```
+prompto_run_experiment \
+    --file path/to/experiment.jsonl \
+    --data-folder data \
+    --rephrase-folder rephrase \
+    --rephrase-templates template.txt \
+    --rephrase-model gemini-1.0-pro
+```
+
 ### Automatic evaluation using an LLM-as-judge
 
-It is possible to automatically run a LLM-as-judge evaluation of the responses by using the `--judge-folder` and `--judge` arguments of the CLI. See the [Create judge file](#create-judge-file) section for more details on these arguments.
+It is possible to automatically run a LLM-as-judge evaluation of the responses by using the `--judge-folder` and `--judge` arguments of the CLI. See the [Create judge file](#create-judge-file) section for more details on these arguments and see the [Evaluation](./evaluation.md) documentation for more details on how to set up an LLM-as-judge evaluation.
 
 For instance, to run an experiment file with automatic evaluation using a judge, you can use the following command:
 ```
@@ -82,7 +96,7 @@ To create a judge file for a particular experiment file with a judge-folder as `
 prompto_create_judge_file \
     --experiment-file path/to/experiment.jsonl \
     --judge-folder judge \
-    --templates template.txt \
+    --judge-templates template.txt \
     --judge gemini-1.0-pro
 ```
 
@@ -91,7 +105,7 @@ In `judge`, you must have the following files:
 * `settings.json`: this is the settings json file which contains the settings for the judge(s). The keys are judge identifiers and the values dictionaries with "api", "model_name", "parameters" keys to specify the LLM to use as a judge (see the [experiment file documentation](experiment_file.md) for more details on these keys).
 * template `.txt` file(s) which specifies the template to use for the judge. The inputs and outputs of the completed experiment file are used to generate the prompts for the judge. This file should contain the placeholders `{INPUT_PROMPT}` and `{OUTPUT_RESPONSE}` which will be replaced with the inputs and outputs of the completed experiment file (i.e. the corresponding values to the `prompt` and `response` keys in the prompt dictionaries of the completed experiment file).
 
-For the template file(s), we allow for specifying multiple templates (for different evaluation prompts), in which case the `--templates` argument should be a comma-separated list of template files. By default, this is set to `template.txt` if not specified. In the above example, we explicitly pass in `template.txt` to the `--templates` argument, so the command will look for a `template.txt` file in the judge folder.
+For the template file(s), we allow for specifying multiple templates (for different evaluation prompts), in which case the `--judge-templates` argument should be a comma-separated list of template files. By default, this is set to `template.txt` if not specified. In the above example, we explicitly pass in `template.txt` to the `--judge-templates` argument, so the command will look for a `template.txt` file in the judge folder.
 
 See for example [this judge example](https://github.com/alan-turing-institute/prompto/tree/main/examples/evaluation/judge) which contains example template and settings files.
 

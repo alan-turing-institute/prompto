@@ -1,16 +1,17 @@
-import json
 import logging
 import os
 
 import pytest
-from cli_test_helpers import shell
 
 from prompto.experiment import Experiment
+from prompto.rephrasal import Rephraser
 from prompto.scripts.run_experiment import (
     create_judge_experiment,
+    create_rephrase_experiment,
     load_env_file,
     load_judge_args,
     load_max_queries_json,
+    load_rephrase_args,
     parse_file_path_and_check_in_input,
 )
 from prompto.settings import Settings
@@ -26,6 +27,18 @@ JUDGE_SETTINGS = {
         "parameters": {"temperature": 0.5},
     },
     "judge2": {
+        "api": "test",
+        "model_name": "model2",
+        "parameters": {"temperature": 0.2, "top_k": 0.9},
+    },
+}
+REPHRASE_SETTINGS = {
+    "rephrase1": {
+        "api": "test",
+        "model_name": "model1",
+        "parameters": {"temperature": 0.5},
+    },
+    "rephrase2": {
         "api": "test",
         "model_name": "model2",
         "parameters": {"temperature": 0.2, "top_k": 0.9},
@@ -66,83 +79,6 @@ def test_load_max_queries_json(temporary_data_folder_judge):
 
     loaded = load_max_queries_json(max_queries_json=None)
     assert loaded == {}
-
-
-def test_load_judge_args_all_none(temporary_data_folder_judge, caplog):
-    caplog.set_level(logging.INFO)
-    # if either argument is None, return (False, None, None, None)
-    result = load_judge_args(judge_folder_arg=None, judge_arg=None, templates_arg=None)
-    assert result == (False, None, None, None)
-    assert (
-        "Not creating judge file as one of judge_folder, judge or templates is None"
-        in caplog.text
-    )
-
-
-def test_load_judge_args_judge_arg_none(temporary_data_folder_judge, caplog):
-    caplog.set_level(logging.INFO)
-    # if either argument is None, return (False, None, None, None)
-    result = load_judge_args(
-        judge_folder_arg="judge_loc", judge_arg=None, templates_arg="template.txt"
-    )
-    assert result == (False, None, None, None)
-    assert (
-        "Not creating judge file as one of judge_folder, judge or templates is None"
-        in caplog.text
-    )
-
-
-def test_load_judge_args_judge_folder_arg_none(temporary_data_folder_judge, caplog):
-    caplog.set_level(logging.INFO)
-    # if either argument is None, return (False, None, None, None)
-    result = load_judge_args(
-        judge_folder_arg=None, judge_arg="judge1", templates_arg="template.txt"
-    )
-    assert result == (False, None, None, None)
-    assert (
-        "Not creating judge file as one of judge_folder, judge or templates is None"
-        in caplog.text
-    )
-
-
-def test_load_judge_args_templates_arg_none(temporary_data_folder_judge, caplog):
-    caplog.set_level(logging.INFO)
-    # if either argument is None, return (False, None, None, None)
-    result = load_judge_args(
-        judge_folder_arg="judge_loc", judge_arg="judge1", templates_arg=None
-    )
-    assert result == (False, None, None, None)
-    assert (
-        "Not creating judge file as one of judge_folder, judge or templates is None"
-        in caplog.text
-    )
-
-
-def test_load_judge_args(temporary_data_folder_judge, caplog):
-    caplog.set_level(logging.INFO)
-    # if both arguments are not None, return (True, templaate, judge_settings, judge
-    result = load_judge_args(
-        judge_folder_arg="judge_loc",
-        judge_arg="judge1,judge2",
-        templates_arg="template.txt",
-    )
-    assert result == (
-        True,
-        {"template": "Template: input={INPUT_PROMPT}, output={OUTPUT_RESPONSE}"},
-        {
-            "judge1": {
-                "api": "test",
-                "model_name": "model1",
-                "parameters": {"temperature": 0.5},
-            },
-            "judge2": {
-                "api": "test",
-                "model_name": "model2",
-                "parameters": {"temperature": 0.2, "top_k": 0.9},
-            },
-        },
-        ["judge1", "judge2"],
-    )
 
 
 def test_parse_file_path_and_check_in_input_error(temporary_data_folder_judge):
@@ -226,6 +162,468 @@ def test_parse_file_path_and_check_in_input_not_in_input_move(
 
     assert not os.path.isfile("test-exp-not-in-input.jsonl")
     assert os.path.isfile("data/input/test-exp-not-in-input.jsonl")
+
+
+def test_load_rephrase_args_all_none(temporary_data_folder_rephrase, caplog):
+    caplog.set_level(logging.INFO)
+    # if either argument is None, return (False, None, None, None)
+    result = load_rephrase_args(
+        rephrase_folder_arg=None, rephrase_model_arg=None, rephrase_templates_arg=None
+    )
+    assert result == (False, None, None, None)
+    assert (
+        "Not creating rephrase file as one of rephrase-folder, rephrase or rephrase-templates is None"
+        in caplog.text
+    )
+
+
+def test_load_rephrase_args_rephrase_arg_none(temporary_data_folder_rephrase, caplog):
+    caplog.set_level(logging.INFO)
+    # if either argument is None, return (False, None, None, None)
+    result = load_rephrase_args(
+        rephrase_folder_arg="rephrase_loc",
+        rephrase_model_arg=None,
+        rephrase_templates_arg="template.txt",
+    )
+    assert result == (False, None, None, None)
+    assert (
+        "Not creating rephrase file as one of rephrase-folder, rephrase or rephrase-templates is None"
+        in caplog.text
+    )
+
+
+def test_load_rephrase_args_rephrase_folder_arg_none(
+    temporary_data_folder_rephrase, caplog
+):
+    caplog.set_level(logging.INFO)
+    # if either argument is None, return (False, None, None, None)
+    result = load_rephrase_args(
+        rephrase_folder_arg=None,
+        rephrase_model_arg="rephrase1",
+        rephrase_templates_arg="template.txt",
+    )
+    assert result == (False, None, None, None)
+    assert (
+        "Not creating rephrase file as one of rephrase-folder, rephrase or rephrase-templates is None"
+        in caplog.text
+    )
+
+
+def test_load_rephrase_args_templates_arg_none(temporary_data_folder_rephrase, caplog):
+    caplog.set_level(logging.INFO)
+    # if either argument is None, return (False, None, None, None)
+    result = load_rephrase_args(
+        rephrase_folder_arg="rephrase_loc",
+        rephrase_model_arg="rephrase1",
+        rephrase_templates_arg=None,
+    )
+    assert result == (False, None, None, None)
+    assert (
+        "Not creating rephrase file as one of rephrase-folder, rephrase or rephrase-templates is None"
+        in caplog.text
+    )
+
+
+def test_load_rephrase_args(temporary_data_folder_rephrase, caplog):
+    caplog.set_level(logging.INFO)
+    # if both arguments are not None, return (True, templaate, rephrase_settings, rephrase
+    result = load_rephrase_args(
+        rephrase_folder_arg="rephrase_loc",
+        rephrase_model_arg="rephrase1,rephrase2",
+        rephrase_templates_arg="template.txt",
+    )
+    assert "Rephrase folder loaded from rephrase_loc" in caplog.text
+    assert "Templates to be loaded from template.txt" in caplog.text
+    assert "Rephrase models to be used: ['rephrase1', 'rephrase2']" in caplog.text
+
+    assert result == (
+        True,
+        ["Template 1: {INPUT_PROMPT}", "Template 2: \n{INPUT_PROMPT}"],
+        {
+            "rephrase1": {
+                "api": "test",
+                "model_name": "model1",
+                "parameters": {"temperature": 0.5},
+            },
+            "rephrase2": {
+                "api": "test",
+                "model_name": "model2",
+                "parameters": {"temperature": 0.2, "top_k": 0.9},
+            },
+        },
+        ["rephrase1", "rephrase2"],
+    )
+
+
+def test_create_rephrase_experiment_rephrase_model_list(temporary_data_folder_rephrase):
+    settings = Settings()
+    experiment = Experiment("test-experiment.jsonl", settings)
+    tp = ["Template 1: {INPUT_PROMPT}", "Template 2: \n{INPUT_PROMPT}"]
+    rephrase_model = ["rephrase1", "rephrase2"]
+
+    assert not os.path.isfile("data/input/rephrase-test-experiment.jsonl")
+
+    result_experiment, rephraser = create_rephrase_experiment(
+        create_rephrase_file=True,
+        experiment=experiment,
+        template_prompts=tp,
+        rephrase_settings=REPHRASE_SETTINGS,
+        rephrase_model=rephrase_model,
+    )
+
+    assert os.path.isfile("data/input/rephrase-test-experiment.jsonl")
+    assert isinstance(result_experiment, Experiment)
+    assert result_experiment.file_name == "rephrase-test-experiment.jsonl"
+    expected_result = [
+        {
+            "id": "rephrase-rephrase1-0-0",
+            "template_index": 0,
+            "prompt": "Template 1: test prompt 1",
+            "api": "test",
+            "model_name": "model1",
+            "parameters": {"temperature": 0.5},
+            "input-id": 0,
+            "input-prompt": "test prompt 1",
+            "input-api": "test",
+            "input-model_name": "model1",
+            "input-parameters": {"raise_error": "False"},
+            "input-expected_response": "This is a test response",
+        },
+        {
+            "id": "rephrase-rephrase1-0-1",
+            "template_index": 0,
+            "prompt": "Template 1: test prompt 2",
+            "api": "test",
+            "model_name": "model1",
+            "parameters": {"temperature": 0.5},
+            "input-id": 1,
+            "input-prompt": "test prompt 2",
+            "input-api": "test",
+            "input-model_name": "model2",
+            "input-parameters": {"raise_error": "False"},
+            "input-expected_response": "something else",
+        },
+        {
+            "id": "rephrase-rephrase1-1-0",
+            "template_index": 1,
+            "prompt": "Template 2: \ntest prompt 1",
+            "api": "test",
+            "model_name": "model1",
+            "parameters": {"temperature": 0.5},
+            "input-id": 0,
+            "input-prompt": "test prompt 1",
+            "input-api": "test",
+            "input-model_name": "model1",
+            "input-parameters": {"raise_error": "False"},
+            "input-expected_response": "This is a test response",
+        },
+        {
+            "id": "rephrase-rephrase1-1-1",
+            "template_index": 1,
+            "prompt": "Template 2: \ntest prompt 2",
+            "api": "test",
+            "model_name": "model1",
+            "parameters": {"temperature": 0.5},
+            "input-id": 1,
+            "input-prompt": "test prompt 2",
+            "input-api": "test",
+            "input-model_name": "model2",
+            "input-parameters": {"raise_error": "False"},
+            "input-expected_response": "something else",
+        },
+        {
+            "id": "rephrase-rephrase2-0-0",
+            "template_index": 0,
+            "prompt": "Template 1: test prompt 1",
+            "api": "test",
+            "model_name": "model2",
+            "parameters": {"temperature": 0.2, "top_k": 0.9},
+            "input-id": 0,
+            "input-prompt": "test prompt 1",
+            "input-api": "test",
+            "input-model_name": "model1",
+            "input-parameters": {"raise_error": "False"},
+            "input-expected_response": "This is a test response",
+        },
+        {
+            "id": "rephrase-rephrase2-0-1",
+            "template_index": 0,
+            "prompt": "Template 1: test prompt 2",
+            "api": "test",
+            "model_name": "model2",
+            "parameters": {"temperature": 0.2, "top_k": 0.9},
+            "input-id": 1,
+            "input-prompt": "test prompt 2",
+            "input-api": "test",
+            "input-model_name": "model2",
+            "input-parameters": {"raise_error": "False"},
+            "input-expected_response": "something else",
+        },
+        {
+            "id": "rephrase-rephrase2-1-0",
+            "template_index": 1,
+            "prompt": "Template 2: \ntest prompt 1",
+            "api": "test",
+            "model_name": "model2",
+            "parameters": {"temperature": 0.2, "top_k": 0.9},
+            "input-id": 0,
+            "input-prompt": "test prompt 1",
+            "input-api": "test",
+            "input-model_name": "model1",
+            "input-parameters": {"raise_error": "False"},
+            "input-expected_response": "This is a test response",
+        },
+        {
+            "id": "rephrase-rephrase2-1-1",
+            "template_index": 1,
+            "prompt": "Template 2: \ntest prompt 2",
+            "api": "test",
+            "model_name": "model2",
+            "parameters": {"temperature": 0.2, "top_k": 0.9},
+            "input-id": 1,
+            "input-prompt": "test prompt 2",
+            "input-api": "test",
+            "input-model_name": "model2",
+            "input-parameters": {"raise_error": "False"},
+            "input-expected_response": "something else",
+        },
+    ]
+
+    assert len(result_experiment.experiment_prompts) == 8
+    assert result_experiment.experiment_prompts == expected_result
+    assert isinstance(rephraser, Rephraser)
+    assert rephraser.rephrase_prompts == expected_result
+
+
+def test_create_rephrase_experiment_rephrase_model_string(
+    temporary_data_folder_rephrase,
+):
+    settings = Settings()
+    experiment = Experiment("test-experiment.jsonl", settings)
+    tp = ["Template 1: {INPUT_PROMPT}", "Template 2: \n{INPUT_PROMPT}"]
+    rephrase_model = "rephrase1"
+
+    assert not os.path.isfile("data/input/rephrase-test-experiment.jsonl")
+
+    result_experiment, rephraser = create_rephrase_experiment(
+        create_rephrase_file=True,
+        experiment=experiment,
+        template_prompts=tp,
+        rephrase_settings=REPHRASE_SETTINGS,
+        rephrase_model=rephrase_model,
+    )
+
+    assert os.path.isfile("data/input/rephrase-test-experiment.jsonl")
+    assert isinstance(result_experiment, Experiment)
+    assert result_experiment.file_name == "rephrase-test-experiment.jsonl"
+    expected_result = [
+        {
+            "id": "rephrase-rephrase1-0-0",
+            "template_index": 0,
+            "prompt": "Template 1: test prompt 1",
+            "api": "test",
+            "model_name": "model1",
+            "parameters": {"temperature": 0.5},
+            "input-id": 0,
+            "input-prompt": "test prompt 1",
+            "input-api": "test",
+            "input-model_name": "model1",
+            "input-parameters": {"raise_error": "False"},
+            "input-expected_response": "This is a test response",
+        },
+        {
+            "id": "rephrase-rephrase1-0-1",
+            "template_index": 0,
+            "prompt": "Template 1: test prompt 2",
+            "api": "test",
+            "model_name": "model1",
+            "parameters": {"temperature": 0.5},
+            "input-id": 1,
+            "input-prompt": "test prompt 2",
+            "input-api": "test",
+            "input-model_name": "model2",
+            "input-parameters": {"raise_error": "False"},
+            "input-expected_response": "something else",
+        },
+        {
+            "id": "rephrase-rephrase1-1-0",
+            "template_index": 1,
+            "prompt": "Template 2: \ntest prompt 1",
+            "api": "test",
+            "model_name": "model1",
+            "parameters": {"temperature": 0.5},
+            "input-id": 0,
+            "input-prompt": "test prompt 1",
+            "input-api": "test",
+            "input-model_name": "model1",
+            "input-parameters": {"raise_error": "False"},
+            "input-expected_response": "This is a test response",
+        },
+        {
+            "id": "rephrase-rephrase1-1-1",
+            "template_index": 1,
+            "prompt": "Template 2: \ntest prompt 2",
+            "api": "test",
+            "model_name": "model1",
+            "parameters": {"temperature": 0.5},
+            "input-id": 1,
+            "input-prompt": "test prompt 2",
+            "input-api": "test",
+            "input-model_name": "model2",
+            "input-parameters": {"raise_error": "False"},
+            "input-expected_response": "something else",
+        },
+    ]
+
+    assert len(result_experiment.experiment_prompts) == 4
+    assert result_experiment.experiment_prompts == expected_result
+    assert isinstance(rephraser, Rephraser)
+    assert rephraser.rephrase_prompts == expected_result
+
+
+def test_create_rephrase_experiment_type_errors(temporary_data_folder_rephrase):
+    settings = Settings()
+    experiment = Experiment("test-experiment.jsonl", settings)
+    # add a completed response to the experiment to avoid empty error
+    experiment.completed_responses = [{"prompt": "prompt1", "response": "response1"}]
+
+    # raise error if create_rephrase_file is True and template_prompts is not a dictionary
+    with pytest.raises(
+        TypeError,
+        match="If create_rephrase_file is True, template_prompts must be a list of strings",
+    ):
+        create_rephrase_experiment(
+            create_rephrase_file=True,
+            experiment=experiment,
+            template_prompts=None,
+            rephrase_settings=None,
+            rephrase_model=None,
+        )
+
+    # raise error if create_rephrase_file is True and REPHRASE_SETTINGS is not a dictionary
+    with pytest.raises(
+        TypeError,
+        match="If create_rephrase_file is True, rephrase_settings must be a dictionary",
+    ):
+        create_rephrase_experiment(
+            create_rephrase_file=True,
+            experiment=experiment,
+            template_prompts=["some template"],
+            rephrase_settings=None,
+            rephrase_model=None,
+        )
+
+    # raise error if create_rephrase_file is True and rephrase_model is not a list of strings or a string
+    with pytest.raises(
+        TypeError,
+        match="If create_rephrase_file is True, rephrase_model must be a list of strings or a string",
+    ):
+        create_rephrase_experiment(
+            create_rephrase_file=True,
+            experiment=experiment,
+            template_prompts=["some template"],
+            rephrase_settings={},
+            rephrase_model=None,
+        )
+
+
+def test_create_rephrase_experiment_false(temporary_data_folder_rephrase):
+    settings = Settings()
+    experiment = Experiment("test-experiment.jsonl", settings)
+    experiment.completed_responses = [{"prompt": "prompt1", "response": "response1"}]
+
+    result_experiment, rephraser = create_rephrase_experiment(
+        create_rephrase_file=False,
+        experiment=experiment,
+        template_prompts=None,
+        rephrase_settings=None,
+        rephrase_model=None,
+    )
+    assert result_experiment is None
+    assert rephraser is None
+
+
+def test_load_judge_args_all_none(temporary_data_folder_judge, caplog):
+    caplog.set_level(logging.INFO)
+    # if either argument is None, return (False, None, None, None)
+    result = load_judge_args(
+        judge_folder_arg=None, judge_arg=None, judge_templates_arg=None
+    )
+    assert result == (False, None, None, None)
+    assert (
+        "Not creating judge file as one of judge-folder, judge or judge-templates is None"
+        in caplog.text
+    )
+
+
+def test_load_judge_args_judge_arg_none(temporary_data_folder_judge, caplog):
+    caplog.set_level(logging.INFO)
+    # if either argument is None, return (False, None, None, None)
+    result = load_judge_args(
+        judge_folder_arg="judge_loc", judge_arg=None, judge_templates_arg="template.txt"
+    )
+    assert result == (False, None, None, None)
+    assert (
+        "Not creating judge file as one of judge-folder, judge or judge-templates is None"
+        in caplog.text
+    )
+
+
+def test_load_judge_args_judge_folder_arg_none(temporary_data_folder_judge, caplog):
+    caplog.set_level(logging.INFO)
+    # if either argument is None, return (False, None, None, None)
+    result = load_judge_args(
+        judge_folder_arg=None, judge_arg="judge1", judge_templates_arg="template.txt"
+    )
+    assert result == (False, None, None, None)
+    assert (
+        "Not creating judge file as one of judge-folder, judge or judge-templates is None"
+        in caplog.text
+    )
+
+
+def test_load_judge_args_templates_arg_none(temporary_data_folder_judge, caplog):
+    caplog.set_level(logging.INFO)
+    # if either argument is None, return (False, None, None, None)
+    result = load_judge_args(
+        judge_folder_arg="judge_loc", judge_arg="judge1", judge_templates_arg=None
+    )
+    assert result == (False, None, None, None)
+    assert (
+        "Not creating judge file as one of judge-folder, judge or judge-templates is None"
+        in caplog.text
+    )
+
+
+def test_load_judge_args(temporary_data_folder_judge, caplog):
+    caplog.set_level(logging.INFO)
+    # if both arguments are not None, return (True, templaate, judge_settings, judge
+    result = load_judge_args(
+        judge_folder_arg="judge_loc",
+        judge_arg="judge1,judge2",
+        judge_templates_arg="template.txt",
+    )
+    assert "Judge folder loaded from judge_loc" in caplog.text
+    assert "Templates to be used: ['template.txt']" in caplog.text
+    assert "Judges to be used: ['judge1', 'judge2']" in caplog.text
+
+    assert result == (
+        True,
+        {"template": "Template: input={INPUT_PROMPT}, output={OUTPUT_RESPONSE}"},
+        {
+            "judge1": {
+                "api": "test",
+                "model_name": "model1",
+                "parameters": {"temperature": 0.5},
+            },
+            "judge2": {
+                "api": "test",
+                "model_name": "model2",
+                "parameters": {"temperature": 0.2, "top_k": 0.9},
+            },
+        },
+        ["judge1", "judge2"],
+    )
 
 
 def test_create_judge_experiment_judge_list(temporary_data_folder_judge):
@@ -422,454 +820,3 @@ def test_create_judge_experiment_empty_completed_responses(temporary_data_folder
             judge_settings={},
             judge=["judge1"],
         )
-
-
-def test_run_experiment_entrypoint():
-    result = shell("prompto_run_experiment --help")
-    assert result.exit_code == 0
-
-
-def test_run_experiment_no_inputs():
-    result = shell("prompto_run_experiment")
-    assert result.exit_code != 0
-    assert "usage:" in result.stderr
-
-
-def test_run_experiment_no_judge_in_input(temporary_data_folder_judge):
-    result = shell(
-        "prompto_run_experiment "
-        "--file data/input/test-experiment.jsonl "
-        "--max-queries=200"
-    )
-    assert result.exit_code == 0
-    assert "No environment file found at .env" in result.stderr
-    assert (
-        "Not creating judge file as one of judge_folder, judge or templates is None"
-        in result.stderr
-    )
-    assert (
-        "Settings: "
-        "data_folder=data, "
-        "max_queries=200, "
-        "max_attempts=5, "
-        "parallel=False\n"
-        "Subfolders: "
-        "input_folder=data/input, "
-        "output_folder=data/output, "
-        "media_folder=data/media"
-    ) in result.stderr
-    assert (
-        "Starting processing experiment: data/input/test-experiment.jsonl..."
-        in result.stderr
-    )
-    assert "Experiment processed successfully!" in result.stderr
-    assert os.path.isdir("data/output/test-experiment")
-
-
-def test_run_experiment_no_judge_not_in_input_move(temporary_data_folder_judge):
-    result = shell(
-        "prompto_run_experiment "
-        "--file test-exp-not-in-input.jsonl "
-        "--env-file some_file.env "
-        "--data-folder pipeline_data "
-        "--move-to-input "
-        "--max-queries 500 "
-        "--max-attempts 10 "
-        "--parallel "
-        "--max-queries-json max_queries_dict.json"
-    )
-    assert result.exit_code == 0
-
-    assert not os.path.isfile("test-exp-not-in-input.jsonl")
-
-    assert "No environment file found at some_file.env" in result.stderr
-    assert (
-        "Not creating judge file as one of judge_folder, judge or templates is None"
-        in result.stderr
-    )
-    assert (
-        "File test-exp-not-in-input.jsonl is not in the input folder pipeline_data/input"
-        in result.stderr
-    )
-    assert (
-        "Moving file from test-exp-not-in-input.jsonl to pipeline_data/input/test-exp-not-in-input.jsonl"
-        in result.stderr
-    )
-    assert (
-        "Settings: "
-        "data_folder=pipeline_data, "
-        "max_queries=500, "
-        "max_attempts=10, "
-        "parallel=True, "
-        "max_queries_dict={'test': {'model1': 100, 'model2': 120}}\n"
-        "Subfolders: "
-        "input_folder=pipeline_data/input, "
-        "output_folder=pipeline_data/output, "
-        "media_folder=pipeline_data/media"
-    ) in result.stderr
-    assert (
-        "Starting processing experiment: test-exp-not-in-input.jsonl..."
-        in result.stderr
-    )
-    assert "Experiment processed successfully!" in result.stderr
-    assert os.path.isdir("pipeline_data/output/test-exp-not-in-input")
-
-
-def test_run_experiment_judge_not_in_input_copy(temporary_data_folder_judge):
-    result = shell(
-        "prompto_run_experiment "
-        "--file test-exp-not-in-input.jsonl "
-        "--data-folder pipeline_data "
-        "--max-queries=200 "
-        "--judge-folder judge_loc "
-        "--judge judge1"
-    )
-    assert result.exit_code == 0
-
-    assert os.path.isfile("test-exp-not-in-input.jsonl")
-
-    assert "No environment file found at .env" in result.stderr
-    assert "Judge folder loaded from judge_loc" in result.stderr
-    assert "Templates to be used: ['template.txt']" in result.stderr
-    assert "Judges to be used: ['judge1']" in result.stderr
-    assert (
-        "File test-exp-not-in-input.jsonl is not in the input folder pipeline_data/input"
-        in result.stderr
-    )
-    assert (
-        "Copying file from test-exp-not-in-input.jsonl to pipeline_data/input/test-exp-not-in-input.jsonl"
-        in result.stderr
-    )
-    assert (
-        "Settings: "
-        "data_folder=pipeline_data, "
-        "max_queries=200, "
-        "max_attempts=5, "
-        "parallel=False\n"
-        "Subfolders: "
-        "input_folder=pipeline_data/input, "
-        "output_folder=pipeline_data/output, "
-        "media_folder=pipeline_data/media"
-    ) in result.stderr
-    assert (
-        "Starting processing experiment: test-exp-not-in-input.jsonl..."
-        in result.stderr
-    )
-    assert "Completed experiment: test-exp-not-in-input.jsonl" in result.stderr
-    assert (
-        "Starting processing judge of experiment: judge-test-exp-not-in-input.jsonl..."
-        in result.stderr
-    )
-    assert "Completed experiment: judge-test-exp-not-in-input.jsonl" in result.stderr
-    assert "Experiment processed successfully!" in result.stderr
-    assert os.path.isdir("pipeline_data/output/test-exp-not-in-input")
-    assert os.path.isdir("pipeline_data/output/judge-test-exp-not-in-input")
-
-
-def test_run_experiment_judge(temporary_data_folder_judge):
-    result = shell(
-        "prompto_run_experiment "
-        "--file data/input/test-experiment.jsonl "
-        "--max-queries=200 "
-        "--judge-folder judge_loc "
-        "--templates template.txt "
-        "--judge judge1,judge2"
-    )
-    assert result.exit_code == 0
-    assert "No environment file found at .env" in result.stderr
-    assert "Judge folder loaded from judge_loc" in result.stderr
-    assert "Templates to be used: ['template.txt']" in result.stderr
-    assert "Judges to be used: ['judge1', 'judge2']" in result.stderr
-    assert (
-        "Settings: "
-        "data_folder=data, "
-        "max_queries=200, "
-        "max_attempts=5, "
-        "parallel=False\n"
-        "Subfolders: "
-        "input_folder=data/input, "
-        "output_folder=data/output, "
-        "media_folder=data/media"
-    ) in result.stderr
-    assert (
-        "Starting processing experiment: data/input/test-experiment.jsonl..."
-        in result.stderr
-    )
-    assert "Completed experiment: test-experiment.jsonl" in result.stderr
-    assert (
-        "Starting processing judge of experiment: judge-test-experiment.jsonl..."
-        in result.stderr
-    )
-    assert "Completed experiment: judge-test-experiment.jsonl" in result.stderr
-    assert "Experiment processed successfully!" in result.stderr
-    assert os.path.isdir("data/output/test-experiment")
-    assert os.path.isdir("data/output/judge-test-experiment")
-
-
-def test_run_experiment_scorer_not_in_dict(temporary_data_folder_judge):
-    result = shell(
-        "prompto_run_experiment "
-        "--file data/input/test-experiment.jsonl "
-        "--max-queries=200 "
-        "--scorer not_a_scorer"
-    )
-    assert result.exit_code != 0
-    assert (
-        "Scorer 'not_a_scorer' is not a key in scoring_functions_dict. "
-        "Available scorers are: "
-    ) in result.stderr
-
-
-def test_run_experiment_scorer_only(temporary_data_folder_judge):
-    result = shell(
-        "prompto_run_experiment "
-        "--file data/input/test-experiment.jsonl "
-        "--max-queries=200 "
-        "--scorer match,includes"
-    )
-    assert result.exit_code == 0
-    assert "No environment file found at .env" in result.stderr
-    assert (
-        "Not creating judge file as one of judge_folder, judge or templates is None"
-        in result.stderr
-    )
-    assert "Scoring functions to be used: ['match', 'includes']" in result.stderr
-    assert (
-        "Settings: "
-        "data_folder=data, "
-        "max_queries=200, "
-        "max_attempts=5, "
-        "parallel=False\n"
-        "Subfolders: "
-        "input_folder=data/input, "
-        "output_folder=data/output, "
-        "media_folder=data/media"
-    ) in result.stderr
-    assert (
-        "Starting processing experiment: data/input/test-experiment.jsonl..."
-        in result.stderr
-    )
-    assert "Experiment processed successfully!" in result.stderr
-    assert os.path.isdir("data/output/test-experiment")
-
-    completed_files = [
-        x for x in os.listdir("data/output/test-experiment") if "completed" in x
-    ]
-    assert len(completed_files) == 1
-    completed_file = completed_files[0]
-
-    # load the output to check the scores have been added
-    with open(f"data/output/test-experiment/{completed_file}", "r") as f:
-        responses = [dict(json.loads(line)) for line in f]
-
-    assert len(responses) == 2
-    for response in responses:
-        if response["id"] == 0:
-            assert response["match"] is True
-            assert response["includes"] is True
-        elif response["id"] == 1:
-            assert response["match"] is False
-            assert response["includes"] is False
-        else:
-            assert False
-
-
-def test_run_experiment_judge_and_scorer(temporary_data_folder_judge):
-    result = shell(
-        "prompto_run_experiment "
-        "--file data/input/test-experiment.jsonl "
-        "--max-queries=200 "
-        "--judge-folder judge_loc "
-        "--templates template.txt,template2.txt "
-        "--judge judge2 "
-        "--scorer 'match, includes'"
-    )
-    assert result.exit_code == 0
-    assert "No environment file found at .env" in result.stderr
-    assert "Judge folder loaded from judge_loc" in result.stderr
-    assert "Templates to be used: ['template.txt', 'template2.txt']" in result.stderr
-    assert "Judges to be used: ['judge2']" in result.stderr
-    assert "Scoring functions to be used: ['match', 'includes']" in result.stderr
-    assert (
-        "Settings: "
-        "data_folder=data, "
-        "max_queries=200, "
-        "max_attempts=5, "
-        "parallel=False\n"
-        "Subfolders: "
-        "input_folder=data/input, "
-        "output_folder=data/output, "
-        "media_folder=data/media"
-    ) in result.stderr
-    assert (
-        "Starting processing experiment: data/input/test-experiment.jsonl..."
-        in result.stderr
-    )
-    assert "Completed experiment: test-experiment.jsonl" in result.stderr
-    assert (
-        "Starting processing judge of experiment: judge-test-experiment.jsonl..."
-        in result.stderr
-    )
-    assert "Completed experiment: judge-test-experiment.jsonl" in result.stderr
-    assert "Experiment processed successfully!" in result.stderr
-    assert os.path.isdir("data/output/test-experiment")
-    assert os.path.isdir("data/output/judge-test-experiment")
-
-    # check the output files for the test-experiment
-    completed_files = [
-        x for x in os.listdir("data/output/test-experiment") if "completed" in x
-    ]
-    assert len(completed_files) == 1
-    completed_file = completed_files[0]
-
-    # load the output to check the scores have been added
-    with open(f"data/output/test-experiment/{completed_file}", "r") as f:
-        responses = [dict(json.loads(line)) for line in f]
-
-    # test that the scorers got added to the completed file
-    assert len(responses) == 2
-    for response in responses:
-        if response["id"] == 0:
-            assert response["match"] is True
-            assert response["includes"] is True
-        elif response["id"] == 1:
-            assert response["match"] is False
-            assert response["includes"] is False
-        else:
-            assert False
-
-    # check the output files for the judge-test-experiment
-    completed_files = [
-        x for x in os.listdir("data/output/judge-test-experiment") if "completed" in x
-    ]
-    assert len(completed_files) == 1
-    completed_file = completed_files[0]
-
-    # load the output to check the scores have been added
-    with open(f"data/output/judge-test-experiment/{completed_file}", "r") as f:
-        responses = [dict(json.loads(line)) for line in f]
-
-    # test that the scorers got added to the completed judge file
-    assert len(responses) == 4
-    for response in responses:
-        if response["id"] == "judge-judge2-template-0":
-            assert response["input-match"] is True
-            assert response["input-includes"] is True
-        elif response["id"] == "judge-judge2-template-1":
-            assert response["input-match"] is False
-            assert response["input-includes"] is False
-        elif response["id"] == "judge-judge2-template2-0":
-            assert response["input-match"] is True
-            assert response["input-includes"] is True
-        elif response["id"] == "judge-judge2-template2-1":
-            assert response["input-match"] is False
-            assert response["input-includes"] is False
-        else:
-            assert False
-
-
-def test_run_experiment_judge_and_scorer_with_csv_input_and_output(
-    temporary_data_folder_judge,
-):
-    result = shell(
-        "prompto_run_experiment "
-        "--file data/input/test-experiment.csv "
-        "--max-queries=200 "
-        "--judge-folder judge_loc "
-        "--templates template.txt,template2.txt "
-        "--judge judge2 "
-        "--scorer 'match, includes' "
-        "--output-as-csv"
-    )
-    assert result.exit_code == 0
-    assert "No environment file found at .env" in result.stderr
-    assert "Judge folder loaded from judge_loc" in result.stderr
-    assert "Templates to be used: ['template.txt', 'template2.txt']" in result.stderr
-    assert "Judges to be used: ['judge2']" in result.stderr
-    assert "Scoring functions to be used: ['match', 'includes']" in result.stderr
-    assert (
-        "Settings: "
-        "data_folder=data, "
-        "max_queries=200, "
-        "max_attempts=5, "
-        "parallel=False\n"
-        "Subfolders: "
-        "input_folder=data/input, "
-        "output_folder=data/output, "
-        "media_folder=data/media"
-    ) in result.stderr
-    assert (
-        "Starting processing experiment: data/input/test-experiment.csv..."
-        in result.stderr
-    )
-    assert "Completed experiment: test-experiment.csv" in result.stderr
-    assert (
-        "Starting processing judge of experiment: judge-test-experiment.jsonl..."
-        in result.stderr
-    )
-    assert "Completed experiment: judge-test-experiment.jsonl" in result.stderr
-    assert "Experiment processed successfully!" in result.stderr
-    assert os.path.isdir("data/output/test-experiment")
-    assert os.path.isdir("data/output/judge-test-experiment")
-
-    # check the output files for the test-experiment
-    completed_files = [
-        x for x in os.listdir("data/output/test-experiment") if "completed" in x
-    ]
-    # should be 2 (one jsonl and one csv)
-    assert len(completed_files) == 2
-    completed_jsonl_file = [
-        file for file in completed_files if file.endswith(".jsonl")
-    ][0]
-    completed_csv_files = [file for file in completed_files if file.endswith(".csv")]
-    assert len(completed_csv_files) == 1
-
-    # load the output to check the scores have been added
-    with open(f"data/output/test-experiment/{completed_jsonl_file}", "r") as f:
-        responses = [dict(json.loads(line)) for line in f]
-
-    # test that the scorers got added to the completed file
-    assert len(responses) == 2
-    for response in responses:
-        if response["id"] == 0:
-            assert response["match"] is True
-            assert response["includes"] is True
-        elif response["id"] == 1:
-            assert response["match"] is False
-            assert response["includes"] is False
-        else:
-            assert False
-
-    # check the output files for the judge-test-experiment
-    completed_files = [
-        x for x in os.listdir("data/output/judge-test-experiment") if "completed" in x
-    ]
-    # should be 2 (one jsonl and one csv)
-    assert len(completed_files) == 2
-    completed_jsonl_file = [
-        file for file in completed_files if file.endswith(".jsonl")
-    ][0]
-    completed_csv_files = [file for file in completed_files if file.endswith(".csv")]
-    assert len(completed_csv_files) == 1
-
-    # load the output to check the scores have been added
-    with open(f"data/output/judge-test-experiment/{completed_jsonl_file}", "r") as f:
-        responses = [dict(json.loads(line)) for line in f]
-
-    # test that the scorers got added to the completed judge file
-    assert len(responses) == 4
-    for response in responses:
-        if response["id"] == "judge-judge2-template-0":
-            assert response["input-match"] is True
-            assert response["input-includes"] is True
-        elif response["id"] == "judge-judge2-template-1":
-            assert response["input-match"] is False
-            assert response["input-includes"] is False
-        elif response["id"] == "judge-judge2-template2-0":
-            assert response["input-match"] is True
-            assert response["input-includes"] is True
-        elif response["id"] == "judge-judge2-template2-1":
-            assert response["input-match"] is False
-            assert response["input-includes"] is False
-        else:
-            assert False

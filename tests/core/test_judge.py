@@ -305,6 +305,7 @@ def test_check_judge_init():
     assert judge.completed_responses == COMPLETED_RESPONSES
     assert judge.judge_settings == JUDGE_SETTINGS
     assert judge.template_prompts == tp
+    assert judge.judge_prompts == []
 
 
 def test_judge_create_judge_inputs_errors():
@@ -354,8 +355,7 @@ def test_judge_create_judge_inputs(capsys):
 
     # "judge1" case
     judge_1_inputs = judge.create_judge_inputs("judge1")
-    assert len(judge_1_inputs) == 2
-    assert judge_1_inputs == [
+    expected_result = [
         {
             "id": "judge-judge1-temp-0",
             "template_name": "temp",
@@ -379,6 +379,9 @@ def test_judge_create_judge_inputs(capsys):
             "input-response": "test response 2",
         },
     ]
+    assert len(judge_1_inputs) == 2
+    assert judge_1_inputs == expected_result
+    assert judge.judge_prompts == expected_result
 
     captured = capsys.readouterr()
     assert (
@@ -387,8 +390,7 @@ def test_judge_create_judge_inputs(capsys):
 
     # "judge2" case
     judge_2_inputs = judge.create_judge_inputs("judge2")
-    assert len(judge_2_inputs) == 2
-    assert judge_2_inputs == [
+    expected_result_2 = [
         {
             "id": "judge-judge2-temp-0",
             "template_name": "temp",
@@ -412,6 +414,9 @@ def test_judge_create_judge_inputs(capsys):
             "input-response": "test response 2",
         },
     ]
+    assert len(judge_2_inputs) == 2
+    assert judge_2_inputs == expected_result_2
+    assert judge.judge_prompts == expected_result_2
 
     captured = capsys.readouterr()
     assert (
@@ -429,8 +434,7 @@ def test_judge_create_judge_inputs_multiple_judges(capsys):
 
     # "judge1, judge2" case
     judge_1_2_inputs = judge.create_judge_inputs(["judge1", "judge2"])
-    assert len(judge_1_2_inputs) == 4
-    assert judge_1_2_inputs == [
+    expected_result = [
         {
             "id": "judge-judge1-temp-0",
             "template_name": "temp",
@@ -476,6 +480,9 @@ def test_judge_create_judge_inputs_multiple_judges(capsys):
             "input-response": "test response 2",
         },
     ]
+    assert len(judge_1_2_inputs) == 4
+    assert judge_1_2_inputs == expected_result
+    assert judge.judge_prompts == expected_result
 
     captured = capsys.readouterr()
     assert (
@@ -522,6 +529,7 @@ def test_judge_create_judge_file(temporary_data_folder_judge, capsys):
     assert (
         "Creating judge inputs for judge 'judge1' and template 'temp2'" in captured.err
     )
+    assert "Writing judge prompts to judge_file.jsonl" in captured.err
 
     # check the judge file was created
     assert os.path.isfile("judge_file.jsonl")
@@ -530,8 +538,7 @@ def test_judge_create_judge_file(temporary_data_folder_judge, capsys):
     with open("judge_file.jsonl", "r") as f:
         judge_inputs = [dict(json.loads(line)) for line in f]
 
-    assert len(judge_inputs) == 4
-    assert judge_inputs == [
+    expected_result = [
         {
             "id": "judge-judge1-temp-0",
             "template_name": "temp",
@@ -577,3 +584,7 @@ def test_judge_create_judge_file(temporary_data_folder_judge, capsys):
             "input-response": "test response 2",
         },
     ]
+
+    assert len(judge_inputs) == 4
+    assert judge_inputs == expected_result
+    assert judge.judge_prompts == expected_result
