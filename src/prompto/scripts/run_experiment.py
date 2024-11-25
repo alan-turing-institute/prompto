@@ -9,6 +9,7 @@ from dotenv import load_dotenv
 from prompto.experiment import Experiment
 from prompto.judge import Judge, load_judge_folder
 from prompto.rephrasal import Rephraser, load_rephrase_folder
+from prompto.rephrasal_parser import PARSER_FUNCTIONS, obtain_parser_functions
 from prompto.scorer import SCORING_FUNCTIONS, obtain_scoring_functions
 from prompto.settings import Settings
 from prompto.utils import copy_file, create_folder, move_file, parse_list_arg
@@ -525,6 +526,16 @@ async def main():
         default=None,
     )
     parser.add_argument(
+        "--rephrase-parser",
+        "-rp",
+        help=(
+            "Parser to be used. "
+            "This must be a key in the parser functions dictionary"
+        ),
+        type=str,
+        default=None,
+    ),
+    parser.add_argument(
         "--remove-original",
         "-ro",
         help=(
@@ -681,6 +692,9 @@ async def main():
             keep_original=not args.remove_original,
             completed_rephrase_responses=rephrase_experiment.completed_responses,
             out_filepath=rephrased_experiment_path,
+            parser=obtain_parser_functions(
+                parser=args.rephrase_parser, parser_functions_dict=PARSER_FUNCTIONS
+            )[0],
         )
 
         if args.only_rephrase:

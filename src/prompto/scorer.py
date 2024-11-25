@@ -1,9 +1,10 @@
 import logging
+from typing import Callable
 
 
 def obtain_scoring_functions(
-    scorer: str | list[str], scoring_functions_dict: dict[str, callable]
-) -> list[callable]:
+    scorer: str | list[str], scoring_functions_dict: dict[str, Callable]
+) -> list[Callable]:
     """
     Check if the scorer(s) provided are in the scoring_functions_dict.
 
@@ -12,13 +13,13 @@ def obtain_scoring_functions(
     scorer : str | list[str]
         A single scorer or a list of scorers to check if they
         are keys in the scoring_functions_dict dictionary
-    scoring_functions_dict : dict[str, callable]
+    scoring_functions_dict : dict[str, Callable]
         A dictionary of scoring functions with the keys as the
         scorer names and the values as the scoring functions
 
     Returns
     -------
-    list[callable]
+    list[Callable]
         List of scoring functions that correspond to the scorers
     """
     if isinstance(scorer, str):

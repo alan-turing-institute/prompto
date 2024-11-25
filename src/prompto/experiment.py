@@ -4,6 +4,7 @@ import logging
 import os
 import time
 from datetime import datetime
+from typing import Callable
 
 import pandas as pd
 from tqdm import tqdm
@@ -318,7 +319,7 @@ class Experiment:
         return queries_and_rates_per_group
 
     async def process(
-        self, evaluation_funcs: list[callable] | None = None
+        self, evaluation_funcs: list[Callable] | None = None
     ) -> tuple[dict, float]:
         """
         Function to process the experiment.
@@ -336,7 +337,7 @@ class Experiment:
 
         Parameters
         ----------
-        evaluation_funcs : list[callable], optional
+        evaluation_funcs : list[Callable], optional
             List of evaluation functions to run on the completed responses.
             Each function should take a prompt_dict as input and return a prompt dict
             as output. The evaluation functions can use keys in the prompt_dict to
@@ -452,7 +453,7 @@ class Experiment:
         attempt: int,
         rate_limit: int,
         group: str | None = None,
-        evaluation_funcs: list[callable] | None = None,
+        evaluation_funcs: list[Callable] | None = None,
     ) -> tuple[list[dict], list[dict | Exception]]:
         """
         Send requests to the API asynchronously.
@@ -538,7 +539,7 @@ class Experiment:
         prompt_dicts: list[dict],
         rate_limit: int,
         group: str | None = None,
-        evaluation_funcs: list[callable] | None = None,
+        evaluation_funcs: list[Callable] | None = None,
     ) -> None:
         """
         Send requests to the API asynchronously and retry failed queries
@@ -612,7 +613,7 @@ class Experiment:
         prompt_dict: dict,
         index: int | str | None,
         attempt: int,
-        evaluation_funcs: list[callable] | None = None,
+        evaluation_funcs: list[Callable] | None = None,
     ) -> dict | Exception:
         """
         Send request to generate response from a LLM and record the response in a jsonl file.
@@ -729,7 +730,7 @@ class Experiment:
         self,
         prompt_dict: dict,
         index: int | None,
-        evaluation_funcs: list[callable] | None = None,
+        evaluation_funcs: list[Callable] | None = None,
     ) -> dict:
         """
         Generate text by querying an LLM.
@@ -783,7 +784,7 @@ class Experiment:
         return response
 
     async def evaluate_responses(
-        self, prompt_dict, evaluation_funcs: list[callable]
+        self, prompt_dict, evaluation_funcs: list[Callable]
     ) -> dict:
         """
         Runs evaluation functions on a prompt dictionary. Note that the list of functions
@@ -794,7 +795,7 @@ class Experiment:
         prompt_dict : dict
             Dictionary for the evaluation functions to run on. Note: in the process function,
             this will be run on self.completed_responses.
-        evaluation_funcs : list[callable]
+        evaluation_funcs : list[Callable]
             List of evaluation functions to run on the completed responses. Each function should
             take a prompt_dict as input and return a prompt dict as output. The evaluation
             functions can use keys in the prompt_dict to parameterise the functions.
