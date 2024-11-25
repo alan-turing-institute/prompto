@@ -688,13 +688,18 @@ async def main():
         rephrased_experiment_path = (
             f"{settings.input_folder}/{rephrased_experiment_file_name}"
         )
+        if args.rephrase_parser is not None:
+            parser_function = obtain_parser_functions(
+                parser=args.rephrase_parser, parser_functions_dict=PARSER_FUNCTIONS
+            )[0]
+        else:
+            parser_function = None
+
         rephraser.create_new_input_file(
             keep_original=not args.remove_original,
             completed_rephrase_responses=rephrase_experiment.completed_responses,
             out_filepath=rephrased_experiment_path,
-            parser=obtain_parser_functions(
-                parser=args.rephrase_parser, parser_functions_dict=PARSER_FUNCTIONS
-            )[0],
+            parser=parser_function,
         )
 
         if args.only_rephrase:
