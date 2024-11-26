@@ -339,7 +339,7 @@ class Rephraser:
                 "id": id,
                 "prompt": resp,
                 "input-prompt": rephrased_prompt["input-prompt"],
-                "input-id": rephrased_prompt.get("input-id", "MA"),
+                "input-id": rephrased_prompt.get("input-id", "NA"),
             }
 
             # restore the original input keys (e.g. "api", "model_name", "parameters")
