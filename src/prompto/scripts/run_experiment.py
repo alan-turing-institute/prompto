@@ -735,6 +735,8 @@ async def main():
             destination=destination,
         )
 
+        return None
+
     # process the experiment
     logging.info(f"Starting processing experiment: {experiment.input_file_path}...")
     await experiment.process(evaluation_funcs=scoring_functions)
