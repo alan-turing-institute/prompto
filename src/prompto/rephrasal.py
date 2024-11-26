@@ -1,6 +1,7 @@
 import json
 import logging
 import os
+from typing import Callable
 
 from tqdm import tqdm
 
@@ -280,7 +281,9 @@ class Rephraser:
         return rephrase_prompts
 
     @staticmethod
-    def _convert_rephrased_prompt_dict_to_input(rephrased_prompt: dict) -> dict:
+    def _convert_rephrased_prompt_dict_to_input(
+        rephrased_prompt: dict, parser: Callable | None = None
+    ) -> dict | list[dict]:
         """
         Method to convert a completed rephrased prompt dictionary to an input prompt dictionary.
         This is done by:
@@ -298,6 +301,10 @@ class Rephraser:
             A dictionary containing the rephrased prompt. Should usually contain
             the keys "id", "prompt", "input-prompt" and "input-id". Should also
             contain "input-api", "input-model_name" and "input-parameters" keys
+        parser : Callable, optional
+            A parser function to apply to the rephrased prompt response. This
+            function should take a string and return a string or a list of strings.
+            If None, no parser will be applied to the rephrased prompt response
 
         Returns
         -------
@@ -308,25 +315,51 @@ class Rephraser:
             The "id" key will indicate the rephrased prompt id. The "api", "model_name",
             and other keys from the original input will be restored
         """
-        input_prompt = {
-            "id": rephrased_prompt["id"],
-            "prompt": rephrased_prompt["response"],
-            "input-prompt": rephrased_prompt["input-prompt"],
-            "input-id": rephrased_prompt.get("input-id", "MA"),
-        }
+        # apply parser (if it is provided) to response in the rephrased_prompt
+        # this may return a single string or a list of strings
+        if parser is not None:
+            response = parser(rephrased_prompt["response"])
+            if isinstance(response, str):
+                response = [response]
 
-        # restore the original input keys (e.g. "api", "model_name", "parameters")
-        for k, v in rephrased_prompt.items():
-            if k.startswith("input-") and k not in ["input-prompt", "input-id"]:
-                input_prompt[k[6:]] = v
+            if not isinstance(response, list):
+                raise TypeError(
+                    "Applying parser on rephrased_prompt['response'] must return a string or list of strings"
+                )
+        else:
+            response = [rephrased_prompt["response"]]
 
-        return input_prompt
+        input_prompts = []
+        for i, resp in enumerate(response):
+            id = rephrased_prompt["id"]
+            if len(response) > 1:
+                id = f"{id}-{i}"
+
+            new_prompt_dict = {
+                "id": id,
+                "prompt": resp,
+                "input-prompt": rephrased_prompt["input-prompt"],
+                "input-id": rephrased_prompt.get("input-id", "NA"),
+            }
+
+            # restore the original input keys (e.g. "api", "model_name", "parameters")
+            for k, v in rephrased_prompt.items():
+                if k.startswith("input-") and k not in ["input-prompt", "input-id"]:
+                    new_prompt_dict[k[6:]] = v
+
+            input_prompts.append(new_prompt_dict)
+
+        if len(response) == 1:
+            return input_prompts[0]
+
+        return input_prompts
 
     def create_new_input_file(
         self,
         keep_original: bool,
         completed_rephrase_responses: list[dict],
         out_filepath: str,
+        parser: Callable | None = None,
     ) -> list[dict]:
         """
         Method to create a new input file given the original input prompts and
@@ -349,6 +382,10 @@ class Rephraser:
         out_filepath : str
             The path to the output file where the new input prompts will
             be saved as a jsonl file
+        parser : Callable, optional
+            A parser function to apply to the rephrased prompt response. This
+            function should take a string and return a string or a list of strings.
+            If None, no parser will be applied to the rephrased prompt response
 
         Returns
         -------
@@ -363,10 +400,15 @@ class Rephraser:
             raise ValueError("out_filepath must end with '.jsonl'")
 
         # obtain the new rephrased prompts
-        new_input_prompts = [
-            self._convert_rephrased_prompt_dict_to_input(rephrased_prompt)
-            for rephrased_prompt in completed_rephrase_responses
-        ]
+        new_input_prompts = []
+        for rephrased_prompt in completed_rephrase_responses:
+            input_prompts = self._convert_rephrased_prompt_dict_to_input(
+                rephrased_prompt, parser=parser
+            )
+            if isinstance(input_prompts, dict):
+                new_input_prompts.append(input_prompts)
+            else:
+                new_input_prompts += input_prompts
 
         # add the original input prompts if keep_original is True
         if keep_original:
