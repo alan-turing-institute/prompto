@@ -65,12 +65,12 @@ def split_numbered_list(text: str) -> list[str]:
     # split the text and clean each part
     parts = re.split(pattern, text)
 
+    # strip whitespace and newlines from each part
+    parts = [remove_quotation_marks(remove_brackets(part).strip()) for part in parts]
+
     # remove empty strings from the beginning if they exist
     if parts and not parts[0]:
         parts = parts[1:]
-
-    # strip whitespace and newlines from each part
-    parts = [remove_quotation_marks(remove_brackets(part).strip()) for part in parts]
 
     return parts
 
