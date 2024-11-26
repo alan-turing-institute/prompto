@@ -160,9 +160,12 @@ class HuggingfaceTGIAPI(AsyncAPI):
 
         # obtain model name
         model_name = prompt_dict["model_name"]
-        api_key = get_environment_variable(
-            env_variable=API_KEY_VAR_NAME, model_name=model_name
-        )
+        try:
+            api_key = get_environment_variable(
+                env_variable=API_KEY_VAR_NAME, model_name=model_name
+            )
+        except KeyError:
+            api_key = "-"
         api_endpoint = get_environment_variable(
             env_variable=API_ENDPOINT_VAR_NAME, model_name=model_name
         )
@@ -185,7 +188,7 @@ class HuggingfaceTGIAPI(AsyncAPI):
             )
 
         # obtain mode (default is chat)
-        mode = prompt_dict.get("mode", "completion")
+        mode = prompt_dict.get("mode", "chat")
         if mode not in ["chat", "completion"]:
             raise ValueError(f"mode must be 'chat' or 'completion', not {mode}")
 
