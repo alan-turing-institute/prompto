@@ -707,6 +707,7 @@ async def main():
                 "Only rephrasing the experiment, not processing it. "
                 f"See rephrased prompts in {rephrased_experiment_path}!"
             )
+            return None
 
         original_experiment_file_path = experiment.input_file_path
         original_experiment_name = experiment.experiment_name
@@ -734,8 +735,6 @@ async def main():
             source=original_experiment_file_path,
             destination=destination,
         )
-
-        return None
 
     # process the experiment
     logging.info(f"Starting processing experiment: {experiment.input_file_path}...")
