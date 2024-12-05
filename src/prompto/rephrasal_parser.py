@@ -57,10 +57,11 @@ def remove_quotation_marks(text: str) -> str:
 
 def split_numbered_list(text: str) -> list[str]:
     # regex pattern matches:
-    # - Starts with one or more digits (\d+)
+    # - Starts with one or more digits (\d+) at the
+    #   beginning of the line (^) or after a newline
     # - followed by a period (\.)
     # - followed by optional whitespace (\s*)
-    pattern = r"\d+\.\s*"
+    pattern = r"(?<=\n|^)\d+\.\s*"
 
     # split the text and clean each part
     parts = re.split(pattern, text)
