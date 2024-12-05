@@ -1,0 +1,1 @@
+29-10-2024, 15:36: Completed experiment: anthropic-multimodal-example.jsonl! Experiment processing time: 9.878 seconds, Average time per query: 3.293 seconds
