@@ -1,7 +1,6 @@
 ## Quart API
 
-To query models from Huggingface that are not available via the `text-generation-inference` API, we have written a simple [script to start up a Quart API](https://github.com/alan-turing-institute/prompto/blob/main/src/prompto/apis/quart/quart_api.py)
-``` that can be used to query a text-generation model from the [Huggingface model hub](https://huggingface.co/models) using the Huggingface `transformers` library. This can be started using the `prompto_quart_server` command, e.g.
+To query models from Huggingface that are not available via the `text-generation-inference` API, we have written a simple [script to start up a Quart API](https://github.com/alan-turing-institute/prompto/blob/main/src/prompto/apis/quart/quart_api.py) that can be used to query a text-generation model from the [Huggingface model hub](https://huggingface.co/models) using the Huggingface `transformers` library. This can be started using the `prompto_quart_server` command, e.g.
 ```bash
 prompto_quart_server \
     --model-name vicgalle/gpt2-open-instruct-v1 \
