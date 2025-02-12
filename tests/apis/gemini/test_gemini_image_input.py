@@ -1,6 +1,8 @@
-from prompto.apis.gemini.gemini_utils import parse_parts_value
-from PIL import Image
 import os
+
+from PIL import Image
+
+from prompto.apis.gemini.gemini_utils import parse_parts_value
 
 
 def test_parse_parts_value_text():
