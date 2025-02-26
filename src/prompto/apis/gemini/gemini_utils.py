@@ -39,27 +39,20 @@ def parse_parts_value(part: dict | str, media_folder: str) -> any:
     if media is None:
         raise ValueError("File location is not specified")
 
-    # create Part object based on multimedia type
     if type == "text":
         return media
     else:
-        if type == "image":
-            media_file_path = os.path.join(media_folder, media)
-            return PIL.Image.open(media_file_path)
-        elif type == "video" or type == "file" or type == "audio":
-            if uploaded_filename is None:
-                raise ValueError(
-                    f"File {media} not uploaded. Please upload the file first."
-                )
-            else:
-                try:
-                    return get_file(name=uploaded_filename)
-                except Exception as err:
-                    raise ValueError(
-                        f"Failed to get file: {media} due to error: {type(err).__name__} - {err}"
-                    )
+        if uploaded_filename is None:
+            raise ValueError(
+                f"File {media} not uploaded. Please upload the file first."
+            )
         else:
-            raise ValueError(f"Unsupported multimedia type: {type}")
+            try:
+                return get_file(name=uploaded_filename)
+            except Exception as err:
+                raise ValueError(
+                    f"Failed to get file: {media} due to error: {type(err).__name__} - {err}"
+                )
 
 
 def parse_parts(parts: list[dict | str] | dict | str, media_folder: str) -> list[any]:
