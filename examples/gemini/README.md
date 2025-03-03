@@ -11,7 +11,8 @@ prompto_run_experiment --file data/input/gemini-example.jsonl --max-queries 30
 
 ## Multimodal prompting
 
-Multimodal prompting is available with the Gemini API. We provide an example notebook in the [Multimodal prompting with Vertex AI notebook](./gemini-multimodal.ipynb) and example experiment file in [data/input/gemini-multimodal-example.jsonl](https://github.com/alan-turing-institute/prompto/blob/main/examples/gemini/data/input/gemini-multimodal-example.jsonl). You can run it with the following command:
+Multimodal prompting is available with the Gemini API. To use it, you first need to upload your files to a dedicated cloud storage using the [File API](https://ai.google.dev/api/files#v1beta.files). To support you with this step, we provide a [notebook](./gemini-upload.ipynb) which takes your multimedia prompts as input and will add to each of your `media` elements a corresponding `uploaded_filename` key/value. You can test this with the example experiment file in [data/input/gemini-multimodal-example.jsonl](https://github.com/alan-turing-institute/prompto/blob/main/examples/gemini/data/input/gemini-multimodal-example.jsonl).
+Then, we provide an example notebook in the [Multimodal prompting with Vertex AI notebook](./gemini-multimodal.ipynb). You can run it with the following command:
 ```bash
 prompto_run_experiment --file data/input/gemini-multimodal-example.jsonl --max-queries 30
 ```
