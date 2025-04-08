@@ -1,10 +1,23 @@
 import asyncio
+import base64
+import hashlib
 import logging
 import os
 import shutil
 from datetime import datetime
 
 FILE_WRITE_LOCK = asyncio.Lock()
+
+
+def compute_sha256_base64(file_path, chunk_size=8192):
+    """
+    Compute the SHA256 hash of the file at 'file_path' and return it as a base64-encoded string.
+    """
+    hasher = hashlib.sha256()
+    with open(file_path, "rb") as f:
+        for chunk in iter(lambda: f.read(chunk_size), b""):
+            hasher.update(chunk)
+    return base64.b64encode(hasher.digest()).decode("utf-8")
 
 
 def sort_input_files_by_creation_time(input_folder: str) -> list[str]:
