@@ -143,7 +143,7 @@ def upload_media_parse_args():
         "-f",
         help=(
             "Path to the experiment file."
-            "It is not moved by the `upload media` command"
+            " This file is not moved by the `prompto_upload_media upload` command"
         ),
         type=str,
         required=True,
@@ -167,21 +167,19 @@ def upload_media_parse_args():
     upload_grp.add_argument(
         "--overwrite-output",
         "-w",
-        help="Overwrite output files (if they exist). This is required if you wish to overwrite the input file.",
+        help="Overwrite the output file (if it exist). If this is not specified the command will refuse to overwrite the output file if it already exists.",
         action="store_true",
         default=False,
     )
     upload_grp.set_defaults(func=do_upload_media)
 
-    # TODO: Make this mutually exclusive with `--output-file`, `--overwrite-output` etc
-    # delete_grp = parser.add_mutually_exclusive_group(required=False)
     delete_grp = subparsers.add_parser(
         name="delete",
         help="Delete previously uploaded files. No files will be uploaded.",
     )
     delete_grp.add_argument(
         "--confirm-delete-all",
-        help="Delete existing files. No files will be uploaded.",
+        help="Delete existing files. This option is required to confirm that you want to delete all previously uploaded files.",
         action="store_true",
         default=False,
         required=True,

@@ -1,12 +1,16 @@
 # Commands
 
-* [Running an experiment file](#running-an-experiment-file)
-* [Running the pipeline](#running-the-pipeline)
-* [Run checks on an experiment file](#run-checks-on-an-experiment-file)
-* [Create judge file](#create-judge-file)
-* [Obtain missing results jsonl file](#obtain-missing-results-jsonl-file)
-* [Convert images to correct form](#convert-images-to-correct-form)
-* [Start up Quart server](#start-up-quart-server)
+- [Commands](#commands)
+  - [Running an experiment file](#running-an-experiment-file)
+    - [Rephrasing prompts with `prompto`](#rephrasing-prompts-with-prompto)
+    - [Automatic evaluation using an LLM-as-judge](#automatic-evaluation-using-an-llm-as-judge)
+  - [Running the pipeline](#running-the-pipeline)
+  - [Run checks on an experiment file](#run-checks-on-an-experiment-file)
+  - [Create judge file](#create-judge-file)
+  - [Obtain missing results jsonl file](#obtain-missing-results-jsonl-file)
+  - [Convert images to correct form](#convert-images-to-correct-form)
+  - [Upload images](#upload-images)
+  - [Start up Quart server](#start-up-quart-server)
 
 ## Running an experiment file
 
@@ -130,6 +134,48 @@ The `prompto_convert_images` command can be used to convert images to the correc
 To convert images in a folder `./images` to the correct form, you can use the following command:
 ```
 prompto_convert_images --folder images
+```
+
+## Upload images 
+
+The `pompto_upload_media` will find media referenced from an experiment file and upload the files to the relevant API, so that future prompts can quickly reference the uploaded instance, rather than repeatedly uploading the file for each request. A new experiment file is created with the uploaded filenames, or the existing experiment file cna be updated in place. There are also options for listing or deleting previously uploaded files.
+
+Currently, only uploading to the "Gemini" API is is supported.
+
+There are three subcommands `upload`, `delete`, and `list`:
+
+```bash
+$ prompto_upload_media upload --help                                                                                                            integrate-upload 
+usage: prompto_upload_media upload [-h] --file FILE --data-folder DATA_FOLDER [--output-file OUTPUT_FILE] [--overwrite-output]
+
+options:
+  -h, --help            show this help message and exit
+  --file, -f FILE       Path to the experiment file. This file is not moved by the `prompto_upload_media upload` command
+  --data-folder, -d DATA_FOLDER
+                        Path to the folder containing the media files
+  --output-file, -o OUTPUT_FILE
+                        Path to new or updated output file. A updated version of the input file is created with the path to the media files updated. If `--output-file` is specified, this value will be used. If
+                        `--output-file` is not specified, a new file will be created with the same name as the input file, but with `_uploaded` appended to the name. The input file can be overwrite is both the
+                        `--overwrite-output` option is set and the `--output-file` specifies the same path as `--file`.
+  --overwrite-output, -w
+                        Overwrite the output file (if it exist). If this is not specified the command will refuse to overwrite the output file if it already exists.
+```
+
+```bash
+$ prompto_upload_media list --help                                                                                                             ✹integrate-upload 
+usage: prompto_upload_media list [-h]
+
+options:
+  -h, --help  show this help message and exit
+```
+
+```bash
+$ prompto_upload_media delete --help                                                                                                           ✹integrate-upload 
+usage: prompto_upload_media delete [-h] --confirm-delete-all
+
+options:
+  -h, --help            show this help message and exit
+  --confirm-delete-all  Delete existing files. This option is required to confirm that you want to delete all previously uploaded files.
 ```
 
 ## Start up Quart server
