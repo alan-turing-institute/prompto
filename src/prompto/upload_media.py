@@ -53,7 +53,7 @@ def _read_experiment_file(
             continue
 
         absolute_media_paths = {
-            f'{media_dir}/{el["media"]}'
+            os.path.join(media_dir, el["media"])
             for prompt in data["prompt"]
             for part in prompt.get("parts", [])
             if isinstance(el := part, dict) and "media" in el
@@ -159,7 +159,7 @@ def upload_media_parse_args():
     upload_grp.add_argument(
         "--output-file",
         "-o",
-        help="Path to new or updated output file. A updated version of the input file is created with the path to the media files updated. If `--output-file` is specified, this value will be used. If `--output-file` is not specified, a new file will be created with the same name as the input file, but with `_uploaded` appended to the name. The input file can be overwrite is both the `--overwrite-output` option is set and the `--output-file` specifies the same path as `--file`.",
+        help="Path to new or updated output file. A updated version of the input file is created with the path to the media files updated. If `--output-file` is specified, this value will be used. If `--output-file` is not specified, a new file will be created with the same name as the input file, but with `_uploaded` appended to the name. The input file can be overwritten if both the `--overwrite-output` option is set and the `--output-file` specifies the same path as `--file`.",
         type=str,
         default=None,
         required=False,
