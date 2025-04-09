@@ -114,7 +114,9 @@ def test_read_experiment_file(tmp_path):
         )
 
     # Call the function
-    actual_media_files, actual_prompt_dict_list = _read_experiment_file(str(experiment_file), str(media_dir))
+    actual_media_files, actual_prompt_dict_list = _read_experiment_file(
+        str(experiment_file), str(media_dir)
+    )
 
     # Check the media file results
     expected_media_files = {

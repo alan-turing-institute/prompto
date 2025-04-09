@@ -136,7 +136,8 @@ def upload_media_parse_args():
 
     upload_grp = subparsers.add_parser(
         name="upload",
-        help="Upload media files to the relevant API. The media files are uploaded and the experiment file is updated with the uploaded filenames.",)
+        help="Upload media files to the relevant API. The media files are uploaded and the experiment file is updated with the uploaded filenames.",
+    )
     upload_grp.add_argument(
         "--file",
         "-f",
@@ -183,7 +184,7 @@ def upload_media_parse_args():
         help="Delete existing files. No files will be uploaded.",
         action="store_true",
         default=False,
-        required=True
+        required=True,
     )
     delete_grp.set_defaults(func=do_delete_existing_files)
 
@@ -200,7 +201,8 @@ def upload_media_parse_args():
 def do_delete_existing_files(args):
     gemini_media.delete_uploaded_files()
     return
-    
+
+
 def do_list_uploaded_files(args):
     gemini_media.list_uploaded_files()
     return
@@ -227,6 +229,7 @@ def do_upload_media(args):
         output_file,
         data_folder,
     )
+
 
 def main():
     args = upload_media_parse_args()
