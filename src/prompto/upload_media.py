@@ -1,12 +1,22 @@
 import argparse
 import json
+import logging
 import os
 
 import prompto.apis.gemini.gemini_media as gemini_media
 from prompto.apis import ASYNC_APIS
 
+# initialise logging
+logger = logging.getLogger(__name__)
+logging.basicConfig(
+    datefmt=r"%Y-%m-%d %H:%M:%S",
+    format="%(asctime)s [%(levelname)8s] %(message)s",
+    level=logging.INFO,
+)
+
+
 UPLOAD_APIS = {
-    "gemini": gemini_media.upload_media,
+    "gemini": gemini_media.upload_media_files,
 }
 
 
@@ -120,7 +130,9 @@ def update_experiment_file(
                         if file_path in uploaded_files:
                             part["uploaded_filename"] = uploaded_files[file_path]
                         else:
-                            print(f"Failed to find {file_path} in uploaded_files")
+                            logger.warning(
+                                f"Failed to find {file_path} in uploaded_files"
+                            )
 
     # Write modified data back to the JSONL file
     with open(output_path, "w") as f:
@@ -129,8 +141,6 @@ def update_experiment_file(
 
 
 def upload_media_parse_args():
-    # parse command line arguments
-    # TODO: What are the needed arguments?
     parser = argparse.ArgumentParser()
     subparsers = parser.add_subparsers(required=True)
 
@@ -219,7 +229,7 @@ def do_upload_media(args):
     # Therefore we will just call the upload function
     # If in future we support other bulk upload to other APIs, we will need to
     # refactor here
-    uploaded_files = gemini_media.upload_media(files_to_upload)
+    uploaded_files = gemini_media.upload_media_files(files_to_upload)
 
     update_experiment_file(
         prompt_dict_list,
@@ -232,3 +242,8 @@ def do_upload_media(args):
 def main():
     args = upload_media_parse_args()
     args.func(args)
+
+
+# Only intended for testing purposes only
+if __name__ == "__main__":
+    main()

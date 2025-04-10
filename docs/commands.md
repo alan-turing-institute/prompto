@@ -136,16 +136,16 @@ To convert images in a folder `./images` to the correct form, you can use the fo
 prompto_convert_images --folder images
 ```
 
-## Upload images 
+## Upload images
 
-The `pompto_upload_media` will find media referenced from an experiment file and upload the files to the relevant API, so that future prompts can quickly reference the uploaded instance, rather than repeatedly uploading the file for each request. A new experiment file is created with the uploaded filenames, or the existing experiment file cna be updated in place. There are also options for listing or deleting previously uploaded files.
+The `pompto_upload_media` will find media referenced from an experiment file and upload the files to the relevant API, so that future prompts can quickly reference the uploaded instance, rather than repeatedly uploading the file for each request. A new experiment file is created with the uploaded filenames, or the existing experiment file can be updated in place. There are also options for listing or deleting previously uploaded files.
 
 Currently, only uploading to the "Gemini" API is is supported.
 
 There are three subcommands `upload`, `delete`, and `list`:
 
 ```bash
-$ prompto_upload_media upload --help                                                                                                            integrate-upload 
+$ prompto_upload_media upload --help                                                                                                            integrate-upload
 usage: prompto_upload_media upload [-h] --file FILE --data-folder DATA_FOLDER [--output-file OUTPUT_FILE] [--overwrite-output]
 
 options:
@@ -162,7 +162,7 @@ options:
 ```
 
 ```bash
-$ prompto_upload_media list --help                                                                                                             ✹integrate-upload 
+$ prompto_upload_media list --help                                                                                                             ✹integrate-upload
 usage: prompto_upload_media list [-h]
 
 options:
@@ -170,7 +170,7 @@ options:
 ```
 
 ```bash
-$ prompto_upload_media delete --help                                                                                                           ✹integrate-upload 
+$ prompto_upload_media delete --help                                                                                                           ✹integrate-upload
 usage: prompto_upload_media delete [-h] --confirm-delete-all
 
 options:
