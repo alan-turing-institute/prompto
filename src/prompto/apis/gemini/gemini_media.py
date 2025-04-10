@@ -126,11 +126,16 @@ def delete_uploaded_files():
     """
     _init_genai()
     uploaded_files = _get_previously_uploaded_files()
+    return asyncio.run(_delete_uploaded_files_async(uploaded_files))
 
-    # TODO: make this async
+
+async def _delete_uploaded_files_async(uploaded_files):
+    tasks = []
     for file_name in uploaded_files.values():
-        logger.info(f"Deleting file: {file_name}")
-        genai.delete_file(file_name)
+        logger.info(f"Preparing to delete file: {file_name}")
+        tasks.append(asyncio.to_thread(genai.delete_file, file_name))
+
+    await tqdm.asyncio.tqdm.gather(*tasks)
     logger.info("All uploaded files deleted.")
 
 
