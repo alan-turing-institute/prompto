@@ -11,6 +11,7 @@ from prompto.upload_media import (
     _resolve_output_file_location,
     check_uploads_by_api,
     update_experiment_file,
+    upload_media_parse_args,
 )
 
 
@@ -18,6 +19,56 @@ def test_upload_media_no_inputs():
     result = shell("prompto_upload_media")
     assert result.exit_code != 0
     assert "usage:" in result.stderr
+
+
+def test_upload_media_subcmd_upload_parse_args():
+
+    # Test the default output file location
+    with ArgvContext(
+        "prompto_upload_media",
+        "upload",
+        "--file",
+        "test_file.jsonl",
+        "--data-folder",
+        "test_data",
+    ):
+        args = upload_media_parse_args()
+        assert args.file == "test_file.jsonl"
+        assert args.data_folder == "test_data"
+        assert args.output_file is None
+        assert args.overwrite_output is False
+
+
+def test_upload_media_subcmd_list_parse_args():
+    # There are no options for the list subcommand
+    with ArgvContext(
+        "prompto_upload_media",
+        "list",
+    ):
+        args_vars = vars(upload_media_parse_args())
+        assert "func" in args_vars
+        assert len(args_vars) == 1
+
+
+def test_upload_media_subcmd_delete_parse_args():
+    # There is only one option for the delete subcommand
+
+    # Because the confirmation switch is not included, this
+    # instance should raise a usage warning and quit
+    result = shell("prompto_upload_media delete")
+    assert result.exit_code != 0
+    assert "usage:" in result.stderr
+    assert "confirm-delete-all" in result.stderr
+
+    # Now we can test the delete subcommand with the confirmation switch
+    # This should complete without error
+    with ArgvContext(
+        "prompto_upload_media",
+        "delete",
+        "--confirm-delete-all",
+    ):
+        args = upload_media_parse_args()
+        assert args.confirm_delete_all is True
 
 
 def test_supported_apis_list():
