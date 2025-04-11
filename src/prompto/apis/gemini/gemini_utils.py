@@ -1,8 +1,7 @@
 import os
 
+import google.generativeai as genai
 import PIL.Image
-# from google.generativeai import get_file
-import google.generativeai as ggai
 
 gemini_chat_roles = set(["user", "model"])
 
@@ -37,8 +36,6 @@ def parse_parts_value(part: dict | str, media_folder: str) -> any:
         raise ValueError("Multimedia type is not specified")
     # read file location
     media = part.get("media")
-    print(f"{media=}")
-    print(f"{type(media)=}")
     if media is None:
         raise ValueError("File location is not specified")
 
@@ -57,7 +54,7 @@ def parse_parts_value(part: dict | str, media_folder: str) -> any:
                 )
         else:
             try:
-                return ggai.get_file(name=uploaded_filename)
+                return genai.get_file(name=uploaded_filename)
             except Exception as err:
                 raise ValueError(
                     f"Failed to get file: {media} due to error: {type(err).__name__} - {err}"

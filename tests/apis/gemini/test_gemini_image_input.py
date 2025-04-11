@@ -1,7 +1,7 @@
 import os
 
-from PIL import Image
 import pytest
+from PIL import Image
 
 from prompto.apis.gemini.gemini_utils import parse_parts_value
 
@@ -55,9 +55,14 @@ def test_parse_parts_value_video_not_uploaded():
     assert "not uploaded" in str(excinfo.value)
 
 
-
 def test_parse_parts_value_video_uploaded(monkeypatch):
-    part = {"type": "video", "media": "pantani_giro.mp4", "uploaded_filename": "file/123456"}
+    part = {
+        "type": "video",
+        "media": "pantani_giro.mp4",
+        "uploaded_filename": "file/123456",
+    }
+    # This directory is not used in the test but it is a required
+    # parameter for the parse_parts_value function
     media_folder = "media"
 
     # Mock the google.generativeai get_file function
@@ -66,15 +71,16 @@ def test_parse_parts_value_video_uploaded(monkeypatch):
     # Instead, we will just return the uploaded_filename
     def mock_get_file(name):
         return name
-    
+
     # Replace the original get_file function with the mock
-    # ***It is important that the import statement used here is exactly the same as 
+    # ***It is important that the import statement used here is exactly the same as
     # the one in the gemini_utils.py file***
-    import google.generativeai as ggai
-    monkeypatch.setattr(ggai, "get_file", mock_get_file)
+    import google.generativeai as genai
+
+    monkeypatch.setattr(genai, "get_file", mock_get_file)
 
     # Assert that the mock function was called with the expected argument
-    assert ggai.get_file("check mocked function") == "check mocked function"
+    assert genai.get_file("check mocked function") == "check mocked function"
 
     expected_result = "file/123456"
     actual_result = parse_parts_value(part, media_folder)
