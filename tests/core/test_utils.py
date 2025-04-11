@@ -9,6 +9,7 @@ from prompto.utils import (
     check_max_queries_dict,
     check_optional_env_variables_set,
     check_required_env_variables_set,
+    compute_sha256_base64,
     copy_file,
     create_folder,
     get_environment_variable,
@@ -720,3 +721,18 @@ def test_parse_list_arg():
 def test_parse_list_arg_logging(caplog):
     assert parse_list_arg("judge1, judge2") == ["judge1", "judge2"]
     assert parse_list_arg("judge_3,judge_4,judge5") == ["judge_3", "judge_4", "judge5"]
+
+
+def test_compute_sha256_base64(tmp_path):
+    # Create a temporary file
+    temp_file = tmp_path / "test_file.txt"
+    with open(temp_file, "w") as f:
+        f.write("123456")
+
+    # Compute SHA256 base64
+    actual_result = compute_sha256_base64(temp_file)
+
+    # Determined separately using an online tool
+    # https://emn178.github.io/online-tools/sha256.html?input=123456&input_type=utf-8&output_type=base64&hmac_enabled=0&hmac_input_type=utf-8
+    expected_result = "jZae727K08KaOmKSgOaGzww/XVqGr/PKEgIMkjrcbJI="
+    assert actual_result == expected_result
