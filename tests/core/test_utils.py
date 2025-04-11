@@ -723,7 +723,6 @@ def test_parse_list_arg_logging(caplog):
     assert parse_list_arg("judge_3,judge_4,judge5") == ["judge_3", "judge_4", "judge5"]
 
 
-
 def test_compute_sha256_base64(tmp_path):
     # Create a temporary file
     temp_file = tmp_path / "test_file.txt"
