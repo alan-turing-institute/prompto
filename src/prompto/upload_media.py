@@ -126,7 +126,7 @@ def update_experiment_file(
             for prompt in data["prompt"]:
                 for part in prompt.get("parts", []):
                     if isinstance(part, dict) and "media" in part:
-                        file_path = f'{media_location}/{part["media"]}'
+                        file_path = os.path.join(media_location, part["media"])
                         if file_path in uploaded_files:
                             part["uploaded_filename"] = uploaded_files[file_path]
                         else:
