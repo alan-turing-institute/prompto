@@ -154,10 +154,10 @@ def upload_media_files(files_to_upload: set[str]):
         Dictionary mapping local file paths to their corresponding uploaded filenames.
     """
     _init_genai()
-    return asyncio.run(_upload_media_files_async(files_to_upload))
+    return asyncio.run(upload_media_files_async(files_to_upload))
 
 
-async def _upload_media_files_async(files_to_upload: set[str]):
+async def upload_media_files_async(files_to_upload: set[str]):
     start_time = time.time()
     logger.info(f"Start retrieving previously uploaded files ")
     uploaded_files = _get_previously_uploaded_files()

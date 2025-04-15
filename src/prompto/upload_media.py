@@ -1,10 +1,12 @@
 import argparse
+import asyncio
 import json
 import logging
 import os
 
 import prompto.apis.gemini.gemini_media as gemini_media
 from prompto.apis import ASYNC_APIS
+from prompto.scripts.run_experiment import load_env_file
 
 # initialise logging
 logger = logging.getLogger(__name__)
@@ -140,6 +142,19 @@ def update_experiment_file(
             f.write(json.dumps(data) + "\n")
 
 
+def _common_cmdline_args(parser: argparse.ArgumentParser):
+    """
+    Add common command line arguments to the parser.
+    """
+    parser.add_argument(
+        "--env-file",
+        "-e",
+        help="Path to the environment file",
+        type=str,
+        default=".env",
+    )
+
+
 def upload_media_parse_args():
     parser = argparse.ArgumentParser()
     subparsers = parser.add_subparsers(required=True)
@@ -159,11 +174,10 @@ def upload_media_parse_args():
         required=True,
     )
     upload_grp.add_argument(
-        "--data-folder",
-        "-d",
+        "--media-folder",
+        "-m",
         help="Path to the folder containing the media files",
         type=str,
-        default="data",
         required=True,
     )
     upload_grp.add_argument(
@@ -181,7 +195,8 @@ def upload_media_parse_args():
         action="store_true",
         default=False,
     )
-    upload_grp.set_defaults(func=do_upload_media)
+    _common_cmdline_args(upload_grp)
+    upload_grp.set_defaults(func=_do_upload_media_from_args)
 
     delete_grp = subparsers.add_parser(
         name="delete",
@@ -194,12 +209,14 @@ def upload_media_parse_args():
         default=False,
         required=True,
     )
+    _common_cmdline_args(delete_grp)
     delete_grp.set_defaults(func=do_delete_existing_files)
 
     list_grp = subparsers.add_parser(
         name="list",
         help="List previously uploaded files.",
     )
+    _common_cmdline_args(list_grp)
     list_grp.set_defaults(func=do_list_uploaded_files)
 
     args = parser.parse_args()
@@ -216,31 +233,62 @@ def do_list_uploaded_files(args):
     return
 
 
-def do_upload_media(args):
+def _do_upload_media_from_args(args):
+    """
+    Upload media files to the relevant API. The media files are uploaded and the experiment
+    file is updated with the uploaded filenames. The output file location is resolved - either
+    the default location (based on the input file) or the location specified by the user. The
+    logic for choosing the default output file location, and whether or not to overwrite existing
+    files is implemented in the `_resolve_output_file_location`.
+
+    This function is mostly a wrapper around the `do_upload_media` function, for the convenience
+    of calling it from the command line. It is not intended to be used directly outside of this module.
+
+    Parameters
+    ----------
+    args : argparse.Namespace
+    """
     _resolve_output_file_location(args)
+    asyncio.run(do_upload_media(args.file, args.media_folder, args.output_file))
 
-    input_file = args.file
-    data_folder = args.data_folder
-    output_file = args.output_file
 
-    files_to_upload, prompt_dict_list = _read_experiment_file(input_file, data_folder)
+async def do_upload_media(input_file, media_folder, output_file):
+    """
+    Upload media files to the relevant API. The media files are uploaded and the experiment
+    file is updated with the uploaded filenames.
+
+    Parameters
+    ----------
+    input_file : str
+
+        Path to the experiment file.
+    media_folder : str
+        Path to the folder containing the media files.
+    output_file : str
+        Path to new or updated output file. This can be the same as the input file in which
+        case the input file will be overwritten. No checking of this behaviour is included in this
+        function. It is assumed that the overwrite logic has been implemented elsewhere.
+    """
+    files_to_upload, prompt_dict_list = _read_experiment_file(input_file, media_folder)
 
     # At present we only support the gemini API
     # Therefore we will just call the upload function
     # If in future we support other bulk upload to other APIs, we will need to
     # refactor here
-    uploaded_files = gemini_media.upload_media_files(files_to_upload)
+
+    uploaded_files = await gemini_media.upload_media_files_async(files_to_upload)
 
     update_experiment_file(
         prompt_dict_list,
         uploaded_files,
         output_file,
-        data_folder,
+        media_folder,
     )
 
 
 def main():
     args = upload_media_parse_args()
+    load_env_file(args.env_file)
     args.func(args)
 
 
