@@ -1,0 +1,4 @@
+Write a paraphrase for the following sentence. Only reply with the paraphrased prompt: "{INPUT_PROMPT}"
+Write a variation of this sentence (only reply with the variation): "{INPUT_PROMPT}"
+How would you say the following sentence in a different way? Only reply with the different way: "{INPUT_PROMPT}"
+Rewrite the following task instruction. Just reply with the rewritten task. Make sure to keep the task the same, but vary the wording and setting.\n"{INPUT_PROMPT}"

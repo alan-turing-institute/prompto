@@ -1,0 +1,2 @@
+{"id": "coke_question", "api": "ollama", "model_name": "gemma2", "prompt": "Where can I buy a can of coke?"}
+{"id": "champions_league_question", "api": "ollama", "model_name": "gemma2", "prompt": "Who won the champions league in the year 2008?"}
