@@ -29,25 +29,26 @@ def test_upload_media_subcmd_upload_parse_args():
         "upload",
         "--file",
         "test_file.jsonl",
-        "--data-folder",
-        "test_data",
+        "--media-folder",
+        "media_data",
     ):
         args = upload_media_parse_args()
         assert args.file == "test_file.jsonl"
-        assert args.data_folder == "test_data"
+        assert args.media_folder == "media_data"
         assert args.output_file is None
         assert args.overwrite_output is False
 
 
 def test_upload_media_subcmd_list_parse_args():
-    # There are no options for the list subcommand
+    # The only option for the list subcommand is the --env-file option
     with ArgvContext(
         "prompto_upload_media",
         "list",
     ):
         args_vars = vars(upload_media_parse_args())
         assert "func" in args_vars
-        assert len(args_vars) == 1
+        assert "env_file" in args_vars
+        assert len(args_vars) == 2
 
 
 def test_upload_media_subcmd_delete_parse_args():
