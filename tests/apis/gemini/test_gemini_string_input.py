@@ -2,6 +2,8 @@ import logging
 from unittest.mock import AsyncMock, Mock, patch
 
 import pytest
+from google.genai.client import AsyncClient
+from google.genai.models import AsyncModels
 
 from prompto.apis.gemini import GeminiAPI
 from prompto.settings import Settings
@@ -32,8 +34,13 @@ async def test_gemini_query_string_no_env_var(
 
 
 @pytest.mark.asyncio
-@patch(
-    "google.generativeai.GenerativeModel.generate_content_async", new_callable=AsyncMock
+# @patch(
+#     "google.generativeai.GenerativeModel.generate_content_async", new_callable=AsyncMock
+# )
+@patch.object(
+    AsyncModels,
+    "generate_content",
+    new_callable=AsyncMock,
 )
 @patch("prompto.apis.gemini.gemini.process_response", new_callable=Mock)
 @patch("prompto.apis.gemini.gemini.process_safety_attributes", new_callable=Mock)
@@ -52,11 +59,14 @@ async def test_gemini_query_string(
     monkeypatch.setenv("GEMINI_API_KEY", "DUMMY")
     gemini_api = GeminiAPI(settings=settings, log_file=log_file)
 
-    # mock the response from the API
-    # NOTE: The actual response from the API is a
-    # google.generativeai.types.AsyncGenerateContentResponse object
+    # Mock the response from the API
+    # NOTE: The actual response from the API is a (probably)
+    # google.genai.types.GenerateContentResponse object
     # not a string value, but for the purpose of this test, we are using a string value
     # and testing that this is the input to the process_response function
+    # TODO: Check if there is a difference in the return type of
+    # `google.genai.client.aio.models.generate_content`` and
+    # `google.genai.client.models.generate_content`
     mock_gemini_call.return_value = "response Messages object"
 
     # mock the process_response function
@@ -96,8 +106,13 @@ async def test_gemini_query_string(
 
 
 @pytest.mark.asyncio
-@patch(
-    "google.generativeai.GenerativeModel.generate_content_async", new_callable=AsyncMock
+# @patch(
+#     "google.generativeai.GenerativeModel.generate_content_async", new_callable=AsyncMock
+# )
+@patch.object(
+    AsyncModels,
+    "generate_content",
+    new_callable=AsyncMock,
 )
 async def test_gemini_query_string__index_error(
     mock_gemini_call, prompt_dict_string, temporary_data_folders, monkeypatch, caplog
@@ -142,8 +157,13 @@ async def test_gemini_query_string__index_error(
 
 
 @pytest.mark.asyncio
-@patch(
-    "google.generativeai.GenerativeModel.generate_content_async", new_callable=AsyncMock
+# @patch(
+#     "google.generativeai.GenerativeModel.generate_content_async", new_callable=AsyncMock
+# )
+@patch.object(
+    AsyncModels,
+    "generate_content",
+    new_callable=AsyncMock,
 )
 async def test_gemini_query_string_error(
     mock_gemini_call, prompt_dict_string, temporary_data_folders, monkeypatch, caplog

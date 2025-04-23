@@ -2,7 +2,9 @@ import logging
 from unittest.mock import AsyncMock, Mock, patch
 
 import pytest
-from google.generativeai import GenerativeModel
+
+# from google.generativeai import GenerativeModel
+from google.genai.chats import AsyncChats, Chat
 
 from prompto.apis.gemini import GeminiAPI
 from prompto.settings import Settings
@@ -34,8 +36,13 @@ async def test_gemini_query_chat_no_env_var(
 
 
 @pytest.mark.asyncio
-@patch(
-    "google.generativeai.ChatSession.send_message_async", new_callable=CopyingAsyncMock
+# @patch(
+#     "google.generativeai.ChatSession.send_message_async", new_callable=CopyingAsyncMock
+# )
+@patch.object(
+    Chat,
+    "send_message",
+    new_callable=CopyingAsyncMock,
 )
 @patch("prompto.apis.gemini.gemini.process_response", new_callable=Mock)
 @patch("prompto.apis.gemini.gemini.process_safety_attributes", new_callable=Mock)
@@ -125,7 +132,12 @@ async def test_gemini_query_chat(
 
 
 @pytest.mark.asyncio
-@patch("google.generativeai.GenerativeModel.start_chat", new_callable=Mock)
+# @patch("google.generativeai.GenerativeModel.start_chat", new_callable=Mock)
+@patch.object(
+    AsyncChats,
+    "create",
+    new_callable=AsyncMock,
+)
 @patch(
     "prompto.apis.gemini.gemini.GeminiAPI._obtain_model_inputs", new_callable=AsyncMock
 )
@@ -165,8 +177,13 @@ async def test_gemini_query_history_check_chat_init(
 
 
 @pytest.mark.asyncio
-@patch(
-    "google.generativeai.ChatSession.send_message_async", new_callable=CopyingAsyncMock
+# @patch(
+#     "google.generativeai.ChatSession.send_message_async", new_callable=CopyingAsyncMock
+# )
+@patch.object(
+    Chat,
+    "send_message",
+    new_callable=CopyingAsyncMock,
 )
 async def test_gemini_query_chat_index_error_1(
     mock_gemini_call, prompt_dict_chat, temporary_data_folders, monkeypatch, caplog
@@ -212,8 +229,13 @@ async def test_gemini_query_chat_index_error_1(
 
 
 @pytest.mark.asyncio
-@patch(
-    "google.generativeai.ChatSession.send_message_async", new_callable=CopyingAsyncMock
+# @patch(
+#     "google.generativeai.ChatSession.send_message_async", new_callable=CopyingAsyncMock
+# )
+@patch.object(
+    Chat,
+    "send_message",
+    new_callable=CopyingAsyncMock,
 )
 async def test_gemini_query_chat_error_1(
     mock_gemini_call, prompt_dict_chat, temporary_data_folders, monkeypatch, caplog
@@ -251,8 +273,13 @@ async def test_gemini_query_chat_error_1(
 
 
 @pytest.mark.asyncio
-@patch(
-    "google.generativeai.ChatSession.send_message_async", new_callable=CopyingAsyncMock
+# @patch(
+#     "google.generativeai.ChatSession.send_message_async", new_callable=CopyingAsyncMock
+# )
+@patch.object(
+    Chat,
+    "send_message",
+    new_callable=CopyingAsyncMock,
 )
 @patch("prompto.apis.gemini.gemini.process_response", new_callable=Mock)
 @patch("prompto.apis.gemini.gemini.process_safety_attributes", new_callable=Mock)
@@ -331,8 +358,13 @@ async def test_gemini_query_chat_index_error_2(
 
 
 @pytest.mark.asyncio
-@patch(
-    "google.generativeai.ChatSession.send_message_async", new_callable=CopyingAsyncMock
+# @patch(
+#     "google.generativeai.ChatSession.send_message_async", new_callable=CopyingAsyncMock
+# )
+@patch.object(
+    Chat,
+    "send_message",
+    new_callable=CopyingAsyncMock,
 )
 @patch("prompto.apis.gemini.gemini.process_response", new_callable=Mock)
 @patch("prompto.apis.gemini.gemini.process_safety_attributes", new_callable=Mock)

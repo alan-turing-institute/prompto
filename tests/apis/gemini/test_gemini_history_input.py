@@ -2,16 +2,16 @@ import logging
 from unittest.mock import AsyncMock, Mock, patch
 
 import pytest
-from google.generativeai import GenerativeModel
+
+# from google.generativeai import GenerativeModel
+from google.genai.chats import AsyncChats, Chat
 
 from prompto.apis.gemini import GeminiAPI
 from prompto.settings import Settings
 
-from .test_gemini import (
-    DEFAULT_SAFETY_SETTINGS,
-    prompt_dict_history,
-    prompt_dict_history_no_system,
-)
+from .test_gemini import prompt_dict_history  # nopa: F401
+from .test_gemini import prompt_dict_history_no_system  # nopa: F401
+from .test_gemini import DEFAULT_SAFETY_SETTINGS
 
 pytest_plugins = ("pytest_asyncio",)
 
@@ -37,7 +37,12 @@ async def test_gemini_query_history_no_env_var(
 
 
 @pytest.mark.asyncio
-@patch("google.generativeai.ChatSession.send_message_async", new_callable=AsyncMock)
+# @patch("google.generativeai.ChatSession.send_message_async", new_callable=AsyncMock)
+@patch.object(
+    Chat,
+    "send_message",
+    new_callable=AsyncMock,
+)
 @patch("prompto.apis.gemini.gemini.process_response", new_callable=Mock)
 @patch("prompto.apis.gemini.gemini.process_safety_attributes", new_callable=Mock)
 async def test_gemini_query_history(
@@ -55,9 +60,9 @@ async def test_gemini_query_history(
     monkeypatch.setenv("GEMINI_API_KEY", "DUMMY")
     gemini_api = GeminiAPI(settings=settings, log_file=log_file)
 
-    # mock the response from the API
+    # Mock the response from the API
     # NOTE: The actual response from the API is a
-    # google.generativeai.types.AsyncGenerateContentResponse object
+    # google.genai.types.GenerateContentResponse object
     # not a string value, but for the purpose of this test, we are using a string value
     # and testing that this is the input to the process_response function
     mock_gemini_call.return_value = "response Messages object"
@@ -99,7 +104,12 @@ async def test_gemini_query_history(
 
 
 @pytest.mark.asyncio
-@patch("google.generativeai.ChatSession.send_message_async", new_callable=AsyncMock)
+# @patch("google.generativeai.ChatSession.send_message_async", new_callable=AsyncMock)
+@patch.object(
+    Chat,
+    "send_message",
+    new_callable=AsyncMock,
+)
 async def test_gemini_query_history_error(
     mock_gemini_call, prompt_dict_history, temporary_data_folders, monkeypatch, caplog
 ):
@@ -135,7 +145,12 @@ async def test_gemini_query_history_error(
 
 
 @pytest.mark.asyncio
-@patch("google.generativeai.ChatSession.send_message_async", new_callable=AsyncMock)
+# @patch("google.generativeai.ChatSession.send_message_async", new_callable=AsyncMock)
+@patch.object(
+    Chat,
+    "send_message",
+    new_callable=AsyncMock,
+)
 async def test_gemini_query_history_index_error(
     mock_gemini_call, prompt_dict_history, temporary_data_folders, monkeypatch, caplog
 ):
@@ -179,7 +194,12 @@ async def test_gemini_query_history_index_error(
 
 
 @pytest.mark.asyncio
-@patch("google.generativeai.GenerativeModel.start_chat", new_callable=Mock)
+# @patch("google.generativeai.GenerativeModel.start_chat", new_callable=Mock)
+@patch.object(
+    AsyncChats,
+    "create",
+    new_callable=AsyncMock,
+)
 @patch(
     "prompto.apis.gemini.gemini.GeminiAPI._obtain_model_inputs", new_callable=AsyncMock
 )
@@ -221,7 +241,12 @@ async def test_gemini_query_history_check_chat_init(
 
 
 @pytest.mark.asyncio
-@patch("google.generativeai.ChatSession.send_message_async", new_callable=AsyncMock)
+# @patch("google.generativeai.ChatSession.send_message_async", new_callable=AsyncMock)
+@patch.object(
+    Chat,
+    "send_message",
+    new_callable=AsyncMock,
+)
 @patch("prompto.apis.gemini.gemini.process_response", new_callable=Mock)
 @patch("prompto.apis.gemini.gemini.process_safety_attributes", new_callable=Mock)
 async def test_gemini_query_history_no_system(
@@ -287,7 +312,12 @@ async def test_gemini_query_history_no_system(
 
 
 @pytest.mark.asyncio
-@patch("google.generativeai.ChatSession.send_message_async", new_callable=AsyncMock)
+# @patch("google.generativeai.ChatSession.send_message_async", new_callable=AsyncMock)
+@patch.object(
+    Chat,
+    "send_message",
+    new_callable=AsyncMock,
+)
 async def test_gemini_query_history_error_no_system(
     mock_gemini_call,
     prompt_dict_history_no_system,
@@ -330,7 +360,12 @@ async def test_gemini_query_history_error_no_system(
 
 
 @pytest.mark.asyncio
-@patch("google.generativeai.ChatSession.send_message_async", new_callable=AsyncMock)
+# @patch("google.generativeai.ChatSession.send_message_async", new_callable=AsyncMock)
+@patch.object(
+    Chat,
+    "send_message",
+    new_callable=AsyncMock,
+)
 async def test_gemini_query_history_index_error_no_system(
     mock_gemini_call,
     prompt_dict_history_no_system,
@@ -383,7 +418,12 @@ async def test_gemini_query_history_index_error_no_system(
 
 
 @pytest.mark.asyncio
-@patch("google.generativeai.GenerativeModel.start_chat", new_callable=Mock)
+# @patch("google.generativeai.GenerativeModel.start_chat", new_callable=Mock)
+@patch.object(
+    AsyncChats,
+    "create",
+    new_callable=AsyncMock,
+)
 @patch(
     "prompto.apis.gemini.gemini.GeminiAPI._obtain_model_inputs", new_callable=AsyncMock
 )

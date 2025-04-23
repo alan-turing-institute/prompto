@@ -2,11 +2,15 @@ from unittest.mock import AsyncMock, patch
 
 import pytest
 import regex as re
-from google.generativeai import GenerativeModel
-from google.generativeai.types import HarmBlockThreshold, HarmCategory
+from google.genai.client import AsyncClient
+from google.genai.types import HarmBlockThreshold, HarmCategory
 
 from prompto.apis.gemini import GeminiAPI
 from prompto.settings import Settings
+
+# from google.generativeai import GenerativeModel
+# from google.generativeai.types import HarmBlockThreshold, HarmCategory
+
 
 pytest_plugins = ("pytest_asyncio",)
 
@@ -68,6 +72,7 @@ DEFAULT_SAFETY_SETTINGS = {
     HarmCategory.HARM_CATEGORY_HARASSMENT: HarmBlockThreshold.BLOCK_MEDIUM_AND_ABOVE,
     HarmCategory.HARM_CATEGORY_SEXUALLY_EXPLICIT: HarmBlockThreshold.BLOCK_MEDIUM_AND_ABOVE,
 }
+
 
 TYPE_ERROR_MSG = (
     "if api == 'gemini', then the prompt must be a str, list[str], or "
@@ -366,7 +371,11 @@ async def test_gemini_obtain_model_inputs(temporary_data_folders, monkeypatch):
     assert len(test_case) == 5
     assert test_case[0] == "test prompt"
     assert test_case[1] == "gemini_model_name"
-    assert isinstance(test_case[2], GenerativeModel)
+    # TODO: For now assume that the most sensible thing for the `_obtain_model_inputs` to return
+    # here is the AsyncClient instance. It may be that returning nothing is the sensible thing to do.
+    # in which case we should update `assert len(test_case) == 4` and update the indexes.
+    # assert isinstance(test_case[2], GenerativeModel)
+    assert isinstance(test_case[2], AsyncClient)
     assert test_case[2]._model_name == "models/gemini_model_name"
     assert test_case[2]._system_instruction is None
     assert isinstance(test_case[3], dict)
@@ -385,7 +394,11 @@ async def test_gemini_obtain_model_inputs(temporary_data_folders, monkeypatch):
     assert len(test_case) == 5
     assert test_case[0] == "test prompt"
     assert test_case[1] == "gemini_model_name"
-    assert isinstance(test_case[2], GenerativeModel)
+    # TODO: For now assume that the most sensible thing for the `_obtain_model_inputs` tp return
+    # here is the AsyncClient instance. It may be that retuning nothing is the sensible thing to do.
+    # in which case we should update `assert len(test_case) == 4` and update the indexes.
+    # assert isinstance(test_case[2], GenerativeModel)
+    assert isinstance(test_case[2], AsyncClient)
     assert test_case[2]._model_name == "models/gemini_model_name"
     assert test_case[2]._system_instruction is None
     assert isinstance(test_case[3], dict)
@@ -405,7 +418,12 @@ async def test_gemini_obtain_model_inputs(temporary_data_folders, monkeypatch):
     assert len(test_case) == 5
     assert test_case[0] == "test prompt"
     assert test_case[1] == "gemini_model_name"
-    assert isinstance(test_case[2], GenerativeModel)
+
+    # TODO: For now assume that the most sensible thing for the `_obtain_model_inputs` tp return
+    # here is the AsyncClient instance. It may be that retuning nothing is the sensible thing to do.
+    # in which case we should update `assert len(test_case) == 4` and update the indexes.
+    # assert isinstance(test_case[2], GenerativeModel)
+    assert isinstance(test_case[2], AsyncClient)
     assert test_case[2]._model_name == "models/gemini_model_name"
     assert test_case[2]._system_instruction is not None
     assert isinstance(test_case[3], dict)
@@ -472,7 +490,11 @@ async def test_gemini_obtain_model_inputs_safety_filters(
         assert len(test_case) == 5
         assert test_case[0] == "test prompt"
         assert test_case[1] == "gemini_model_name"
-        assert isinstance(test_case[2], GenerativeModel)
+        # TODO: For now assume that the most sensible thing for the `_obtain_model_inputs` tp return
+        # here is the AsyncClient instance. It may be that retuning nothing is the sensible thing to do.
+        # in which case we should update `assert len(test_case) == 4` and update the indexes.
+        # assert isinstance(test_case[2], GenerativeModel)
+        assert isinstance(test_case[2], AsyncClient)
         assert test_case[2]._model_name == "models/gemini_model_name"
         assert test_case[2]._system_instruction is None
         assert isinstance(test_case[3], dict)

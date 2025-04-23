@@ -1,4 +1,5 @@
 import os
+from unittest.mock import patch
 
 import pytest
 from PIL import Image
@@ -55,6 +56,7 @@ def test_parse_parts_value_video_not_uploaded():
     assert "not uploaded" in str(excinfo.value)
 
 
+# @patch("google.genai.client.files.get")
 def test_parse_parts_value_video_uploaded(monkeypatch):
     part = {
         "type": "video",
@@ -65,23 +67,24 @@ def test_parse_parts_value_video_uploaded(monkeypatch):
     # parameter for the parse_parts_value function
     media_folder = "media"
 
-    # Mock the google.generativeai get_file function
-    # We don't want to call the real get_file function and it would be tricky to
-    # assert the binary data returned by the function.
+    # Mock the `google.genai.Client().files.get`` function
+    # The real `get` function returns the binary contents of the file
+    # which would be tricky to assert.
     # Instead, we will just return the uploaded_filename
-    def mock_get_file(name):
-        return name
+    mock_get_file_no_op = lambda name: name
 
     # Replace the original get_file function with the mock
     # ***It is important that the import statement used here is exactly the same as
     # the one in the gemini_utils.py file***
-    import google.generativeai as genai
+    import google.genai as genai
 
-    monkeypatch.setattr(genai, "get_file", mock_get_file)
+    with monkeypatch.context() as m:
+        # Mock the get_file function
+        client = genai.Client(api_key="DUMMY")
+        m.setattr(client.files, "get", mock_get_file_no_op)
+        # Assert that the mock function was called with the expected argument
+        assert client.files.get(name="check mocked function") == "check mocked function"
 
-    # Assert that the mock function was called with the expected argument
-    assert genai.get_file("check mocked function") == "check mocked function"
-
-    expected_result = "file/123456"
-    actual_result = parse_parts_value(part, media_folder)
-    assert actual_result == expected_result
+        expected_result = "file/123456"
+        actual_result = parse_parts_value(part, media_folder)
+        assert actual_result == expected_result
