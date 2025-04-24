@@ -2,8 +2,13 @@ from unittest.mock import AsyncMock, patch
 
 import pytest
 import regex as re
-from google.genai.client import AsyncClient
-from google.genai.types import HarmBlockThreshold, HarmCategory
+from google.genai.client import AsyncClient, Client
+from google.genai.types import (
+    GenerateContentConfig,
+    HarmBlockThreshold,
+    HarmCategory,
+    SafetySetting,
+)
 
 from prompto.apis.gemini import GeminiAPI
 from prompto.settings import Settings
@@ -66,12 +71,24 @@ def prompt_dict_history_no_system():
     }
 
 
-DEFAULT_SAFETY_SETTINGS = {
-    HarmCategory.HARM_CATEGORY_DANGEROUS_CONTENT: HarmBlockThreshold.BLOCK_MEDIUM_AND_ABOVE,
-    HarmCategory.HARM_CATEGORY_HATE_SPEECH: HarmBlockThreshold.BLOCK_MEDIUM_AND_ABOVE,
-    HarmCategory.HARM_CATEGORY_HARASSMENT: HarmBlockThreshold.BLOCK_MEDIUM_AND_ABOVE,
-    HarmCategory.HARM_CATEGORY_SEXUALLY_EXPLICIT: HarmBlockThreshold.BLOCK_MEDIUM_AND_ABOVE,
-}
+DEFAULT_SAFETY_SETTINGS = [
+    SafetySetting(
+        category=HarmCategory.HARM_CATEGORY_DANGEROUS_CONTENT,
+        threshold=HarmBlockThreshold.BLOCK_MEDIUM_AND_ABOVE,
+    ),
+    SafetySetting(
+        category=HarmCategory.HARM_CATEGORY_HATE_SPEECH,
+        threshold=HarmBlockThreshold.BLOCK_MEDIUM_AND_ABOVE,
+    ),
+    SafetySetting(
+        category=HarmCategory.HARM_CATEGORY_HARASSMENT,
+        threshold=HarmBlockThreshold.BLOCK_MEDIUM_AND_ABOVE,
+    ),
+    SafetySetting(
+        category=HarmCategory.HARM_CATEGORY_SEXUALLY_EXPLICIT,
+        threshold=HarmBlockThreshold.BLOCK_MEDIUM_AND_ABOVE,
+    ),
+]
 
 
 TYPE_ERROR_MSG = (
@@ -371,15 +388,14 @@ async def test_gemini_obtain_model_inputs(temporary_data_folders, monkeypatch):
     assert len(test_case) == 5
     assert test_case[0] == "test prompt"
     assert test_case[1] == "gemini_model_name"
-    # TODO: For now assume that the most sensible thing for the `_obtain_model_inputs` to return
-    # here is the AsyncClient instance. It may be that returning nothing is the sensible thing to do.
-    # in which case we should update `assert len(test_case) == 4` and update the indexes.
-    # assert isinstance(test_case[2], GenerativeModel)
-    assert isinstance(test_case[2], AsyncClient)
-    assert test_case[2]._model_name == "models/gemini_model_name"
-    assert test_case[2]._system_instruction is None
-    assert isinstance(test_case[3], dict)
-    assert test_case[4] == {"temperature": 1, "max_output_tokens": 100}
+    assert isinstance(test_case[2], Client)
+    assert isinstance(test_case[2].aio, AsyncClient)
+    assert isinstance(test_case[3], GenerateContentConfig)
+    assert test_case[3].system_instruction is None
+    assert test_case[3].temperature == 1
+    assert test_case[3].max_output_tokens == 100
+    assert test_case[3].safety_settings == DEFAULT_SAFETY_SETTINGS
+    assert test_case[4] is None
 
     # test for case where no parameters in prompt_dict
     test_case = await gemini_api._obtain_model_inputs(
@@ -398,11 +414,14 @@ async def test_gemini_obtain_model_inputs(temporary_data_folders, monkeypatch):
     # here is the AsyncClient instance. It may be that retuning nothing is the sensible thing to do.
     # in which case we should update `assert len(test_case) == 4` and update the indexes.
     # assert isinstance(test_case[2], GenerativeModel)
-    assert isinstance(test_case[2], AsyncClient)
-    assert test_case[2]._model_name == "models/gemini_model_name"
-    assert test_case[2]._system_instruction is None
-    assert isinstance(test_case[3], dict)
-    assert test_case[4] == {}
+    assert isinstance(test_case[2], Client)
+    assert isinstance(test_case[2].aio, AsyncClient)
+    assert isinstance(test_case[3], GenerateContentConfig)
+    assert test_case[3].system_instruction is None
+    assert test_case[3].temperature is None
+    assert test_case[3].max_output_tokens is None
+    assert test_case[3].safety_settings == DEFAULT_SAFETY_SETTINGS
+    assert test_case[4] is None
 
     # test for case where system_instruction is provided
     test_case = await gemini_api._obtain_model_inputs(
@@ -418,16 +437,12 @@ async def test_gemini_obtain_model_inputs(temporary_data_folders, monkeypatch):
     assert len(test_case) == 5
     assert test_case[0] == "test prompt"
     assert test_case[1] == "gemini_model_name"
-
-    # TODO: For now assume that the most sensible thing for the `_obtain_model_inputs` tp return
-    # here is the AsyncClient instance. It may be that retuning nothing is the sensible thing to do.
-    # in which case we should update `assert len(test_case) == 4` and update the indexes.
-    # assert isinstance(test_case[2], GenerativeModel)
-    assert isinstance(test_case[2], AsyncClient)
-    assert test_case[2]._model_name == "models/gemini_model_name"
-    assert test_case[2]._system_instruction is not None
-    assert isinstance(test_case[3], dict)
-    assert test_case[4] == {}
+    assert isinstance(test_case[2], Client)
+    assert isinstance(test_case[2].aio, AsyncClient)
+    assert isinstance(test_case[3], GenerateContentConfig)
+    assert test_case[3].system_instruction is not None
+    assert test_case[3].safety_settings == DEFAULT_SAFETY_SETTINGS
+    assert test_case[4] is None
 
     # test error catching when parameters are not a dictionary
     with pytest.raises(
@@ -473,9 +488,15 @@ async def test_gemini_obtain_model_inputs_safety_filters(
     monkeypatch.setenv("GEMINI_API_KEY", "DUMMY")
     gemini_api = GeminiAPI(settings=settings, log_file=log_file)
 
-    valid_safety_filter_choices = ["none", "few", "default", "some", "most"]
+    valid_safety_filter_choices = {
+        "none": HarmBlockThreshold.BLOCK_NONE,
+        "few": HarmBlockThreshold.BLOCK_ONLY_HIGH,
+        "default": HarmBlockThreshold.BLOCK_MEDIUM_AND_ABOVE,
+        "some": HarmBlockThreshold.BLOCK_MEDIUM_AND_ABOVE,
+        "most": HarmBlockThreshold.BLOCK_LOW_AND_ABOVE,
+    }
 
-    for safety_filter in valid_safety_filter_choices:
+    for safety_filter, expected_threshold in valid_safety_filter_choices.items():
         test_case = await gemini_api._obtain_model_inputs(
             {
                 "id": "gemini_id",
@@ -490,15 +511,19 @@ async def test_gemini_obtain_model_inputs_safety_filters(
         assert len(test_case) == 5
         assert test_case[0] == "test prompt"
         assert test_case[1] == "gemini_model_name"
-        # TODO: For now assume that the most sensible thing for the `_obtain_model_inputs` tp return
-        # here is the AsyncClient instance. It may be that retuning nothing is the sensible thing to do.
-        # in which case we should update `assert len(test_case) == 4` and update the indexes.
-        # assert isinstance(test_case[2], GenerativeModel)
-        assert isinstance(test_case[2], AsyncClient)
-        assert test_case[2]._model_name == "models/gemini_model_name"
-        assert test_case[2]._system_instruction is None
-        assert isinstance(test_case[3], dict)
-        assert test_case[4] == {"temperature": 1, "max_output_tokens": 100}
+        assert isinstance(test_case[2], Client)
+        assert isinstance(test_case[2].aio, AsyncClient)
+        assert isinstance(test_case[3], GenerateContentConfig)
+        assert test_case[3].system_instruction is None
+        assert test_case[3].temperature == 1
+        assert test_case[3].max_output_tokens == 100
+        assert test_case[4] is None
+
+        # Assert that the safety settings contain the expected threshold for all categories
+        assert all(
+            safety_set.threshold == expected_threshold
+            for safety_set in test_case[3].safety_settings
+        )
 
     # test error if safety filter is not recognised
     with pytest.raises(
