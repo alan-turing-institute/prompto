@@ -4,6 +4,7 @@ from unittest.mock import AsyncMock, Mock, patch
 import pytest
 from google.genai.client import AsyncClient
 from google.genai.models import AsyncModels
+from google.genai.types import GenerateContentConfig
 
 from prompto.apis.gemini import GeminiAPI
 from prompto.settings import Settings
@@ -84,10 +85,13 @@ async def test_gemini_query_string(
     mock_gemini_call.assert_called_once()
     mock_gemini_call.assert_awaited_once()
     mock_gemini_call.assert_awaited_once_with(
-        contents=prompt_dict_string["prompt"],
-        generation_config=prompt_dict_string["parameters"],
-        safety_settings=DEFAULT_SAFETY_SETTINGS,
-        stream=False,
+        model="gemini_model_name",
+        contents="test prompt",
+        config=GenerateContentConfig(
+            temperature=1.0,
+            max_output_tokens=100,
+            safety_settings=DEFAULT_SAFETY_SETTINGS,
+        ),
     )
 
     mock_process_response.assert_called_once_with(mock_gemini_call.return_value)
@@ -138,10 +142,13 @@ async def test_gemini_query_string__index_error(
     mock_gemini_call.assert_called_once()
     mock_gemini_call.assert_awaited_once()
     mock_gemini_call.assert_awaited_once_with(
-        contents=prompt_dict_string["prompt"],
-        generation_config=prompt_dict_string["parameters"],
-        safety_settings=DEFAULT_SAFETY_SETTINGS,
-        stream=False,
+        model="gemini_model_name",
+        contents="test prompt",
+        config=GenerateContentConfig(
+            temperature=1.0,
+            max_output_tokens=100,
+            safety_settings=DEFAULT_SAFETY_SETTINGS,
+        ),
     )
 
     expected_log_message = (
@@ -184,10 +191,13 @@ async def test_gemini_query_string_error(
     mock_gemini_call.assert_called_once()
     mock_gemini_call.assert_awaited_once()
     mock_gemini_call.assert_awaited_once_with(
-        contents=prompt_dict_string["prompt"],
-        generation_config=prompt_dict_string["parameters"],
-        safety_settings=DEFAULT_SAFETY_SETTINGS,
-        stream=False,
+        model="gemini_model_name",
+        contents="test prompt",
+        config=GenerateContentConfig(
+            temperature=1.0,
+            max_output_tokens=100,
+            safety_settings=DEFAULT_SAFETY_SETTINGS,
+        ),
     )
 
     expected_log_message = (

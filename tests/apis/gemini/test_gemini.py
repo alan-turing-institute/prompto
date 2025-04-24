@@ -410,10 +410,6 @@ async def test_gemini_obtain_model_inputs(temporary_data_folders, monkeypatch):
     assert len(test_case) == 5
     assert test_case[0] == "test prompt"
     assert test_case[1] == "gemini_model_name"
-    # TODO: For now assume that the most sensible thing for the `_obtain_model_inputs` tp return
-    # here is the AsyncClient instance. It may be that retuning nothing is the sensible thing to do.
-    # in which case we should update `assert len(test_case) == 4` and update the indexes.
-    # assert isinstance(test_case[2], GenerativeModel)
     assert isinstance(test_case[2], Client)
     assert isinstance(test_case[2].aio, AsyncClient)
     assert isinstance(test_case[3], GenerateContentConfig)

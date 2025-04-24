@@ -1,14 +1,23 @@
 import logging
 from typing import Any
 
-import google.generativeai as genai
-from google.generativeai import GenerativeModel
-from google.generativeai.types import GenerationConfig, HarmBlockThreshold, HarmCategory
+from google.genai import Client
+
+# import google.generativeai as genai
+# from google.generativeai import GenerativeModel
+# from google.generativeai.types import GenerationConfig, HarmBlockThreshold, HarmCategory
+from google.genai.types import (
+    GenerateContentConfig,
+    HarmBlockThreshold,
+    HarmCategory,
+    SafetySetting,
+)
 
 from prompto.apis.base import AsyncAPI
 from prompto.apis.gemini.gemini_utils import (
-    convert_dict_to_input,
+    convert_history_dict_to_content,
     gemini_chat_roles,
+    parse_parts,
     process_response,
     process_safety_attributes,
 )
@@ -53,6 +62,8 @@ class GeminiAPI(AsyncAPI):
     log_file : str
         The path to the log file
     """
+
+    _clients: dict[str, Client] = {}
 
     def __init__(
         self,
@@ -177,9 +188,37 @@ class GeminiAPI(AsyncAPI):
 
         return issues
 
+    def _get_client(self, model_name) -> Client:
+        """
+        Method to get the client for the Gemini API. A separate client is created for each model name, to allow for
+        model-specific API keys to be used.
+
+        The client is created only once per model name and stored in the clients dictionary.
+        If the client is already created, it is returned from the dictionary.
+
+        Parameters
+        ----------
+        model_name : str
+            The name of the model to use
+
+        Returns
+        -------
+        Client
+            A client for the Gemini API
+        """
+        # If the Client does not exist, create it
+        if model_name not in self._clients:
+            api_key = get_environment_variable(
+                env_variable=API_KEY_VAR_NAME, model_name=model_name
+            )
+            self._clients[model_name] = Client(api_key=api_key)
+
+        # Return the client for the model name
+        return self._clients[model_name]
+
     async def _obtain_model_inputs(
         self, prompt_dict: dict, system_instruction: str | None = None
-    ) -> tuple[str, str, GenerativeModel, dict, dict, list | None]:
+    ) -> tuple[str, str, Client, GenerateContentConfig, list | None]:
         """
         Async method to obtain the model inputs from the prompt dictionary.
 
@@ -193,26 +232,19 @@ class GeminiAPI(AsyncAPI):
 
         Returns
         -------
-        tuple[str, str, dict, dict, list | None]
-            A tuple containing the prompt, model name, GenerativeModel instance,
-            safety settings, the generation config, and list of multimedia parts
-            (if passed) to use for querying the model
+        tuple[str, str, Client, GenerateContentConfig, list | None]
+            A tuple containing:
+            - the prompt,
+            - model name,
+            - Client instance,
+            - GenerateContentConfig instance (which incorporates the safety settings),
+            - (optional) list of multimedia parts (if passed) to use for querying the model or None
         """
         prompt = prompt_dict["prompt"]
 
         # obtain model name
         model_name = prompt_dict["model_name"]
-        api_key = get_environment_variable(
-            env_variable=API_KEY_VAR_NAME, model_name=model_name
-        )
-
-        # configure the API key
-        genai.configure(api_key=api_key)
-
-        # create the model instance
-        model = GenerativeModel(
-            model_name=model_name, system_instruction=system_instruction
-        )
+        client = self._get_client(model_name)
 
         # define safety settings
         safety_filter = prompt_dict.get("safety_filter", None)
@@ -221,33 +253,81 @@ class GeminiAPI(AsyncAPI):
 
         # explicitly set the safety settings
         if safety_filter == "none":
-            safety_settings = {
-                HarmCategory.HARM_CATEGORY_DANGEROUS_CONTENT: HarmBlockThreshold.BLOCK_NONE,
-                HarmCategory.HARM_CATEGORY_HATE_SPEECH: HarmBlockThreshold.BLOCK_NONE,
-                HarmCategory.HARM_CATEGORY_HARASSMENT: HarmBlockThreshold.BLOCK_NONE,
-                HarmCategory.HARM_CATEGORY_SEXUALLY_EXPLICIT: HarmBlockThreshold.BLOCK_NONE,
-            }
+            safety_settings = [
+                SafetySetting(
+                    category=HarmCategory.HARM_CATEGORY_DANGEROUS_CONTENT,
+                    threshold=HarmBlockThreshold.BLOCK_NONE,
+                ),
+                SafetySetting(
+                    category=HarmCategory.HARM_CATEGORY_HATE_SPEECH,
+                    threshold=HarmBlockThreshold.BLOCK_NONE,
+                ),
+                SafetySetting(
+                    category=HarmCategory.HARM_CATEGORY_HARASSMENT,
+                    threshold=HarmBlockThreshold.BLOCK_NONE,
+                ),
+                SafetySetting(
+                    category=HarmCategory.HARM_CATEGORY_SEXUALLY_EXPLICIT,
+                    threshold=HarmBlockThreshold.BLOCK_NONE,
+                ),
+            ]
         elif safety_filter == "few":
-            safety_settings = {
-                HarmCategory.HARM_CATEGORY_DANGEROUS_CONTENT: HarmBlockThreshold.BLOCK_ONLY_HIGH,
-                HarmCategory.HARM_CATEGORY_HATE_SPEECH: HarmBlockThreshold.BLOCK_ONLY_HIGH,
-                HarmCategory.HARM_CATEGORY_HARASSMENT: HarmBlockThreshold.BLOCK_ONLY_HIGH,
-                HarmCategory.HARM_CATEGORY_SEXUALLY_EXPLICIT: HarmBlockThreshold.BLOCK_ONLY_HIGH,
-            }
+            safety_settings = [
+                SafetySetting(
+                    category=HarmCategory.HARM_CATEGORY_DANGEROUS_CONTENT,
+                    threshold=HarmBlockThreshold.BLOCK_ONLY_HIGH,
+                ),
+                SafetySetting(
+                    category=HarmCategory.HARM_CATEGORY_HATE_SPEECH,
+                    threshold=HarmBlockThreshold.BLOCK_ONLY_HIGH,
+                ),
+                SafetySetting(
+                    category=HarmCategory.HARM_CATEGORY_HARASSMENT,
+                    threshold=HarmBlockThreshold.BLOCK_ONLY_HIGH,
+                ),
+                SafetySetting(
+                    category=HarmCategory.HARM_CATEGORY_SEXUALLY_EXPLICIT,
+                    threshold=HarmBlockThreshold.BLOCK_ONLY_HIGH,
+                ),
+            ]
         elif safety_filter in ["default", "some"]:
-            safety_settings = {
-                HarmCategory.HARM_CATEGORY_DANGEROUS_CONTENT: HarmBlockThreshold.BLOCK_MEDIUM_AND_ABOVE,
-                HarmCategory.HARM_CATEGORY_HATE_SPEECH: HarmBlockThreshold.BLOCK_MEDIUM_AND_ABOVE,
-                HarmCategory.HARM_CATEGORY_HARASSMENT: HarmBlockThreshold.BLOCK_MEDIUM_AND_ABOVE,
-                HarmCategory.HARM_CATEGORY_SEXUALLY_EXPLICIT: HarmBlockThreshold.BLOCK_MEDIUM_AND_ABOVE,
-            }
+            safety_settings = [
+                SafetySetting(
+                    category=HarmCategory.HARM_CATEGORY_DANGEROUS_CONTENT,
+                    threshold=HarmBlockThreshold.BLOCK_MEDIUM_AND_ABOVE,
+                ),
+                SafetySetting(
+                    category=HarmCategory.HARM_CATEGORY_HATE_SPEECH,
+                    threshold=HarmBlockThreshold.BLOCK_MEDIUM_AND_ABOVE,
+                ),
+                SafetySetting(
+                    category=HarmCategory.HARM_CATEGORY_HARASSMENT,
+                    threshold=HarmBlockThreshold.BLOCK_MEDIUM_AND_ABOVE,
+                ),
+                SafetySetting(
+                    category=HarmCategory.HARM_CATEGORY_SEXUALLY_EXPLICIT,
+                    threshold=HarmBlockThreshold.BLOCK_MEDIUM_AND_ABOVE,
+                ),
+            ]
         elif safety_filter == "most":
-            safety_settings = {
-                HarmCategory.HARM_CATEGORY_DANGEROUS_CONTENT: HarmBlockThreshold.BLOCK_LOW_AND_ABOVE,
-                HarmCategory.HARM_CATEGORY_HATE_SPEECH: HarmBlockThreshold.BLOCK_LOW_AND_ABOVE,
-                HarmCategory.HARM_CATEGORY_HARASSMENT: HarmBlockThreshold.BLOCK_LOW_AND_ABOVE,
-                HarmCategory.HARM_CATEGORY_SEXUALLY_EXPLICIT: HarmBlockThreshold.BLOCK_LOW_AND_ABOVE,
-            }
+            safety_settings = [
+                SafetySetting(
+                    category=HarmCategory.HARM_CATEGORY_DANGEROUS_CONTENT,
+                    threshold=HarmBlockThreshold.BLOCK_LOW_AND_ABOVE,
+                ),
+                SafetySetting(
+                    category=HarmCategory.HARM_CATEGORY_HATE_SPEECH,
+                    threshold=HarmBlockThreshold.BLOCK_LOW_AND_ABOVE,
+                ),
+                SafetySetting(
+                    category=HarmCategory.HARM_CATEGORY_HARASSMENT,
+                    threshold=HarmBlockThreshold.BLOCK_LOW_AND_ABOVE,
+                ),
+                SafetySetting(
+                    category=HarmCategory.HARM_CATEGORY_SEXUALLY_EXPLICIT,
+                    threshold=HarmBlockThreshold.BLOCK_LOW_AND_ABOVE,
+                ),
+            ]
         else:
             raise ValueError(
                 f"safety_filter '{safety_filter}' not recognised. Must be one of: "
@@ -255,15 +335,21 @@ class GeminiAPI(AsyncAPI):
             )
 
         # get parameters dict (if any)
-        generation_config = prompt_dict.get("parameters", None)
-        if generation_config is None:
-            generation_config = {}
-        if type(generation_config) is not dict:
+        generation_config_params = prompt_dict.get("parameters", None)
+        if generation_config_params is None:
+            generation_config_params = {}
+        if type(generation_config_params) is not dict:
             raise TypeError(
-                f"parameters must be a dictionary, not {type(generation_config)}"
+                f"parameters must be a dictionary, not {type(generation_config_params)}"
             )
 
-        return prompt, model_name, model, safety_settings, generation_config
+        gen_content_config = GenerateContentConfig(
+            **generation_config_params,
+            safety_settings=safety_settings,
+            system_instruction=system_instruction,
+        )
+
+        return prompt, model_name, client, gen_content_config, None
 
     async def _query_string(self, prompt_dict: dict, index: int | str):
         """
@@ -271,18 +357,17 @@ class GeminiAPI(AsyncAPI):
         (prompt_dict["prompt"] is a string),
         i.e. single-turn completion or chat.
         """
-        prompt, model_name, model, safety_settings, generation_config = (
+        prompt, model_name, client, generation_config, _ = (
             await self._obtain_model_inputs(
                 prompt_dict=prompt_dict, system_instruction=None
             )
         )
 
         try:
-            response = await model.generate_content_async(
+            response = await client.aio.models.generate_content(
+                model=model_name,
                 contents=prompt,
-                generation_config=generation_config,
-                safety_settings=safety_settings,
-                stream=False,
+                config=generation_config,
             )
             response_text = process_response(response)
             safety_attributes = process_safety_attributes(response)
@@ -352,24 +437,27 @@ class GeminiAPI(AsyncAPI):
         (prompt_dict["prompt"] is a list of strings to sequentially send to the model),
         i.e. multi-turn chat with history.
         """
-        prompt, model_name, model, safety_settings, generation_config = (
+        prompt, model_name, client, generation_config, _ = (
             await self._obtain_model_inputs(
                 prompt_dict=prompt_dict, system_instruction=None
             )
         )
 
-        chat = model.start_chat(history=[])
+        # chat = client.start_chat(history=[])
+        chat = client.aio.chats.create(
+            model=model_name,
+            config=generation_config,
+            history=[],
+        )
         response_list = []
         safety_attributes_list = []
         try:
             for message_index, message in enumerate(prompt):
                 # send the messages sequentially
                 # run the predict method in a separate thread using run_in_executor
-                response = await chat.send_message_async(
-                    content=message,
-                    generation_config=generation_config,
-                    safety_settings=safety_settings,
-                    stream=False,
+                response = await chat.send_message(
+                    message=message,
+                    config=generation_config,
                 )
                 response_text = process_response(response)
                 safety_attributes = process_safety_attributes(response)
@@ -455,43 +543,63 @@ class GeminiAPI(AsyncAPI):
         i.e. multi-turn chat with history.
         """
         if prompt_dict["prompt"][0]["role"] == "system":
-            prompt, model_name, model, safety_settings, generation_config = (
+            prompt, model_name, client, generation_config, _ = (
                 await self._obtain_model_inputs(
                     prompt_dict=prompt_dict,
                     system_instruction=prompt_dict["prompt"][0]["parts"],
                 )
             )
-            chat = model.start_chat(
-                history=[
-                    convert_dict_to_input(
-                        content_dict=x, media_folder=self.settings.media_folder
-                    )
-                    for x in prompt[1:-1]
-                ]
-            )
+            # Used to skip the system message in the prompt history
+            first_user_idx = 1
         else:
-            prompt, model_name, model, safety_settings, generation_config = (
+            prompt, model_name, client, generation_config, _ = (
                 await self._obtain_model_inputs(
                     prompt_dict=prompt_dict, system_instruction=None
                 )
             )
-            chat = model.start_chat(
-                history=[
-                    convert_dict_to_input(
-                        content_dict=x, media_folder=self.settings.media_folder
-                    )
-                    for x in prompt[:-1]
-                ]
-            )
+            first_user_idx = 0
+
+        chat = client.aio.chats.create(
+            model=model_name,
+            config=generation_config,
+            history=[
+                convert_history_dict_to_content(
+                    content_dict=x,
+                    media_folder=self.settings.media_folder,
+                    client=client,
+                )
+                for x in prompt[first_user_idx:-1]
+            ],
+        )
 
         try:
-            response = await chat.send_message_async(
-                content=convert_dict_to_input(
-                    content_dict=prompt[-1], media_folder=self.settings.media_folder
-                ),
-                generation_config=generation_config,
-                safety_settings=safety_settings,
-                stream=False,
+            # No need to send the generation_config again, as it is no different
+            # from the one used to create the chat
+            last_msg = prompt[-1]
+            print(f"whole prompt: {prompt}")
+            print(f"last_msg: {last_msg}")
+            # msg_to_send = convert_dict_to_input(
+            #     content_dict=prompt[-1], media_folder=self.settings.media_folder
+            # )
+
+            msg_to_send = parse_parts(
+                prompt[-1]["parts"],
+                media_folder=self.settings.media_folder,
+                client=client,
+            )
+
+            assert (
+                len(msg_to_send) == 1
+            ), "Only one message is allowed in the last message"
+            msg_to_send = msg_to_send[0]
+
+            print(f"msg_to_send: {msg_to_send}")
+
+            response = await chat.send_message(
+                # message=convert_dict_to_input(
+                #     content_dict=prompt[-1], media_folder=self.settings.media_folder
+                # ),
+                message=msg_to_send
             )
 
             response_text = process_response(response)

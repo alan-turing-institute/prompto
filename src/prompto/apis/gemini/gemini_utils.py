@@ -1,12 +1,13 @@
 import os
 
-import google.generativeai as genai
 import PIL.Image
+from google.genai import types
+from google.genai.client import Client
 
 gemini_chat_roles = set(["user", "model"])
 
 
-def parse_parts_value(part: dict | str, media_folder: str) -> any:
+def parse_parts_value(part: dict | str, media_folder: str, client: Client) -> any:
     """
     Parse part dictionary and create a dictionary input for Gemini API.
     If part is a string, a dictionary to represent a text object is returned.
@@ -27,7 +28,9 @@ def parse_parts_value(part: dict | str, media_folder: str) -> any:
         Multimedia data object
     """
     if isinstance(part, str):
-        return part
+        # return part
+        print(f"Part is a string: {part}")
+        return types.Part.from_text(text=part)
 
     # read multimedia type
     media_type = part.get("type")
@@ -54,14 +57,17 @@ def parse_parts_value(part: dict | str, media_folder: str) -> any:
                 )
         else:
             try:
-                return genai.get_file(name=uploaded_filename)
+                # return genai.get_file(name=uploaded_filename)
+                return client.aio.files.get(name=uploaded_filename)
             except Exception as err:
                 raise ValueError(
                     f"Failed to get file: {media} due to error: {type(err).__name__} - {err}"
                 )
 
 
-def parse_parts(parts: list[dict | str] | dict | str, media_folder: str) -> list[any]:
+def parse_parts(
+    parts: list[dict | str] | dict | str, media_folder: str, client: Client
+) -> list[any]:
     """
     Parse parts data and create a list of multimedia data objects.
     If parts is a single dictionary, a list with a single multimedia data object is returned.
@@ -83,10 +89,14 @@ def parse_parts(parts: list[dict | str] | dict | str, media_folder: str) -> list
     if isinstance(parts, dict) or isinstance(parts, str):
         parts = [parts]
 
-    return [parse_parts_value(p, media_folder=media_folder) for p in parts]
+    return [
+        parse_parts_value(p, media_folder=media_folder, client=client) for p in parts
+    ]
 
 
-def convert_dict_to_input(content_dict: dict, media_folder: str) -> dict:
+def convert_history_dict_to_content(
+    content_dict: dict, media_folder: str, client: Client
+) -> types.Content:
     """
     Convert dictionary to an input that can be used by the Gemini API.
     The output is a dictionary with keys "role" and "parts".
@@ -112,13 +122,27 @@ def convert_dict_to_input(content_dict: dict, media_folder: str) -> dict:
     if "parts" not in content_dict:
         raise KeyError("parts key is missing in content dictionary")
 
-    return {
-        "role": content_dict["role"],
-        "parts": parse_parts(
+    # return parse_parts(
+    #     content_dict["parts"],
+    #     media_folder=media_folder,
+    # )
+
+    return types.Content(
+        role=content_dict["role"],
+        parts=parse_parts(
             content_dict["parts"],
             media_folder=media_folder,
+            client=client,
         ),
-    }
+    )
+
+    # return {
+    #     "role": content_dict["role"],
+    #     "parts": parse_parts(
+    #         content_dict["parts"],
+    #         media_folder=media_folder,
+    #     )
+    # }
 
 
 def process_response(response: dict) -> str:

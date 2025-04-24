@@ -4,7 +4,8 @@ from unittest.mock import AsyncMock, Mock, patch
 import pytest
 
 # from google.generativeai import GenerativeModel
-from google.genai.chats import AsyncChats, Chat
+from google.genai.chats import AsyncChat, AsyncChats, Chat
+from google.genai.types import Content, GenerateContentConfig, Part
 
 from prompto.apis.gemini import GeminiAPI
 from prompto.settings import Settings
@@ -39,7 +40,7 @@ async def test_gemini_query_history_no_env_var(
 @pytest.mark.asyncio
 # @patch("google.generativeai.ChatSession.send_message_async", new_callable=AsyncMock)
 @patch.object(
-    Chat,
+    AsyncChat,
     "send_message",
     new_callable=AsyncMock,
 )
@@ -81,11 +82,15 @@ async def test_gemini_query_history(
 
     mock_gemini_call.assert_called_once()
     mock_gemini_call.assert_awaited_once()
+    # mock_gemini_call.assert_awaited_once_with(
+    #     content={"role": "user", "parts": [prompt_dict_history["prompt"][1]["parts"]]},
+    #     generation_config=prompt_dict_history["parameters"],
+    #     safety_settings=DEFAULT_SAFETY_SETTINGS,
+    #     stream=False,
+    # )
+
     mock_gemini_call.assert_awaited_once_with(
-        content={"role": "user", "parts": [prompt_dict_history["prompt"][1]["parts"]]},
-        generation_config=prompt_dict_history["parameters"],
-        safety_settings=DEFAULT_SAFETY_SETTINGS,
-        stream=False,
+        message=Part(text=prompt_dict_history["prompt"][1]["parts"]),
     )
 
     mock_process_response.assert_called_once_with(mock_gemini_call.return_value)
@@ -106,7 +111,7 @@ async def test_gemini_query_history(
 @pytest.mark.asyncio
 # @patch("google.generativeai.ChatSession.send_message_async", new_callable=AsyncMock)
 @patch.object(
-    Chat,
+    AsyncChat,
     "send_message",
     new_callable=AsyncMock,
 )
@@ -128,11 +133,15 @@ async def test_gemini_query_history_error(
 
     mock_gemini_call.assert_called_once()
     mock_gemini_call.assert_awaited_once()
+    # mock_gemini_call.assert_awaited_once_with(
+    #     content={"role": "user", "parts": [prompt_dict_history["prompt"][1]["parts"]]},
+    #     generation_config=prompt_dict_history["parameters"],
+    #     safety_settings=DEFAULT_SAFETY_SETTINGS,
+    #     stream=False,
+    # )
+
     mock_gemini_call.assert_awaited_once_with(
-        content={"role": "user", "parts": [prompt_dict_history["prompt"][1]["parts"]]},
-        generation_config=prompt_dict_history["parameters"],
-        safety_settings=DEFAULT_SAFETY_SETTINGS,
-        stream=False,
+        message=Part(text=prompt_dict_history["prompt"][1]["parts"]),
     )
 
     expected_log_message = (
@@ -147,7 +156,7 @@ async def test_gemini_query_history_error(
 @pytest.mark.asyncio
 # @patch("google.generativeai.ChatSession.send_message_async", new_callable=AsyncMock)
 @patch.object(
-    Chat,
+    AsyncChat,
     "send_message",
     new_callable=AsyncMock,
 )
@@ -174,11 +183,15 @@ async def test_gemini_query_history_index_error(
 
     mock_gemini_call.assert_called_once()
     mock_gemini_call.assert_awaited_once()
+    # mock_gemini_call.assert_awaited_once_with(
+    #     content={"role": "user", "parts": [prompt_dict_history["prompt"][1]["parts"]]},
+    #     generation_config=prompt_dict_history["parameters"],
+    #     safety_settings=DEFAULT_SAFETY_SETTINGS,
+    #     stream=False,
+    # )
+
     mock_gemini_call.assert_awaited_once_with(
-        content={"role": "user", "parts": [prompt_dict_history["prompt"][1]["parts"]]},
-        generation_config=prompt_dict_history["parameters"],
-        safety_settings=DEFAULT_SAFETY_SETTINGS,
-        stream=False,
+        message=Part(text=prompt_dict_history["prompt"][1]["parts"]),
     )
 
     expected_log_message = (
@@ -217,14 +230,30 @@ async def test_gemini_query_history_check_chat_init(
     monkeypatch.setenv("GEMINI_API_KEY_gemini_model_name", "DUMMY")
     gemini_api = GeminiAPI(settings=settings, log_file=log_file)
 
+    # mock_obtain_model_inputs.return_value = (
+    #     prompt_dict_history["prompt"],
+    #     prompt_dict_history["model_name"],
+    #     GenerativeModel(
+    #         model_name=prompt_dict_history["model_name"],
+    #         system_instruction=prompt_dict_history["prompt"][0]["parts"],
+    #     ),
+    #     DEFAULT_SAFETY_SETTINGS,
+    #     prompt_dict_history["parameters"],
+    # )
+
+    mock_generate_content_config = (
+        GenerateContentConfig(
+            temperature=1.0,
+            max_output_tokens=100,
+            safety_settings=DEFAULT_SAFETY_SETTINGS,
+        ),
+    )
+
     mock_obtain_model_inputs.return_value = (
         prompt_dict_history["prompt"],
         prompt_dict_history["model_name"],
-        GenerativeModel(
-            model_name=prompt_dict_history["model_name"],
-            system_instruction=prompt_dict_history["prompt"][0]["parts"],
-        ),
-        DEFAULT_SAFETY_SETTINGS,
+        gemini_api._get_client("gemini_model_name"),
+        mock_generate_content_config,
         prompt_dict_history["parameters"],
     )
 
@@ -237,13 +266,15 @@ async def test_gemini_query_history_check_chat_init(
         prompt_dict=prompt_dict_history,
         system_instruction=prompt_dict_history["prompt"][0]["parts"],
     )
-    mock_start_chat.assert_called_once_with(history=[])
+    mock_start_chat.assert_called_once_with(
+        model="gemini_model_name", config=mock_generate_content_config, history=[]
+    )
 
 
 @pytest.mark.asyncio
 # @patch("google.generativeai.ChatSession.send_message_async", new_callable=AsyncMock)
 @patch.object(
-    Chat,
+    AsyncChat,
     "send_message",
     new_callable=AsyncMock,
 )
@@ -286,14 +317,18 @@ async def test_gemini_query_history_no_system(
 
     mock_gemini_call.assert_called_once()
     mock_gemini_call.assert_awaited_once()
+    # mock_gemini_call.assert_awaited_once_with(
+    #     content={
+    #         "role": "user",
+    #         "parts": [prompt_dict_history_no_system["prompt"][2]["parts"]],
+    #     },
+    #     generation_config=prompt_dict_history_no_system["parameters"],
+    #     safety_settings=DEFAULT_SAFETY_SETTINGS,
+    #     stream=False,
+    # )
+
     mock_gemini_call.assert_awaited_once_with(
-        content={
-            "role": "user",
-            "parts": [prompt_dict_history_no_system["prompt"][2]["parts"]],
-        },
-        generation_config=prompt_dict_history_no_system["parameters"],
-        safety_settings=DEFAULT_SAFETY_SETTINGS,
-        stream=False,
+        message=Part(text=prompt_dict_history_no_system["prompt"][2]["parts"])
     )
 
     mock_process_response.assert_called_once_with(mock_gemini_call.return_value)
@@ -314,7 +349,7 @@ async def test_gemini_query_history_no_system(
 @pytest.mark.asyncio
 # @patch("google.generativeai.ChatSession.send_message_async", new_callable=AsyncMock)
 @patch.object(
-    Chat,
+    AsyncChat,
     "send_message",
     new_callable=AsyncMock,
 )
@@ -340,14 +375,18 @@ async def test_gemini_query_history_error_no_system(
 
     mock_gemini_call.assert_called_once()
     mock_gemini_call.assert_awaited_once()
+    # mock_gemini_call.assert_awaited_once_with(
+    #     content={
+    #         "role": "user",
+    #         "parts": [prompt_dict_history_no_system["prompt"][2]["parts"]],
+    #     },
+    #     generation_config=prompt_dict_history_no_system["parameters"],
+    #     safety_settings=DEFAULT_SAFETY_SETTINGS,
+    #     stream=False,
+    # )
+
     mock_gemini_call.assert_awaited_once_with(
-        content={
-            "role": "user",
-            "parts": [prompt_dict_history_no_system["prompt"][2]["parts"]],
-        },
-        generation_config=prompt_dict_history_no_system["parameters"],
-        safety_settings=DEFAULT_SAFETY_SETTINGS,
-        stream=False,
+        message=Part(text=prompt_dict_history_no_system["prompt"][2]["parts"]),
     )
 
     expected_log_message = (
@@ -362,7 +401,7 @@ async def test_gemini_query_history_error_no_system(
 @pytest.mark.asyncio
 # @patch("google.generativeai.ChatSession.send_message_async", new_callable=AsyncMock)
 @patch.object(
-    Chat,
+    AsyncChat,
     "send_message",
     new_callable=AsyncMock,
 )
@@ -395,14 +434,18 @@ async def test_gemini_query_history_index_error_no_system(
 
     mock_gemini_call.assert_called_once()
     mock_gemini_call.assert_awaited_once()
+    # mock_gemini_call.assert_awaited_once_with(
+    #     content={
+    #         "role": "user",
+    #         "parts": [prompt_dict_history_no_system["prompt"][2]["parts"]],
+    #     },
+    #     generation_config=prompt_dict_history_no_system["parameters"],
+    #     safety_settings=DEFAULT_SAFETY_SETTINGS,
+    #     stream=False,
+    # )
+
     mock_gemini_call.assert_awaited_once_with(
-        content={
-            "role": "user",
-            "parts": [prompt_dict_history_no_system["prompt"][2]["parts"]],
-        },
-        generation_config=prompt_dict_history_no_system["parameters"],
-        safety_settings=DEFAULT_SAFETY_SETTINGS,
-        stream=False,
+        message=Part(text=prompt_dict_history_no_system["prompt"][2]["parts"]),
     )
 
     expected_log_message = (
@@ -441,14 +484,30 @@ async def test_gemini_query_history_no_system_check_chat_init(
     monkeypatch.setenv("GEMINI_API_KEY_gemini_model_name", "DUMMY")
     gemini_api = GeminiAPI(settings=settings, log_file=log_file)
 
+    # mock_obtain_model_inputs.return_value = (
+    #     prompt_dict_history_no_system["prompt"],
+    #     prompt_dict_history_no_system["model_name"],
+    #     GenerativeModel(
+    #         model_name=prompt_dict_history_no_system["model_name"],
+    #         system_instruction=None,
+    #     ),
+    #     DEFAULT_SAFETY_SETTINGS,
+    #     prompt_dict_history_no_system["parameters"],
+    # )
+
+    mock_generate_content_config = (
+        GenerateContentConfig(
+            temperature=1.0,
+            max_output_tokens=100,
+            safety_settings=DEFAULT_SAFETY_SETTINGS,
+        ),
+    )
+
     mock_obtain_model_inputs.return_value = (
         prompt_dict_history_no_system["prompt"],
         prompt_dict_history_no_system["model_name"],
-        GenerativeModel(
-            model_name=prompt_dict_history_no_system["model_name"],
-            system_instruction=None,
-        ),
-        DEFAULT_SAFETY_SETTINGS,
+        gemini_api._get_client("gemini_model_name"),
+        mock_generate_content_config,
         prompt_dict_history_no_system["parameters"],
     )
 
@@ -461,14 +520,16 @@ async def test_gemini_query_history_no_system_check_chat_init(
         prompt_dict=prompt_dict_history_no_system, system_instruction=None
     )
     mock_start_chat.assert_called_once_with(
+        model="gemini_model_name",
+        config=mock_generate_content_config,
         history=[
-            {
-                "role": "user",
-                "parts": [prompt_dict_history_no_system["prompt"][0]["parts"]],
-            },
-            {
-                "role": "model",
-                "parts": [prompt_dict_history_no_system["prompt"][1]["parts"]],
-            },
-        ]
+            Content(
+                role="user",
+                parts=[Part(text=prompt_dict_history_no_system["prompt"][0]["parts"])],
+            ),
+            Content(
+                role="model",
+                parts=[Part(text=prompt_dict_history_no_system["prompt"][1]["parts"])],
+            ),
+        ],
     )
