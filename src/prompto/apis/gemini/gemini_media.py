@@ -5,7 +5,7 @@ import logging
 import os
 import time
 
-import google.generativeai as genai
+import google.genai
 import tqdm
 from dotenv import load_dotenv
 
