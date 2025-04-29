@@ -278,93 +278,97 @@ def test_gemini_check_prompt_dict(temporary_data_folders, monkeypatch):
         raise test_case[0]
 
     # set the GEMINI_API_KEY environment variable
-    monkeypatch.setenv("GEMINI_API_KEY", "DUMMY")
-    # error if the model-specific environment variable is not set
-    test_case = GeminiAPI.check_prompt_dict(
-        {
-            "api": "gemini",
-            "model_name": "gemini_model_name",
-            "prompt": "test prompt",
-        }
-    )
-    assert len(test_case) == 1
-    with pytest.raises(
-        Warning,
-        match=re.escape(
-            "Environment variable 'GEMINI_API_KEY_gemini_model_name' is not set"
-        ),
-    ):
-        raise test_case[0]
-
-    # unset the GEMINI_API_KEY environment variable and
-    # set the model-specific environment variable
-    monkeypatch.delenv("GEMINI_API_KEY")
-    monkeypatch.setenv("GEMINI_API_KEY_gemini_model_name", "DUMMY")
-    test_case = GeminiAPI.check_prompt_dict(
-        {
-            "api": "gemini",
-            "model_name": "gemini_model_name",
-            "prompt": "test prompt",
-        }
-    )
-    assert len(test_case) == 1
-    with pytest.raises(
-        Warning, match=re.escape("Environment variable 'GEMINI_API_KEY' is not set")
-    ):
-        raise test_case[0]
-
-    # full passes
-    # set both environment variables
-    monkeypatch.setenv("GEMINI_API_KEY", "DUMMY")
-    assert (
-        GeminiAPI.check_prompt_dict(
+    with monkeypatch.context() as m1:
+        m1.setenv("GEMINI_API_KEY", "DUMMY")
+        # error if the model-specific environment variable is not set
+        test_case = GeminiAPI.check_prompt_dict(
             {
                 "api": "gemini",
                 "model_name": "gemini_model_name",
                 "prompt": "test prompt",
             }
         )
-        == []
-    )
-    assert (
-        GeminiAPI.check_prompt_dict(
+        assert len(test_case) == 1
+        with pytest.raises(
+            Warning,
+            match=re.escape(
+                "Environment variable 'GEMINI_API_KEY_gemini_model_name' is not set"
+            ),
+        ):
+            raise test_case[0]
+
+    with monkeypatch.context() as m2:
+        # unset the GEMINI_API_KEY environment variable and
+        # set the model-specific environment variable
+        m2.delenv("GEMINI_API_KEY", raising=False)
+        m2.setenv("GEMINI_API_KEY_gemini_model_name", "DUMMY")
+        test_case = GeminiAPI.check_prompt_dict(
             {
                 "api": "gemini",
                 "model_name": "gemini_model_name",
-                "prompt": ["prompt 1", "prompt 2"],
+                "prompt": "test prompt",
             }
         )
-        == []
-    )
-    assert (
-        GeminiAPI.check_prompt_dict(
-            {
-                "api": "gemini",
-                "model_name": "gemini_model_name",
-                "prompt": [
-                    {"role": "system", "parts": "system prompt"},
-                    {"role": "user", "parts": "user message 1"},
-                    {"role": "model", "parts": "model message"},
-                    {"role": "user", "parts": "user message 2"},
-                ],
-            }
+        assert len(test_case) == 1
+        with pytest.raises(
+            Warning, match=re.escape("Environment variable 'GEMINI_API_KEY' is not set")
+        ):
+            raise test_case[0]
+
+    # full passes
+    # set both environment variables
+    with monkeypatch.context() as m3:
+        m3.setenv("GEMINI_API_KEY", "DUMMY")
+        m3.setenv("GEMINI_API_KEY_gemini_model_name", "DUMMY")
+        assert (
+            GeminiAPI.check_prompt_dict(
+                {
+                    "api": "gemini",
+                    "model_name": "gemini_model_name",
+                    "prompt": "test prompt",
+                }
+            )
+            == []
         )
-        == []
-    )
-    assert (
-        GeminiAPI.check_prompt_dict(
-            {
-                "api": "gemini",
-                "model_name": "gemini_model_name",
-                "prompt": [
-                    {"role": "user", "parts": "user message 1"},
-                    {"role": "model", "parts": "model message"},
-                    {"role": "user", "parts": "user message 2"},
-                ],
-            }
+        assert (
+            GeminiAPI.check_prompt_dict(
+                {
+                    "api": "gemini",
+                    "model_name": "gemini_model_name",
+                    "prompt": ["prompt 1", "prompt 2"],
+                }
+            )
+            == []
         )
-        == []
-    )
+        assert (
+            GeminiAPI.check_prompt_dict(
+                {
+                    "api": "gemini",
+                    "model_name": "gemini_model_name",
+                    "prompt": [
+                        {"role": "system", "parts": "system prompt"},
+                        {"role": "user", "parts": "user message 1"},
+                        {"role": "model", "parts": "model message"},
+                        {"role": "user", "parts": "user message 2"},
+                    ],
+                }
+            )
+            == []
+        )
+        assert (
+            GeminiAPI.check_prompt_dict(
+                {
+                    "api": "gemini",
+                    "model_name": "gemini_model_name",
+                    "prompt": [
+                        {"role": "user", "parts": "user message 1"},
+                        {"role": "model", "parts": "model message"},
+                        {"role": "user", "parts": "user message 2"},
+                    ],
+                }
+            )
+            == []
+        )
 
 
 @pytest.mark.asyncio

@@ -2,6 +2,7 @@ import logging
 from unittest.mock import AsyncMock, Mock, patch
 
 import pytest
+from google.genai.chats import AsyncChat
 from google.genai.client import AsyncClient
 from google.genai.models import AsyncModels
 from google.genai.types import GenerateContentConfig
@@ -15,13 +16,23 @@ pytest_plugins = ("pytest_asyncio",)
 
 
 @pytest.mark.asyncio
+# @patch(
+#     AsyncChat,
+#     "send_message",
+#     new_callable=AsyncMock,
+# )
 async def test_gemini_query_string_no_env_var(
-    prompt_dict_string, temporary_data_folders, caplog
+    prompt_dict_string, temporary_data_folders, caplog, monkeypatch
 ):
+
+    # monkeypatch.delenv("GEMINI_API_KEY", raising=False)
+    # monkeypatch.delenv("GEMINI_API_KEY_gemini_model_name", raising=False)
+
     caplog.set_level(logging.INFO)
     settings = Settings(data_folder="data")
     log_file = "log.txt"
-    gemini_api = GeminiAPI(settings=settings, log_file=log_file)
+
+    # mock_send_message.return_value = "response Messages object"
 
     # raise error if no environment variable is set
     with pytest.raises(
@@ -31,6 +42,7 @@ async def test_gemini_query_string_no_env_var(
             "environment variable is set."
         ),
     ):
+        gemini_api = GeminiAPI(settings=settings, log_file=log_file)
         await gemini_api._query_string(prompt_dict_string, index=0)
 
 

@@ -1,4 +1,6 @@
 import logging
+from copy import deepcopy
+from importlib import reload
 from unittest.mock import AsyncMock, Mock, patch
 
 import pytest
@@ -7,7 +9,10 @@ import pytest
 from google.genai.chats import AsyncChat, AsyncChats
 from google.genai.types import GenerateContentConfig
 
+import prompto.utils
 from prompto.apis.gemini import GeminiAPI
+
+# import prompto.apis.gemini as prompto_gemini
 from prompto.settings import Settings
 
 from ...conftest import CopyingAsyncMock
@@ -21,8 +26,31 @@ pytest_plugins = ("pytest_asyncio",)
 # reset / properly scoped.
 @pytest.mark.asyncio
 async def test_gemini_query_chat_no_env_var(
-    prompt_dict_chat, temporary_data_folders, caplog
+    prompt_dict_chat, temporary_data_folders, caplog, monkeypatch
 ):
+    # with monkeypatch.context() as m:
+    #     reload(prompto.utils.os)
+    #     import os
+    #     # reload(prompto.apis.gemini.gemini.os)
+    #     # reload(prompto.apis.gemini.gemini_utils.os)
+
+    #     if "GEMINI_API_KEY" in os.environ:
+    #         m.delenv("GEMINI_API_KEY", raising=False)
+    #         m.delitem(os.environ, "GEMINI_API_KEY")
+    #         print("GEMINI_API_KEY deleted from os.environ with monkeypatch")
+    #     else:
+    #         print("GEMINI_API_KEY not in os.environ")
+
+    #     if "GEMINI_API_KEY_gemini_model_name" in os.environ:
+    #         m.delenv("GEMINI_API_KEY_gemini_model_name", raising=False)
+    #         m.delitem(os.environ, "GEMINI_API_KEY_gemini_model_name")
+    #         print("GEMINI_API_KEY_gemini_model_name deleted from os.environ with monkeypatch")
+    #     else:
+    #         print("GEMINI_API_KEY_gemini_model_name not in os.environ")
+
+    # monkeypatch.delenv("GEMINI_API_KEY", raising=False)
+    # monkeypatch.delenv("GEMINI_API_KEY_gemini_model_name", raising=False)
+
     caplog.set_level(logging.INFO)
     settings = Settings(data_folder="data")
     log_file = "log.txt"
@@ -59,10 +87,10 @@ async def test_gemini_query_chat(
     monkeypatch,
     caplog,
 ):
+    monkeypatch.setenv("GEMINI_API_KEY", "DUMMY")
     caplog.set_level(logging.INFO)
     settings = Settings(data_folder="data")
     log_file = "log.txt"
-    monkeypatch.setenv("GEMINI_API_KEY", "DUMMY")
     gemini_api = GeminiAPI(settings=settings, log_file=log_file)
 
     # mock the response from the API
@@ -157,10 +185,11 @@ async def test_gemini_query_history_check_chat_init(
     monkeypatch,
     caplog,
 ):
+    monkeypatch.setenv("GEMINI_API_KEY_gemini_model_name", "DUMMY")
+
     caplog.set_level(logging.INFO)
     settings = Settings(data_folder="data")
     log_file = "log.txt"
-    monkeypatch.setenv("GEMINI_API_KEY_gemini_model_name", "DUMMY")
     gemini_api = GeminiAPI(settings=settings, log_file=log_file)
 
     mock_obtain_model_inputs.return_value = (
@@ -206,10 +235,11 @@ async def test_gemini_query_history_check_chat_init(
 async def test_gemini_query_chat_index_error_1(
     mock_gemini_call, prompt_dict_chat, temporary_data_folders, monkeypatch, caplog
 ):
+    monkeypatch.setenv("GEMINI_API_KEY", "DUMMY")
+
     caplog.set_level(logging.INFO)
     settings = Settings(data_folder="data")
     log_file = "log.txt"
-    monkeypatch.setenv("GEMINI_API_KEY", "DUMMY")
     gemini_api = GeminiAPI(settings=settings, log_file=log_file)
 
     # mock index error response from the API
@@ -266,10 +296,10 @@ async def test_gemini_query_chat_index_error_1(
 async def test_gemini_query_chat_error_1(
     mock_gemini_call, prompt_dict_chat, temporary_data_folders, monkeypatch, caplog
 ):
+    monkeypatch.setenv("GEMINI_API_KEY", "DUMMY")
     caplog.set_level(logging.INFO)
     settings = Settings(data_folder="data")
     log_file = "log.txt"
-    monkeypatch.setenv("GEMINI_API_KEY", "DUMMY")
     gemini_api = GeminiAPI(settings=settings, log_file=log_file)
 
     # mock error response from the API
@@ -326,10 +356,11 @@ async def test_gemini_query_chat_index_error_2(
     monkeypatch,
     caplog,
 ):
+    monkeypatch.setenv("GEMINI_API_KEY", "DUMMY")
+
     caplog.set_level(logging.INFO)
     settings = Settings(data_folder="data")
     log_file = "log.txt"
-    monkeypatch.setenv("GEMINI_API_KEY", "DUMMY")
     gemini_api = GeminiAPI(settings=settings, log_file=log_file)
 
     # mock error response from the API from second response
@@ -430,10 +461,11 @@ async def test_gemini_query_chat_error_2(
     monkeypatch,
     caplog,
 ):
+    monkeypatch.setenv("GEMINI_API_KEY", "DUMMY")
+
     caplog.set_level(logging.INFO)
     settings = Settings(data_folder="data")
     log_file = "log.txt"
-    monkeypatch.setenv("GEMINI_API_KEY", "DUMMY")
     gemini_api = GeminiAPI(settings=settings, log_file=log_file)
 
     # mock error response from the API from second response
