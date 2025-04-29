@@ -207,23 +207,11 @@ class GeminiAPI(AsyncAPI):
             A client for the Gemini API
         """
         # If the Client does not exist, create it
-        # already_created = True
-        # api_key = "NO VALUE HAS BEEN SET YET"
-        # print(f"GeminiAPI: {model_name=}")
-        # print(f"GeminiAPI: {self._clients=}")
-        # print(f"GeminiAPI: {self._clients.get(model_name, "not found")=}")
         if model_name not in self._clients:
-            # already_created = False
             api_key = get_environment_variable(
                 env_variable=API_KEY_VAR_NAME, model_name=model_name
             )
-            # print(f"Creating client for {model_name} with {api_key=}")
             self._clients[model_name] = Client(api_key=api_key)
-
-        # print(f"Client for {model_name} already created: {already_created}")
-        # print(f"{api_key=}")
-        # for env_var_name, env_var_val in os.environ.items():
-        #     print(f"{env_var_name}={env_var_val}")
 
         # Return the client for the model name
         return self._clients[model_name]

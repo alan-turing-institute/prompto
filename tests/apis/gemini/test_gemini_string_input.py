@@ -16,23 +16,12 @@ pytest_plugins = ("pytest_asyncio",)
 
 
 @pytest.mark.asyncio
-# @patch(
-#     AsyncChat,
-#     "send_message",
-#     new_callable=AsyncMock,
-# )
 async def test_gemini_query_string_no_env_var(
     prompt_dict_string, temporary_data_folders, caplog, monkeypatch
 ):
-
-    # monkeypatch.delenv("GEMINI_API_KEY", raising=False)
-    # monkeypatch.delenv("GEMINI_API_KEY_gemini_model_name", raising=False)
-
     caplog.set_level(logging.INFO)
     settings = Settings(data_folder="data")
     log_file = "log.txt"
-
-    # mock_send_message.return_value = "response Messages object"
 
     # raise error if no environment variable is set
     with pytest.raises(
@@ -47,9 +36,6 @@ async def test_gemini_query_string_no_env_var(
 
 
 @pytest.mark.asyncio
-# @patch(
-#     "google.generativeai.GenerativeModel.generate_content_async", new_callable=AsyncMock
-# )
 @patch.object(
     AsyncModels,
     "generate_content",
@@ -77,9 +63,6 @@ async def test_gemini_query_string(
     # google.genai.types.GenerateContentResponse object
     # not a string value, but for the purpose of this test, we are using a string value
     # and testing that this is the input to the process_response function
-    # TODO: Check if there is a difference in the return type of
-    # `google.genai.client.aio.models.generate_content`` and
-    # `google.genai.client.models.generate_content`
     mock_gemini_call.return_value = "response Messages object"
 
     # mock the process_response function
@@ -122,9 +105,6 @@ async def test_gemini_query_string(
 
 
 @pytest.mark.asyncio
-# @patch(
-#     "google.generativeai.GenerativeModel.generate_content_async", new_callable=AsyncMock
-# )
 @patch.object(
     AsyncModels,
     "generate_content",
@@ -176,9 +156,6 @@ async def test_gemini_query_string__index_error(
 
 
 @pytest.mark.asyncio
-# @patch(
-#     "google.generativeai.GenerativeModel.generate_content_async", new_callable=AsyncMock
-# )
 @patch.object(
     AsyncModels,
     "generate_content",

@@ -13,10 +13,6 @@ from google.genai.types import (
 from prompto.apis.gemini import GeminiAPI
 from prompto.settings import Settings
 
-# from google.generativeai import GenerativeModel
-# from google.generativeai.types import HarmBlockThreshold, HarmCategory
-
-
 pytest_plugins = ("pytest_asyncio",)
 
 

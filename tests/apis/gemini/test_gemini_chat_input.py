@@ -1,18 +1,12 @@
 import logging
-from copy import deepcopy
-from importlib import reload
 from unittest.mock import AsyncMock, Mock, patch
 
 import pytest
-
-# from google.generativeai import GenerativeModel
 from google.genai.chats import AsyncChat, AsyncChats
 from google.genai.types import GenerateContentConfig
 
 import prompto.utils
 from prompto.apis.gemini import GeminiAPI
-
-# import prompto.apis.gemini as prompto_gemini
 from prompto.settings import Settings
 
 from ...conftest import CopyingAsyncMock
@@ -21,35 +15,10 @@ from .test_gemini import DEFAULT_SAFETY_SETTINGS, prompt_dict_chat
 pytest_plugins = ("pytest_asyncio",)
 
 
-# TODO: FIX THIS. This test passes when executed alone, but fails when executed with all tests
-# This is probably due to the environment variable being monkeypatched somewhere without being
-# reset / properly scoped.
 @pytest.mark.asyncio
 async def test_gemini_query_chat_no_env_var(
     prompt_dict_chat, temporary_data_folders, caplog, monkeypatch
 ):
-    # with monkeypatch.context() as m:
-    #     reload(prompto.utils.os)
-    #     import os
-    #     # reload(prompto.apis.gemini.gemini.os)
-    #     # reload(prompto.apis.gemini.gemini_utils.os)
-
-    #     if "GEMINI_API_KEY" in os.environ:
-    #         m.delenv("GEMINI_API_KEY", raising=False)
-    #         m.delitem(os.environ, "GEMINI_API_KEY")
-    #         print("GEMINI_API_KEY deleted from os.environ with monkeypatch")
-    #     else:
-    #         print("GEMINI_API_KEY not in os.environ")
-
-    #     if "GEMINI_API_KEY_gemini_model_name" in os.environ:
-    #         m.delenv("GEMINI_API_KEY_gemini_model_name", raising=False)
-    #         m.delitem(os.environ, "GEMINI_API_KEY_gemini_model_name")
-    #         print("GEMINI_API_KEY_gemini_model_name deleted from os.environ with monkeypatch")
-    #     else:
-    #         print("GEMINI_API_KEY_gemini_model_name not in os.environ")
-
-    # monkeypatch.delenv("GEMINI_API_KEY", raising=False)
-    # monkeypatch.delenv("GEMINI_API_KEY_gemini_model_name", raising=False)
 
     caplog.set_level(logging.INFO)
     settings = Settings(data_folder="data")
@@ -68,9 +37,6 @@ async def test_gemini_query_chat_no_env_var(
 
 
 @pytest.mark.asyncio
-# @patch(
-#     "google.generativeai.ChatSession.send_message_async", new_callable=CopyingAsyncMock
-# )
 @patch.object(
     AsyncChat,
     "send_message",
@@ -168,7 +134,6 @@ async def test_gemini_query_chat(
 
 
 @pytest.mark.asyncio
-# @patch("google.generativeai.GenerativeModel.start_chat", new_callable=Mock)
 @patch.object(
     AsyncChats,
     "create",
@@ -224,9 +189,6 @@ async def test_gemini_query_history_check_chat_init(
 
 
 @pytest.mark.asyncio
-# @patch(
-#     "google.generativeai.ChatSession.send_message_async", new_callable=CopyingAsyncMock
-# )
 @patch.object(
     AsyncChat,
     "send_message",
@@ -256,12 +218,6 @@ async def test_gemini_query_chat_index_error_1(
 
     mock_gemini_call.assert_called_once()
     mock_gemini_call.assert_awaited_once()
-    # mock_gemini_call.assert_any_await(
-    #     content=prompt_dict_chat["prompt"][0],
-    #     generation_config=prompt_dict_chat["parameters"],
-    #     safety_settings=DEFAULT_SAFETY_SETTINGS,
-    #     stream=False,
-    # )
     mock_gemini_call.assert_any_await(
         message=prompt_dict_chat["prompt"][0],
         config=GenerateContentConfig(
@@ -285,9 +241,6 @@ async def test_gemini_query_chat_index_error_1(
 
 
 @pytest.mark.asyncio
-# @patch(
-#     "google.generativeai.ChatSession.send_message_async", new_callable=CopyingAsyncMock
-# )
 @patch.object(
     AsyncChat,
     "send_message",
@@ -311,12 +264,6 @@ async def test_gemini_query_chat_error_1(
 
     mock_gemini_call.assert_called_once()
     mock_gemini_call.assert_awaited_once()
-    # mock_gemini_call.assert_any_await(
-    #     content=prompt_dict_chat["prompt"][0],
-    #     generation_config=prompt_dict_chat["parameters"],
-    #     safety_settings=DEFAULT_SAFETY_SETTINGS,
-    #     stream=False,
-    # )
     mock_gemini_call.assert_any_await(
         message=prompt_dict_chat["prompt"][0],
         config=GenerateContentConfig(
@@ -337,9 +284,6 @@ async def test_gemini_query_chat_error_1(
 
 
 @pytest.mark.asyncio
-# @patch(
-#     "google.generativeai.ChatSession.send_message_async", new_callable=CopyingAsyncMock
-# )
 @patch.object(
     AsyncChat,
     "send_message",
@@ -385,12 +329,6 @@ async def test_gemini_query_chat_index_error_2(
 
     assert mock_gemini_call.call_count == 2
     assert mock_gemini_call.await_count == 2
-    # mock_gemini_call.assert_any_await(
-    #     content=prompt_dict_chat["prompt"][0],
-    #     generation_config=prompt_dict_chat["parameters"],
-    #     safety_settings=DEFAULT_SAFETY_SETTINGS,
-    #     stream=False,
-    # )
 
     mock_gemini_call.assert_any_await(
         message=prompt_dict_chat["prompt"][0],
@@ -400,13 +338,6 @@ async def test_gemini_query_chat_index_error_2(
             safety_settings=DEFAULT_SAFETY_SETTINGS,
         ),
     )
-
-    # mock_gemini_call.assert_awaited_with(
-    #     content=prompt_dict_chat["prompt"][1],
-    #     generation_config=prompt_dict_chat["parameters"],
-    #     safety_settings=DEFAULT_SAFETY_SETTINGS,
-    #     stream=False,
-    # )
 
     mock_gemini_call.assert_awaited_with(
         message=prompt_dict_chat["prompt"][1],
@@ -442,9 +373,6 @@ async def test_gemini_query_chat_index_error_2(
 
 
 @pytest.mark.asyncio
-# @patch(
-#     "google.generativeai.ChatSession.send_message_async", new_callable=CopyingAsyncMock
-# )
 @patch.object(
     AsyncChat,
     "send_message",
@@ -484,12 +412,6 @@ async def test_gemini_query_chat_error_2(
 
     assert mock_gemini_call.call_count == 2
     assert mock_gemini_call.await_count == 2
-    # mock_gemini_call.assert_any_await(
-    #     content=prompt_dict_chat["prompt"][0],
-    #     generation_config=prompt_dict_chat["parameters"],
-    #     safety_settings=DEFAULT_SAFETY_SETTINGS,
-    #     stream=False,
-    # )
 
     mock_gemini_call.assert_any_await(
         message=prompt_dict_chat["prompt"][0],
@@ -499,13 +421,6 @@ async def test_gemini_query_chat_error_2(
             safety_settings=DEFAULT_SAFETY_SETTINGS,
         ),
     )
-
-    # mock_gemini_call.assert_awaited_with(
-    #     content=prompt_dict_chat["prompt"][1],
-    #     generation_config=prompt_dict_chat["parameters"],
-    #     safety_settings=DEFAULT_SAFETY_SETTINGS,
-    #     stream=False,
-    # )
 
     mock_gemini_call.assert_awaited_with(
         message=prompt_dict_chat["prompt"][1],
