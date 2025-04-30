@@ -28,8 +28,6 @@ def parse_parts_value(part: dict | str, media_folder: str, client: Client) -> an
         Multimedia data object
     """
     if isinstance(part, str):
-        # return part
-        print(f"Part is a string: {part}")
         return types.Part.from_text(text=part)
 
     # read multimedia type

@@ -1,13 +1,11 @@
 import asyncio
 import base64
-import json
 import logging
 import os
-import time
 
-import google.genai
 import tqdm
 from dotenv import load_dotenv
+from google import genai
 
 from prompto.utils import compute_sha256_base64
 
@@ -81,9 +79,10 @@ async def upload_single_file(local_file_path, already_uploaded_files):
             f"Failure uploaded file '{file_obj.name}'. Error: {file_obj.error_message}"
         )
         raise ValueError(err_msg)
-    # logger.info(
-    #     f"Uploaded file '{file_obj.name}' with hash '{local_hash}' to Gemini API"
-    # )
+
+    logger.info(
+        f"Uploaded file '{file_obj.name}' with hash '{local_hash}' to Gemini API"
+    )
     already_uploaded_files[local_hash] = file_obj.name
     return file_obj.name, local_file_path
 
@@ -158,11 +157,9 @@ def upload_media_files(files_to_upload: set[str]):
 
 
 async def upload_media_files_async(files_to_upload: set[str]):
-    start_time = time.time()
-    logger.info(f"Start retrieving previously uploaded files ")
+    logger.info("Start retrieving previously uploaded files")
     uploaded_files = _get_previously_uploaded_files()
-    next_time = time.time()
-    logger.info(f"Retrieved list of previously uploaded files")
+    logger.info("Retrieved list of previously uploaded files")
 
     # Upload files asynchronously
     tasks = []

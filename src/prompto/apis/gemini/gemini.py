@@ -1,5 +1,4 @@
 import logging
-import os
 from typing import Any
 
 from google.genai import Client
@@ -575,13 +574,6 @@ class GeminiAPI(AsyncAPI):
         try:
             # No need to send the generation_config again, as it is no different
             # from the one used to create the chat
-            last_msg = prompt[-1]
-            print(f"whole prompt: {prompt}")
-            print(f"last_msg: {last_msg}")
-            # msg_to_send = convert_dict_to_input(
-            #     content_dict=prompt[-1], media_folder=self.settings.media_folder
-            # )
-
             msg_to_send = parse_parts(
                 prompt[-1]["parts"],
                 media_folder=self.settings.media_folder,
@@ -593,14 +585,7 @@ class GeminiAPI(AsyncAPI):
             ), "Only one message is allowed in the last message"
             msg_to_send = msg_to_send[0]
 
-            print(f"msg_to_send: {msg_to_send}")
-
-            response = await chat.send_message(
-                # message=convert_dict_to_input(
-                #     content_dict=prompt[-1], media_folder=self.settings.media_folder
-                # ),
-                message=msg_to_send
-            )
+            response = await chat.send_message(message=msg_to_send)
 
             response_text = process_response(response)
             safety_attributes = process_safety_attributes(response)
