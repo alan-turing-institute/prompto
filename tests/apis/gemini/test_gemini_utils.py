@@ -3,7 +3,7 @@ from google.genai.types import Content, Part
 
 from prompto.apis.gemini.gemini_utils import convert_history_dict_to_content
 
-from .test_gemini import prompt_dict_chat, prompt_dict_history
+from .test_gemini import prompt_dict_history
 
 
 @pytest.mark.xfail(reason="Test not implemented")
