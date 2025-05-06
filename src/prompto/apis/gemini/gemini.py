@@ -2,10 +2,6 @@ import logging
 from typing import Any
 
 from google.genai import Client
-
-# import google.generativeai as genai
-# from google.generativeai import GenerativeModel
-# from google.generativeai.types import GenerationConfig, HarmBlockThreshold, HarmCategory
 from google.genai.types import (
     GenerateContentConfig,
     HarmBlockThreshold,
@@ -181,7 +177,7 @@ class GeminiAPI(AsyncAPI):
         # if generation_config is provided, check that it can create a valid GenerationConfig object
         if "parameters" in prompt_dict:
             try:
-                GenerationConfig(**prompt_dict["parameters"])
+                GenerateContentConfig(**prompt_dict["parameters"])
             except Exception as err:
                 issues.append(Exception(f"Invalid generation_config parameter: {err}"))
 
@@ -406,7 +402,7 @@ class GeminiAPI(AsyncAPI):
                     safety_attributes = BLOCKED_SAFETY_ATTRIBUTES
                 else:
                     safety_attributes = process_safety_attributes(response)
-            except:
+            except Exception:
                 safety_attributes = BLOCKED_SAFETY_ATTRIBUTES
 
             prompt_dict["response"] = response_text
@@ -508,7 +504,7 @@ class GeminiAPI(AsyncAPI):
                     safety_attributes = BLOCKED_SAFETY_ATTRIBUTES
                 else:
                     safety_attributes = process_safety_attributes(response)
-            except:
+            except Exception:
                 safety_attributes = BLOCKED_SAFETY_ATTRIBUTES
 
             prompt_dict["response"] = response_text
@@ -625,7 +621,7 @@ class GeminiAPI(AsyncAPI):
                     safety_attributes = BLOCKED_SAFETY_ATTRIBUTES
                 else:
                     safety_attributes = process_safety_attributes(response)
-            except:
+            except Exception:
                 safety_attributes = BLOCKED_SAFETY_ATTRIBUTES
 
             prompt_dict["response"] = response_text

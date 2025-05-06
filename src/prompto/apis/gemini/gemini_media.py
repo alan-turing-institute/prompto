@@ -1,12 +1,8 @@
 import asyncio
 import base64
 import logging
-import os
-import tempfile
-from time import sleep
 
 import tqdm
-from dotenv import load_dotenv
 from google import genai
 
 from prompto.apis.gemini.gemini import GeminiAPI
@@ -27,7 +23,6 @@ def remote_file_hash_base64(remote_file):
     Convert a remote file's SHA256 hash (stored as a hex-encoded UTF-8 bytes object)
     to a base64-encoded string.
     """
-    # hex_str = remote_file.sha256_hash.decode("utf-8")
     hex_str = remote_file.sha256_hash
     raw_bytes = bytes.fromhex(hex_str)
     return base64.b64encode(raw_bytes).decode("utf-8")
@@ -38,16 +33,10 @@ async def wait_for_processing(file_obj, client: genai.Client, poll_interval=1):
     Poll until the file is no longer in the 'PROCESSING' state.
     Returns the updated file object.
     """
-    # print(f"File {file_obj.name} is in state {file_obj.state.name}")
-
     while file_obj.state.name == "PROCESSING":
         await asyncio.sleep(poll_interval)
         # We need to re-fetch the file object to get the updated state.
         file_obj = client.files.get(name=file_obj.name)
-        # print(f"File {file_obj.name} is in state {file_obj.state.name}")
-        # print(f"{file_obj.error=}")
-        # print(f"{file_obj.update_time=}")
-        # print(f"{file_obj.create_time=}")
     return file_obj
 
 
@@ -85,10 +74,8 @@ async def _upload_single_file(
         return already_uploaded_files[local_hash], local_file_path
 
     # Upload the file if it hasn't been found.
-    # Use asyncio.to_thread to run the blocking upload_file function in a separate thread.
     logger.info(f"Uploading {local_file_path} to Gemini API")
 
-    # file_obj = await asyncio.to_thread(genai.upload_file, local_file_path)
     file_obj = await client.aio.files.upload(file=local_file_path)
     file_obj = await wait_for_processing(file_obj, client=client)
 
@@ -105,16 +92,6 @@ async def _upload_single_file(
     return file_obj.name, local_file_path
 
 
-# def _init_genai():
-#     load_dotenv(dotenv_path=".env")
-#     # TODO: check if this can be refactored to a common function
-#     GEMINI_API_KEY = os.environ.get("GEMINI_API_KEY")
-#     if GEMINI_API_KEY is None:
-#         raise ValueError("GEMINI_API_KEY is not set")
-
-#     genai.configure(api_key=GEMINI_API_KEY)
-
-
 async def _get_previously_uploaded_files(client: genai.Client):
     raw_files = await client.aio.files.list()
     uploaded_files = {
@@ -128,24 +105,9 @@ def list_uploaded_files(settings: Settings):
     """
     List all previously uploaded files to the Gemini API.
     """
-    # _init_genai()
-
-    # Settings are not used in this function, but we need to
-    # create a dummy settings object to pass to the GeminiAPI
-    # TODO:
-    #  Also, we don't need a directory, but Settings constructor
-    # insists on creating these directories locally.
-    # A better solution would be to create an option in the
-    # Settings constructor to not create the directories.
-    # But for now we'll just pass it a temporary directory.
-    # with tempfile.TemporaryDirectory() as temp_dir:
-    #     data_folder = os.path.join(temp_dir, "data")
-    #     os.makedirs(data_folder, exist_ok=True)
-    #     dummy_settings = Settings(data_folder=data_folder)
-
     genmini_api = GeminiAPI(settings=settings, log_file=None)
     # TODO: We need a model name, because our API caters for different API keys
-    # for different models. Maybe our API to complicated....
+    # for different models. Maybe our API is too complicated....
     default_model_name = "default"
     client = genmini_api._get_client(default_model_name)
     uploaded_files = asyncio.run(_get_previously_uploaded_files(client))
@@ -160,85 +122,22 @@ def delete_uploaded_files(settings: Settings):
     """
     Delete all previously uploaded files from the Gemini API.
     """
-    # _init_genai()
-
-    # with tempfile.TemporaryDirectory() as temp_dir:
-    #     data_folder = os.path.join(temp_dir, "data")
-    #     os.makedirs(data_folder, exist_ok=True)
-    #     dummy_settings = Settings(data_folder=data_folder)
-
     genmini_api = GeminiAPI(settings=settings, log_file=None)
     # TODO: We need a model name, because our API caters for different API keys
     # for different models. Maybe our API to complicated....
     default_model_name = "default"
     client = genmini_api._get_client(default_model_name)
 
-    # uploaded_files = asyncio.run(_get_previously_uploaded_files(client))
+    # This just using the synchronous API. Using the async API did not
+    # seem reliable. In particular `client.aio.files.delete()` did not appear
+    # to always actually deleting the files (even after repeatedly polling the file)
+    # This is not an important function in prompto and delete action is reasonably
+    # quick, so we can live with this simple solution.
+    # ``
     for remote_file in client.files.list():
-        # file_name = file_name.name
         client.files.delete(name=remote_file.name)
-        # _delete_single_uploaded_file(file_name, client)
-    # return asyncio.run(_delete_uploaded_files_async(uploaded_files, client))
+
     logger.info("All uploaded files deleted.")
-
-
-def _delete_single_uploaded_file(file_name: str, client: genai.Client):
-    """
-    Delete a single uploaded file from the Gemini API.
-    """
-    print(f"Deleting file {file_name}")
-    file = client.files.get(name=file_name)
-    client.files.delete(name=file_name)
-    # indx = 0
-
-    # The delete function is non-blocking (even the sync version)
-    # and returns immediately. So we need to poll the file object
-    # to see if it is still exists.
-    # The only reliable way to check if the file is deleted is to
-    # try and get it again and see if it raises an error.
-    while True:
-        # We need to re-fetch the file object to get the updated state.
-        try:
-            file = client.files.get(name=file.name)
-            print(f"File {file.name} is in state {file.state.name}")
-            print(f"{file.error=}")
-            print(f"{file.update_time=}")
-            print(f"{file.create_time=}")
-            print(f"{indx=}")
-            # client.files.delete(name=file_name)
-            indx += 1
-            # if indx > 10:
-            #     break
-        except genai.errors.ClientError as e:
-            # print(f"ClientError: {e}"
-            print(f"File {file.name} deleted")
-            break
-        # if file.state.name == "PROCESSING":
-        sleep(1)
-
-
-async def _delete_uploaded_files_async(uploaded_files, client: genai.Client):
-    tasks_set = set()
-    for file_name in uploaded_files.values():
-        logger.info(f"Preparing to delete file: {file_name}")
-        # tasks.append(asyncio.to_thread(genai.delete_file, file_name))
-
-        # file = await client.aio.files.get(name=file_name)
-        # # task = client.aio.files.delete(name=file_name)
-        # task = asyncio.to_thread(client.aio.files.delete(name=file_name))
-        tasks_set.add(_delete_single_uploaded_file(file_name, client))
-
-    # await tqdm.asyncio.tqdm.gather(*tasks)
-    await asyncio.gather(*tasks_set, return_exceptions=True)
-    logger.info("All uploaded files deleted.")
-
-    # async with asyncio.TaskGroup() as tg:
-    #     for file_name in uploaded_files.values():
-    #         logger.info(f"Preparing to delete file: {file_name}")
-    #         # tasks.append(asyncio.to_thread(genai.delete_file, file_name))
-    #         tg.create_task(client.aio.files.delete(name=file_name))
-
-    # logger.info("All uploaded files deleted.")
 
 
 def upload_media_files(files_to_upload: set[str], settings: Settings):

@@ -55,7 +55,6 @@ def parse_parts_value(part: dict | str, media_folder: str, client: Client) -> an
                 )
         else:
             try:
-                # return genai.get_file(name=uploaded_filename)
                 return client.aio.files.get(name=uploaded_filename)
             except Exception as err:
                 raise ValueError(
@@ -120,11 +119,6 @@ def convert_history_dict_to_content(
     if "parts" not in content_dict:
         raise KeyError("parts key is missing in content dictionary")
 
-    # return parse_parts(
-    #     content_dict["parts"],
-    #     media_folder=media_folder,
-    # )
-
     return types.Content(
         role=content_dict["role"],
         parts=parse_parts(
@@ -133,14 +127,6 @@ def convert_history_dict_to_content(
             client=client,
         ),
     )
-
-    # return {
-    #     "role": content_dict["role"],
-    #     "parts": parse_parts(
-    #         content_dict["parts"],
-    #         media_folder=media_folder,
-    #     )
-    # }
 
 
 def process_response(response: dict) -> str:

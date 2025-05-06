@@ -1,11 +1,9 @@
 import argparse
-import asyncio
 import json
 import logging
 import os
 
 import prompto.apis.gemini.gemini_media as gemini_media
-from prompto.apis import ASYNC_APIS
 from prompto.scripts.run_experiment import load_env_file
 from prompto.settings import Settings
 
@@ -261,7 +259,7 @@ def _create_settings():
     This is used to create a client object for the API.
     For now, we just create a temporary directory for the data folder.
     """
-    # A better solution would be to create an option in the
+    # TODO: A better solution would be to create an option in the
     # Settings constructor to not create the directories.
     # But for now we'll just pass it a temporary directory.
     import tempfile

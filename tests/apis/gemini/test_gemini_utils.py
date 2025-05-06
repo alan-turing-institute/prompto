@@ -6,16 +6,6 @@ from prompto.apis.gemini.gemini_utils import convert_history_dict_to_content
 from .test_gemini import prompt_dict_history
 
 
-@pytest.mark.xfail(reason="Test not implemented")
-def test_process_response():
-    pytest.fail("Test not implemented")
-
-
-@pytest.mark.xfail(reason="Test not implemented")
-def test_process_safety_attributes():
-    pytest.fail("Test not implemented")
-
-
 def test_convert_history_dict_to_content(prompt_dict_history):
 
     media_folder = "media_folder"

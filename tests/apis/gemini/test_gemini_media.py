@@ -129,11 +129,6 @@ def test_upload_media_files_already_uploaded(
         assert expected_log_msg in caplog.text
 
 
-# def test_upload_media_files():
-#     pytest.fail("Test not implemented")
-
-
-# @pytest.mark.asyncio
 @patch(
     "prompto.apis.gemini.gemini_media._get_previously_uploaded_files",
     new_callable=AsyncMock,
@@ -204,11 +199,6 @@ def test_upload_media_files_new_file(
 
         # Check the log message
         assert all(msg in caplog.text for msg in expected_log_msgs)
-
-
-# def test__init_genai():
-#     # Is this still required, or is it superseded by the Client object
-#     pytest.fail("Test not implemented")
 
 
 @patch.object(

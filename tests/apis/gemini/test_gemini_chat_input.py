@@ -59,9 +59,9 @@ async def test_gemini_query_chat(
     log_file = "log.txt"
     gemini_api = GeminiAPI(settings=settings, log_file=log_file)
 
-    # mock the response from the API
+    # Mock the response from the API
     # NOTE: The actual response from the API is a
-    # google.genai.types.GenerateContentResponse object
+    # `google.genai.types.GenerateContentResponse` object
     # not a string value, but for the purpose of this test, we are using a string value
     # and testing that this is the input to the process_response function
     gemini_api_sequence_responses = [

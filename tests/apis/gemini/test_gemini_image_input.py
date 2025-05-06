@@ -72,7 +72,6 @@ def test_parse_parts_value_video_not_uploaded():
     assert "not uploaded" in str(excinfo.value)
 
 
-# @patch("google.genai.client.files.get")
 def test_parse_parts_value_video_uploaded(monkeypatch):
     part = {
         "type": "video",
