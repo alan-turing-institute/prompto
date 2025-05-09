@@ -27,7 +27,7 @@
 
 `prompto` derives from the Italian word "_pronto_" which means "_ready_" (or "hello" when answering the phone). It could also mean "_I prompt_" in Italian (if "_promptare_" was a verb meaning "_to prompt_").
 
-A pre-print for this work is available on [arXiv](https://arxiv.org/abs/2408.11847). If you use this library, please see the [citation](#citation) below. For the experiments in the pre-print, see the [system demonstration examples](./examples/system-demo/README.md).
+See our systems demonstrations paper from NAACL 2025 [here](https://aclanthology.org/2025.naacl-demo.11/). If you use this library, please see the [citation](#citation) below. For the experiments in the paper, see the [system demonstration examples](./examples/system-demo/README.md).
 
 ## Why `prompto`?
 
@@ -212,10 +212,17 @@ When a new model is added, you must add it to the [`API`](https://github.com/ala
 ## Citation
 
 ```
-@article{chan2024prompto,
-  title={Prompto: An open source library for asynchronous querying of LLM endpoints},
-  author={Chan, Ryan Sze-Yin and Nanni, Federico and Brown, Edwin and Chapman, Ed and Williams, Angus R and Bright, Jonathan and Gabasova, Evelina},
-  journal={arXiv preprint arXiv:2408.11847},
-  year={2024}
+@inproceedings{chan-etal-2025-prompto,
+  title={Prompto: An open source library for asynchronous querying of {LLM} endpoints},
+  author={Chan, Ryan Sze-Yin and Nanni, Federico and Brown, Edwin and Chapman, Ed and Williams, Angus Redlarski and Bright, Jonathan and Gabasova, Evelina},
+  editor={Dziri, Nouha and Ren, Sean (Xiang) and Diao, Shizhe},
+  booktitle={Proceedings of the 2025 Conference of the Nations of the Americas Chapter of the Association for Computational Linguistics: Human Language Technologies (System Demonstrations)},
+  publisher={Association for Computational Linguistics},
+  pages={106--115},
+  address={Albuquerque, New Mexico},
+  url={https://aclanthology.org/2025.naacl-demo.11/},
+  month=apr,
+  year={2025},
+  ISBN={979-8-89176-191-9}
 }
 ```
