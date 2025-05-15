@@ -7,6 +7,7 @@ from google.genai.types import (
     HarmBlockThreshold,
     HarmCategory,
     SafetySetting,
+    ThinkingConfig,
 )
 
 from prompto.apis.base import AsyncAPI
@@ -338,10 +339,26 @@ class GeminiAPI(AsyncAPI):
                 f"parameters must be a dictionary, not {type(generation_config_params)}"
             )
 
+        # Derive the required ThinkingConfig from the parameters
+        # TBC - how do we get these values from the prompt_dict?
+
+        # Placeholder values for now
+        include_thoughts = False
+        thinking_budget = 9999
+
+        if include_thoughts is None and thinking_budget is None:
+            thinking_config = None
+        else:
+            thinking_config = ThinkingConfig(
+                include_thoughts=include_thoughts,
+                thinking_budget=thinking_budget,
+            )
+
         gen_content_config = GenerateContentConfig(
             **generation_config_params,
             safety_settings=safety_settings,
             system_instruction=system_instruction,
+            thinking_config=thinking_config,
         )
 
         return prompt, model_name, client, gen_content_config, None

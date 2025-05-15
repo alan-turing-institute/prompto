@@ -8,6 +8,7 @@ from google.genai.types import (
     HarmBlockThreshold,
     HarmCategory,
     SafetySetting,
+    ThinkingConfig,
 )
 
 from prompto.apis.gemini import GeminiAPI
@@ -473,6 +474,74 @@ async def test_gemini_obtain_model_inputs(temporary_data_folders, monkeypatch):
                 "prompt": "test prompt",
             }
         )
+
+
+@pytest.mark.xfail(
+    reason="This cannot work until we agree on the schema for the thinking config parameters"
+)
+@pytest.mark.asyncio
+async def test_gemini_obtain_model_inputs_thinking_config(
+    temporary_data_folders, monkeypatch
+):
+    settings = Settings(data_folder="data")
+    log_file = "log.txt"
+    monkeypatch.setenv("GEMINI_API_KEY", "DUMMY")
+    gemini_api = GeminiAPI(settings=settings, log_file=log_file)
+
+    # These test cases are very similar to the test above, so we will not repeat assertions for all
+    # attributes - only those that are relevant to the thinking config
+
+    # Case 1: test with *NO* thinking config parameters provided
+    test_case = await gemini_api._obtain_model_inputs(
+        {
+            "id": "gemini_id",
+            "api": "gemini",
+            "model_name": "gemini_model_name",
+            "prompt": "test prompt",
+            "parameters": {"temperature": 1, "max_output_tokens": 100},
+        }
+    )
+    assert isinstance(test_case, tuple)
+    assert isinstance(test_case[3], GenerateContentConfig)
+    assert test_case[3].thinking_config is None
+
+    # Case 2: test with thinking config parameters provided
+    # There are two possible ways we could provide the thinking config parameters.
+    # We need to select from one of these to options:
+    dummy_prompt_dicts = [
+        # Either within the parameters dictionary
+        {
+            "id": "gemini_id",
+            "api": "gemini",
+            "model_name": "gemini_model_name",
+            "prompt": "test prompt",
+            "parameters": {
+                "temperature": 1,
+                "max_output_tokens": 100,
+                "thinking_budget": 1234,
+                "include_thoughts": True,
+            },
+        },
+        # OR as top-level keys within the prompt dictionary
+        {
+            "id": "gemini_id",
+            "api": "gemini",
+            "model_name": "gemini_model_name",
+            "prompt": "test prompt",
+            "thinking_budget": 1234,
+            "include_thoughts": True,
+            "parameters": {"temperature": 1, "max_output_tokens": 100},
+        },
+    ]
+
+    for dummy_prompt_dict in dummy_prompt_dicts:
+        test_case = await gemini_api._obtain_model_inputs(dummy_prompt_dict)
+
+        assert isinstance(test_case, tuple)
+        assert isinstance(test_case[3], GenerateContentConfig)
+        assert isinstance(test_case[3].thinking_config, ThinkingConfig)
+        assert test_case[3].thinking_config.thinking_budget == 1234
+        assert test_case[3].thinking_config.include_thoughts is True
 
 
 @pytest.mark.asyncio
