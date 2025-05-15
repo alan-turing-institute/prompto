@@ -340,15 +340,27 @@ class GeminiAPI(AsyncAPI):
             )
 
         # Derive the required ThinkingConfig from the parameters
-        # TBC - how do we get these values from the prompt_dict?
-
-        # Placeholder values for now
-        include_thoughts = False
-        thinking_budget = 9999
+        # `pop` removes the key from the dictionary
+        include_thoughts = generation_config_params.pop("include_thoughts", None)
+        thinking_budget = generation_config_params.pop("thinking_budget", None)
 
         if include_thoughts is None and thinking_budget is None:
             thinking_config = None
         else:
+            if not isinstance(include_thoughts, bool | None):
+                err_msg = "If include_thoughts is set, it must be a boolean"
+                raise ValueError(err_msg)
+
+            try:
+                assert isinstance(thinking_budget, int | None)
+                if thinking_budget is not None:
+                    assert isinstance(thinking_budget, int)
+                    assert 0 <= thinking_budget <= 24576
+
+            except AssertionError as ae:
+                err_msg = "if thinking_budget is set, it must be an integer between 0 and 24576"
+                raise ValueError(err_msg) from ae
+
             thinking_config = ThinkingConfig(
                 include_thoughts=include_thoughts,
                 thinking_budget=thinking_budget,

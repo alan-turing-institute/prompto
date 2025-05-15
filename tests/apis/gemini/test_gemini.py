@@ -476,9 +476,6 @@ async def test_gemini_obtain_model_inputs(temporary_data_folders, monkeypatch):
         )
 
 
-@pytest.mark.xfail(
-    reason="This cannot work until we agree on the schema for the thinking config parameters"
-)
 @pytest.mark.asyncio
 async def test_gemini_obtain_model_inputs_thinking_config(
     temporary_data_folders, monkeypatch
@@ -506,10 +503,7 @@ async def test_gemini_obtain_model_inputs_thinking_config(
     assert test_case[3].thinking_config is None
 
     # Case 2: test with thinking config parameters provided
-    # There are two possible ways we could provide the thinking config parameters.
-    # We need to select from one of these to options:
-    dummy_prompt_dicts = [
-        # Either within the parameters dictionary
+    test_case = await gemini_api._obtain_model_inputs(
         {
             "id": "gemini_id",
             "api": "gemini",
@@ -521,27 +515,33 @@ async def test_gemini_obtain_model_inputs_thinking_config(
                 "thinking_budget": 1234,
                 "include_thoughts": True,
             },
-        },
-        # OR as top-level keys within the prompt dictionary
-        {
-            "id": "gemini_id",
-            "api": "gemini",
-            "model_name": "gemini_model_name",
-            "prompt": "test prompt",
-            "thinking_budget": 1234,
-            "include_thoughts": True,
-            "parameters": {"temperature": 1, "max_output_tokens": 100},
-        },
-    ]
+        }
+    )
 
-    for dummy_prompt_dict in dummy_prompt_dicts:
-        test_case = await gemini_api._obtain_model_inputs(dummy_prompt_dict)
+    assert isinstance(test_case, tuple)
+    assert isinstance(test_case[3], GenerateContentConfig)
+    assert isinstance(test_case[3].thinking_config, ThinkingConfig)
+    assert test_case[3].thinking_config.thinking_budget == 1234
+    assert test_case[3].thinking_config.include_thoughts is True
 
-        assert isinstance(test_case, tuple)
-        assert isinstance(test_case[3], GenerateContentConfig)
-        assert isinstance(test_case[3].thinking_config, ThinkingConfig)
-        assert test_case[3].thinking_config.thinking_budget == 1234
-        assert test_case[3].thinking_config.include_thoughts is True
+    # Case 3: test with invalid thinking config parameters provided
+
+    with pytest.raises(ValueError):
+        # thinking_budget is out of range
+        test_case = await gemini_api._obtain_model_inputs(
+            {
+                "id": "gemini_id",
+                "api": "gemini",
+                "model_name": "gemini_model_name",
+                "prompt": "test prompt",
+                "parameters": {
+                    "temperature": 1,
+                    "max_output_tokens": 100,
+                    "thinking_budget": 12345678901234567890,  # out of range
+                    "include_thoughts": True,
+                },
+            }
+        )
 
 
 @pytest.mark.asyncio
