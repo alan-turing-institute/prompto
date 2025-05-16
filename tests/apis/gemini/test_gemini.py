@@ -2,8 +2,19 @@ from unittest.mock import AsyncMock, patch
 
 import pytest
 import regex as re
-from google.generativeai import GenerativeModel
-from google.generativeai.types import HarmBlockThreshold, HarmCategory
+from google.genai.client import AsyncClient, Client
+from google.genai.types import (
+    Candidate,
+    Content,
+    FinishReason,
+    GenerateContentConfig,
+    GenerateContentResponse,
+    HarmBlockThreshold,
+    HarmCategory,
+    Part,
+    SafetySetting,
+    ThinkingConfig,
+)
 
 from prompto.apis.gemini import GeminiAPI
 from prompto.settings import Settings
@@ -62,12 +73,108 @@ def prompt_dict_history_no_system():
     }
 
 
-DEFAULT_SAFETY_SETTINGS = {
-    HarmCategory.HARM_CATEGORY_DANGEROUS_CONTENT: HarmBlockThreshold.BLOCK_MEDIUM_AND_ABOVE,
-    HarmCategory.HARM_CATEGORY_HATE_SPEECH: HarmBlockThreshold.BLOCK_MEDIUM_AND_ABOVE,
-    HarmCategory.HARM_CATEGORY_HARASSMENT: HarmBlockThreshold.BLOCK_MEDIUM_AND_ABOVE,
-    HarmCategory.HARM_CATEGORY_SEXUALLY_EXPLICIT: HarmBlockThreshold.BLOCK_MEDIUM_AND_ABOVE,
-}
+@pytest.fixture
+def non_thinking_response():
+
+    # Some example responses, with and without thinking included.
+    return GenerateContentResponse(
+        candidates=[
+            Candidate(
+                content=Content(
+                    parts=[
+                        Part(
+                            video_metadata=None,
+                            thought=None,
+                            inline_data=None,
+                            code_execution_result=None,
+                            executable_code=None,
+                            file_data=None,
+                            function_call=None,
+                            function_response=None,
+                            text="A spontaneous answer",
+                        ),
+                    ],
+                    role="model",
+                ),
+                citation_metadata=None,
+                finish_message=None,
+                token_count=None,
+                finish_reason=FinishReason.STOP,
+                avg_logprobs=None,
+                grounding_metadata=None,
+                index=0,
+                logprobs_result=None,
+                safety_ratings=None,
+            )
+        ]
+    )
+
+
+@pytest.fixture
+def thinking_response():
+    return GenerateContentResponse(
+        candidates=[
+            Candidate(
+                content=Content(
+                    parts=[
+                        Part(
+                            video_metadata=None,
+                            thought=True,
+                            inline_data=None,
+                            code_execution_result=None,
+                            executable_code=None,
+                            file_data=None,
+                            function_call=None,
+                            function_response=None,
+                            text="Some thinking",
+                        ),
+                        Part(
+                            video_metadata=None,
+                            thought=None,
+                            inline_data=None,
+                            code_execution_result=None,
+                            executable_code=None,
+                            file_data=None,
+                            function_call=None,
+                            function_response=None,
+                            text="A thought out answer",
+                        ),
+                    ],
+                    role="model",
+                ),
+                citation_metadata=None,
+                finish_message=None,
+                token_count=None,
+                finish_reason=FinishReason.STOP,
+                avg_logprobs=None,
+                grounding_metadata=None,
+                index=0,
+                logprobs_result=None,
+                safety_ratings=None,
+            )
+        ]
+    )
+
+
+DEFAULT_SAFETY_SETTINGS = [
+    SafetySetting(
+        category=HarmCategory.HARM_CATEGORY_DANGEROUS_CONTENT,
+        threshold=HarmBlockThreshold.BLOCK_MEDIUM_AND_ABOVE,
+    ),
+    SafetySetting(
+        category=HarmCategory.HARM_CATEGORY_HATE_SPEECH,
+        threshold=HarmBlockThreshold.BLOCK_MEDIUM_AND_ABOVE,
+    ),
+    SafetySetting(
+        category=HarmCategory.HARM_CATEGORY_HARASSMENT,
+        threshold=HarmBlockThreshold.BLOCK_MEDIUM_AND_ABOVE,
+    ),
+    SafetySetting(
+        category=HarmCategory.HARM_CATEGORY_SEXUALLY_EXPLICIT,
+        threshold=HarmBlockThreshold.BLOCK_MEDIUM_AND_ABOVE,
+    ),
+]
+
 
 TYPE_ERROR_MSG = (
     "if api == 'gemini', then the prompt must be a str, list[str], or "
@@ -256,93 +363,97 @@ def test_gemini_check_prompt_dict(temporary_data_folders, monkeypatch):
         raise test_case[0]
 
     # set the GEMINI_API_KEY environment variable
-    monkeypatch.setenv("GEMINI_API_KEY", "DUMMY")
-    # error if the model-specific environment variable is not set
-    test_case = GeminiAPI.check_prompt_dict(
-        {
-            "api": "gemini",
-            "model_name": "gemini_model_name",
-            "prompt": "test prompt",
-        }
-    )
-    assert len(test_case) == 1
-    with pytest.raises(
-        Warning,
-        match=re.escape(
-            "Environment variable 'GEMINI_API_KEY_gemini_model_name' is not set"
-        ),
-    ):
-        raise test_case[0]
-
-    # unset the GEMINI_API_KEY environment variable and
-    # set the model-specific environment variable
-    monkeypatch.delenv("GEMINI_API_KEY")
-    monkeypatch.setenv("GEMINI_API_KEY_gemini_model_name", "DUMMY")
-    test_case = GeminiAPI.check_prompt_dict(
-        {
-            "api": "gemini",
-            "model_name": "gemini_model_name",
-            "prompt": "test prompt",
-        }
-    )
-    assert len(test_case) == 1
-    with pytest.raises(
-        Warning, match=re.escape("Environment variable 'GEMINI_API_KEY' is not set")
-    ):
-        raise test_case[0]
-
-    # full passes
-    # set both environment variables
-    monkeypatch.setenv("GEMINI_API_KEY", "DUMMY")
-    assert (
-        GeminiAPI.check_prompt_dict(
+    with monkeypatch.context() as m1:
+        m1.setenv("GEMINI_API_KEY", "DUMMY")
+        # error if the model-specific environment variable is not set
+        test_case = GeminiAPI.check_prompt_dict(
             {
                 "api": "gemini",
                 "model_name": "gemini_model_name",
                 "prompt": "test prompt",
             }
         )
-        == []
-    )
-    assert (
-        GeminiAPI.check_prompt_dict(
+        assert len(test_case) == 1
+        with pytest.raises(
+            Warning,
+            match=re.escape(
+                "Environment variable 'GEMINI_API_KEY_gemini_model_name' is not set"
+            ),
+        ):
+            raise test_case[0]
+
+    with monkeypatch.context() as m2:
+        # unset the GEMINI_API_KEY environment variable and
+        # set the model-specific environment variable
+        m2.delenv("GEMINI_API_KEY", raising=False)
+        m2.setenv("GEMINI_API_KEY_gemini_model_name", "DUMMY")
+        test_case = GeminiAPI.check_prompt_dict(
             {
                 "api": "gemini",
                 "model_name": "gemini_model_name",
-                "prompt": ["prompt 1", "prompt 2"],
+                "prompt": "test prompt",
             }
         )
-        == []
-    )
-    assert (
-        GeminiAPI.check_prompt_dict(
-            {
-                "api": "gemini",
-                "model_name": "gemini_model_name",
-                "prompt": [
-                    {"role": "system", "parts": "system prompt"},
-                    {"role": "user", "parts": "user message 1"},
-                    {"role": "model", "parts": "model message"},
-                    {"role": "user", "parts": "user message 2"},
-                ],
-            }
+        assert len(test_case) == 1
+        with pytest.raises(
+            Warning, match=re.escape("Environment variable 'GEMINI_API_KEY' is not set")
+        ):
+            raise test_case[0]
+
+    # full passes
+    # set both environment variables
+    with monkeypatch.context() as m3:
+        m3.setenv("GEMINI_API_KEY", "DUMMY")
+        m3.setenv("GEMINI_API_KEY_gemini_model_name", "DUMMY")
+        assert (
+            GeminiAPI.check_prompt_dict(
+                {
+                    "api": "gemini",
+                    "model_name": "gemini_model_name",
+                    "prompt": "test prompt",
+                }
+            )
+            == []
         )
-        == []
-    )
-    assert (
-        GeminiAPI.check_prompt_dict(
-            {
-                "api": "gemini",
-                "model_name": "gemini_model_name",
-                "prompt": [
-                    {"role": "user", "parts": "user message 1"},
-                    {"role": "model", "parts": "model message"},
-                    {"role": "user", "parts": "user message 2"},
-                ],
-            }
+        assert (
+            GeminiAPI.check_prompt_dict(
+                {
+                    "api": "gemini",
+                    "model_name": "gemini_model_name",
+                    "prompt": ["prompt 1", "prompt 2"],
+                }
+            )
+            == []
         )
-        == []
-    )
+        assert (
+            GeminiAPI.check_prompt_dict(
+                {
+                    "api": "gemini",
+                    "model_name": "gemini_model_name",
+                    "prompt": [
+                        {"role": "system", "parts": "system prompt"},
+                        {"role": "user", "parts": "user message 1"},
+                        {"role": "model", "parts": "model message"},
+                        {"role": "user", "parts": "user message 2"},
+                    ],
+                }
+            )
+            == []
+        )
+        assert (
+            GeminiAPI.check_prompt_dict(
+                {
+                    "api": "gemini",
+                    "model_name": "gemini_model_name",
+                    "prompt": [
+                        {"role": "user", "parts": "user message 1"},
+                        {"role": "model", "parts": "model message"},
+                        {"role": "user", "parts": "user message 2"},
+                    ],
+                }
+            )
+            == []
+        )
 
 
 @pytest.mark.asyncio
@@ -366,11 +477,14 @@ async def test_gemini_obtain_model_inputs(temporary_data_folders, monkeypatch):
     assert len(test_case) == 5
     assert test_case[0] == "test prompt"
     assert test_case[1] == "gemini_model_name"
-    assert isinstance(test_case[2], GenerativeModel)
-    assert test_case[2]._model_name == "models/gemini_model_name"
-    assert test_case[2]._system_instruction is None
-    assert isinstance(test_case[3], dict)
-    assert test_case[4] == {"temperature": 1, "max_output_tokens": 100}
+    assert isinstance(test_case[2], Client)
+    assert isinstance(test_case[2].aio, AsyncClient)
+    assert isinstance(test_case[3], GenerateContentConfig)
+    assert test_case[3].system_instruction is None
+    assert test_case[3].temperature == 1
+    assert test_case[3].max_output_tokens == 100
+    assert test_case[3].safety_settings == DEFAULT_SAFETY_SETTINGS
+    assert test_case[4] is None
 
     # test for case where no parameters in prompt_dict
     test_case = await gemini_api._obtain_model_inputs(
@@ -385,11 +499,14 @@ async def test_gemini_obtain_model_inputs(temporary_data_folders, monkeypatch):
     assert len(test_case) == 5
     assert test_case[0] == "test prompt"
     assert test_case[1] == "gemini_model_name"
-    assert isinstance(test_case[2], GenerativeModel)
-    assert test_case[2]._model_name == "models/gemini_model_name"
-    assert test_case[2]._system_instruction is None
-    assert isinstance(test_case[3], dict)
-    assert test_case[4] == {}
+    assert isinstance(test_case[2], Client)
+    assert isinstance(test_case[2].aio, AsyncClient)
+    assert isinstance(test_case[3], GenerateContentConfig)
+    assert test_case[3].system_instruction is None
+    assert test_case[3].temperature is None
+    assert test_case[3].max_output_tokens is None
+    assert test_case[3].safety_settings == DEFAULT_SAFETY_SETTINGS
+    assert test_case[4] is None
 
     # test for case where system_instruction is provided
     test_case = await gemini_api._obtain_model_inputs(
@@ -405,11 +522,12 @@ async def test_gemini_obtain_model_inputs(temporary_data_folders, monkeypatch):
     assert len(test_case) == 5
     assert test_case[0] == "test prompt"
     assert test_case[1] == "gemini_model_name"
-    assert isinstance(test_case[2], GenerativeModel)
-    assert test_case[2]._model_name == "models/gemini_model_name"
-    assert test_case[2]._system_instruction is not None
-    assert isinstance(test_case[3], dict)
-    assert test_case[4] == {}
+    assert isinstance(test_case[2], Client)
+    assert isinstance(test_case[2].aio, AsyncClient)
+    assert isinstance(test_case[3], GenerateContentConfig)
+    assert test_case[3].system_instruction is not None
+    assert test_case[3].safety_settings == DEFAULT_SAFETY_SETTINGS
+    assert test_case[4] is None
 
     # test error catching when parameters are not a dictionary
     with pytest.raises(
@@ -447,6 +565,74 @@ async def test_gemini_obtain_model_inputs(temporary_data_folders, monkeypatch):
 
 
 @pytest.mark.asyncio
+async def test_gemini_obtain_model_inputs_thinking_config(
+    temporary_data_folders, monkeypatch
+):
+    settings = Settings(data_folder="data")
+    log_file = "log.txt"
+    monkeypatch.setenv("GEMINI_API_KEY", "DUMMY")
+    gemini_api = GeminiAPI(settings=settings, log_file=log_file)
+
+    # These test cases are very similar to the test above, so we will not repeat assertions for all
+    # attributes - only those that are relevant to the thinking config
+
+    # Case 1: test with *NO* thinking config parameters provided
+    test_case = await gemini_api._obtain_model_inputs(
+        {
+            "id": "gemini_id",
+            "api": "gemini",
+            "model_name": "gemini_model_name",
+            "prompt": "test prompt",
+            "parameters": {"temperature": 1, "max_output_tokens": 100},
+        }
+    )
+    assert isinstance(test_case, tuple)
+    assert isinstance(test_case[3], GenerateContentConfig)
+    assert test_case[3].thinking_config is None
+
+    # Case 2: test with thinking config parameters provided
+    test_case = await gemini_api._obtain_model_inputs(
+        {
+            "id": "gemini_id",
+            "api": "gemini",
+            "model_name": "gemini_model_name",
+            "prompt": "test prompt",
+            "parameters": {
+                "temperature": 1,
+                "max_output_tokens": 100,
+                "thinking_budget": 1234,
+                "include_thoughts": True,
+            },
+        }
+    )
+
+    assert isinstance(test_case, tuple)
+    assert isinstance(test_case[3], GenerateContentConfig)
+    assert isinstance(test_case[3].thinking_config, ThinkingConfig)
+    assert test_case[3].thinking_config.thinking_budget == 1234
+    assert test_case[3].thinking_config.include_thoughts is True
+
+    # Case 3: test with invalid thinking config parameters provided
+
+    with pytest.raises(ValueError):
+        # thinking_budget is out of range
+        test_case = await gemini_api._obtain_model_inputs(
+            {
+                "id": "gemini_id",
+                "api": "gemini",
+                "model_name": "gemini_model_name",
+                "prompt": "test prompt",
+                "parameters": {
+                    "temperature": 1,
+                    "max_output_tokens": 100,
+                    "thinking_budget": 12345678901234567890,  # out of range
+                    "include_thoughts": True,
+                },
+            }
+        )
+
+
+@pytest.mark.asyncio
 async def test_gemini_obtain_model_inputs_safety_filters(
     temporary_data_folders, monkeypatch
 ):
@@ -455,9 +641,15 @@ async def test_gemini_obtain_model_inputs_safety_filters(
     monkeypatch.setenv("GEMINI_API_KEY", "DUMMY")
     gemini_api = GeminiAPI(settings=settings, log_file=log_file)
 
-    valid_safety_filter_choices = ["none", "few", "default", "some", "most"]
+    valid_safety_filter_choices = {
+        "none": HarmBlockThreshold.BLOCK_NONE,
+        "few": HarmBlockThreshold.BLOCK_ONLY_HIGH,
+        "default": HarmBlockThreshold.BLOCK_MEDIUM_AND_ABOVE,
+        "some": HarmBlockThreshold.BLOCK_MEDIUM_AND_ABOVE,
+        "most": HarmBlockThreshold.BLOCK_LOW_AND_ABOVE,
+    }
 
-    for safety_filter in valid_safety_filter_choices:
+    for safety_filter, expected_threshold in valid_safety_filter_choices.items():
         test_case = await gemini_api._obtain_model_inputs(
             {
                 "id": "gemini_id",
@@ -472,11 +664,19 @@ async def test_gemini_obtain_model_inputs_safety_filters(
         assert len(test_case) == 5
         assert test_case[0] == "test prompt"
         assert test_case[1] == "gemini_model_name"
-        assert isinstance(test_case[2], GenerativeModel)
-        assert test_case[2]._model_name == "models/gemini_model_name"
-        assert test_case[2]._system_instruction is None
-        assert isinstance(test_case[3], dict)
-        assert test_case[4] == {"temperature": 1, "max_output_tokens": 100}
+        assert isinstance(test_case[2], Client)
+        assert isinstance(test_case[2].aio, AsyncClient)
+        assert isinstance(test_case[3], GenerateContentConfig)
+        assert test_case[3].system_instruction is None
+        assert test_case[3].temperature == 1
+        assert test_case[3].max_output_tokens == 100
+        assert test_case[4] is None
+
+        # Assert that the safety settings contain the expected threshold for all categories
+        assert all(
+            safety_set.threshold == expected_threshold
+            for safety_set in test_case[3].safety_settings
+        )
 
     # test error if safety filter is not recognised
     with pytest.raises(

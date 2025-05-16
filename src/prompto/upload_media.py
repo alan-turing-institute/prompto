@@ -1,12 +1,11 @@
 import argparse
-import asyncio
 import json
 import logging
 import os
 
 import prompto.apis.gemini.gemini_media as gemini_media
-from prompto.apis import ASYNC_APIS
 from prompto.scripts.run_experiment import load_env_file
+from prompto.settings import Settings
 
 # initialise logging
 logger = logging.getLogger(__name__)
@@ -224,12 +223,14 @@ def upload_media_parse_args():
 
 
 def do_delete_existing_files(args):
-    gemini_media.delete_uploaded_files()
+    settings = _create_settings()
+    gemini_media.delete_uploaded_files(settings)
     return
 
 
 def do_list_uploaded_files(args):
-    gemini_media.list_uploaded_files()
+    settings = _create_settings()
+    gemini_media.list_uploaded_files(settings)
     return
 
 
@@ -249,10 +250,29 @@ def _do_upload_media_from_args(args):
     args : argparse.Namespace
     """
     _resolve_output_file_location(args)
-    asyncio.run(do_upload_media(args.file, args.media_folder, args.output_file))
+    do_upload_media(args.file, args.media_folder, args.output_file)
 
 
-async def do_upload_media(input_file, media_folder, output_file):
+def _create_settings():
+    """
+    Create a dummy settings object for the Gemini API.
+    This is used to create a client object for the API.
+    For now, we just create a temporary directory for the data folder.
+    """
+    # TODO: A better solution would be to create an option in the
+    # Settings constructor to not create the directories.
+    # But for now we'll just pass it a temporary directory.
+    import tempfile
+
+    with tempfile.TemporaryDirectory() as temp_dir:
+        data_folder = os.path.join(temp_dir, "data")
+        os.makedirs(data_folder, exist_ok=True)
+        dummy_settings = Settings(data_folder=data_folder)
+
+    return dummy_settings
+
+
+def do_upload_media(input_file, media_folder, output_file):
     """
     Upload media files to the relevant API. The media files are uploaded and the experiment
     file is updated with the uploaded filenames.
@@ -276,7 +296,8 @@ async def do_upload_media(input_file, media_folder, output_file):
     # If in future we support other bulk upload to other APIs, we will need to
     # refactor here
 
-    uploaded_files = await gemini_media.upload_media_files_async(files_to_upload)
+    settings = _create_settings()
+    uploaded_files = gemini_media.upload_media_files(files_to_upload, settings)
 
     update_experiment_file(
         prompt_dict_list,
