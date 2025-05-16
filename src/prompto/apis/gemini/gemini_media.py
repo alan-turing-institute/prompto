@@ -64,8 +64,6 @@ async def _upload_single_file(
           results later.)
     """
     local_hash = compute_sha256_base64(local_file_path)
-    print(f"local_file_path: {local_file_path}")
-    print(f"local_hash: {local_hash}")
 
     if local_hash in already_uploaded_files:
         logger.info(
@@ -105,11 +103,11 @@ def list_uploaded_files(settings: Settings):
     """
     List all previously uploaded files to the Gemini API.
     """
-    genmini_api = GeminiAPI(settings=settings, log_file=None)
+    gemini_api = GeminiAPI(settings=settings, log_file=None)
     # TODO: We need a model name, because our API caters for different API keys
     # for different models. Maybe our API is too complicated....
     default_model_name = "default"
-    client = genmini_api._get_client(default_model_name)
+    client = gemini_api._get_client(default_model_name)
     uploaded_files = asyncio.run(_get_previously_uploaded_files(client))
 
     for file_hash, file_name in uploaded_files.items():
@@ -122,11 +120,11 @@ def delete_uploaded_files(settings: Settings):
     """
     Delete all previously uploaded files from the Gemini API.
     """
-    genmini_api = GeminiAPI(settings=settings, log_file=None)
+    gemini_api = GeminiAPI(settings=settings, log_file=None)
     # TODO: We need a model name, because our API caters for different API keys
     # for different models. Maybe our API to complicated....
     default_model_name = "default"
-    client = genmini_api._get_client(default_model_name)
+    client = gemini_api._get_client(default_model_name)
 
     # This just using the synchronous API. Using the async API did not
     # seem reliable. In particular `client.aio.files.delete()` did not appear
