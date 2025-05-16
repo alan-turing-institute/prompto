@@ -143,8 +143,47 @@ def process_response(response: dict) -> str:
     str
         The processed response text as a string
     """
-    response_text = response.candidates[0].content.parts[0].text
-    return response_text
+    answer, _ = _process_answer_and_thoughts(response)
+    return answer
+
+
+def process_thoughts(response: dict) -> list[str]:
+    """
+    Helper function to process the thoughts from Gemini API.
+
+    Parameters
+    ----------
+    response : dict
+        The response from the Gemini API as a dictionary
+
+    Returns
+    -------
+    list[str]
+        The thoughts as a list of strings
+    """
+    _, thoughts = _process_answer_and_thoughts(response)
+    return thoughts
+
+
+def _process_answer_and_thoughts(response: dict) -> tuple[str, list[str]]:
+    # This is a helper function that implements process_response and process_thoughts.
+    #
+    # These two functions are only trivially different. This implementation is potentially
+    # inefficient as it encourages the caller to call both functions.
+    # However the pattern of `process_response` is widely used throughout the codebase. So
+    # it is better to keep the same pattern.
+    thoughts = []
+    answers = []
+    for candidate in response.candidates:
+        for part in candidate.content.parts:
+            if part.thought:
+                thoughts.append(part.text)
+            else:
+                answers.append(part.text)
+
+    assert len(answers) == 1, "There should be only one answer"
+
+    return answers[0], thoughts
 
 
 def process_safety_attributes(response: dict) -> dict:

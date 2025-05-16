@@ -1,9 +1,16 @@
 import pytest
-from google.genai.types import Candidate, Content, FinishReason, Part
+from google.genai.types import (
+    Candidate,
+    Content,
+    FinishReason,
+    GenerateContentResponse,
+    Part,
+)
 
 from prompto.apis.gemini.gemini_utils import (
     convert_history_dict_to_content,
     process_response,
+    process_thoughts,
 )
 
 from .test_gemini import prompt_dict_history
@@ -110,7 +117,7 @@ def test_process_response():
 
     # Each test case is a tuple of (candidates, expected_answer, expected_thoughts)
     test_cases = [
-        (non_thinking_candidates, "A spontaneous answer...", [None]),
+        (non_thinking_candidates, "A spontaneous answer...", []),
         (thinking_candidates, "A thought out answer...", ["Some thinking..."]),
     ]
 
@@ -118,9 +125,9 @@ def test_process_response():
 
         # Create a mock response - the candidates key is the only one used in the
         # process_response function.
-        response = {
-            "candidates": candidates,
-        }
+        response = GenerateContentResponse(
+            candidates=candidates,
+        )
 
         # Call the function with the test case
         actual_answer = process_response(response)
