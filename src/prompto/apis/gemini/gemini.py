@@ -17,6 +17,7 @@ from prompto.apis.gemini.gemini_utils import (
     parse_parts,
     process_response,
     process_safety_attributes,
+    process_thoughts,
 )
 from prompto.settings import Settings
 from prompto.utils import (
@@ -46,6 +47,11 @@ BLOCKED_SAFETY_ATTRIBUTES = {
     "blocked": "True",
     "finish_reason": "block_reason: OTHER",
 }
+
+# See https://ai.google.dev/gemini-api/docs/thinking#set-budget
+# for more details
+MIN_THINKING_BUDGET = 0
+MAX_THINKING_BUDGET = 24576
 
 
 class GeminiAPI(AsyncAPI):
@@ -355,10 +361,12 @@ class GeminiAPI(AsyncAPI):
                 assert isinstance(thinking_budget, int | None)
                 if thinking_budget is not None:
                     assert isinstance(thinking_budget, int)
-                    assert 0 <= thinking_budget <= 24576
+                    # The ThinkingConfig constructor does not seem to check that the
+                    # thinking_budget is in the valid range (0, 24576), so we do it here
+                    assert MIN_THINKING_BUDGET <= thinking_budget <= MAX_THINKING_BUDGET
 
             except AssertionError as ae:
-                err_msg = "if thinking_budget is set, it must be an integer between 0 and 24576"
+                err_msg = f"if thinking_budget is set, it must be an integer between {MIN_THINKING_BUDGET} and {MAX_THINKING_BUDGET}"
                 raise ValueError(err_msg) from ae
 
             thinking_config = ThinkingConfig(
@@ -394,6 +402,7 @@ class GeminiAPI(AsyncAPI):
                 config=generation_config,
             )
             response_text = process_response(response)
+            thinking_text = process_thoughts(response)
             safety_attributes = process_safety_attributes(response)
 
             log_success_response_query(
@@ -406,6 +415,7 @@ class GeminiAPI(AsyncAPI):
 
             prompt_dict["response"] = response_text
             prompt_dict["safety_attributes"] = safety_attributes
+            prompt_dict["thinking_text"] = thinking_text
             return prompt_dict
         except IndexError as err:
             error_as_string = (
@@ -426,6 +436,7 @@ class GeminiAPI(AsyncAPI):
                     log_file=self.log_file, log_message=log_message, log=True
                 )
             response_text = ""
+            thinking_text = []
             try:
                 if len(response.candidates) == 0:
                     safety_attributes = BLOCKED_SAFETY_ATTRIBUTES
@@ -436,6 +447,7 @@ class GeminiAPI(AsyncAPI):
 
             prompt_dict["response"] = response_text
             prompt_dict["safety_attributes"] = safety_attributes
+            prompt_dict["thinking_text"] = thinking_text
             return prompt_dict
 
         except Exception as err:
@@ -475,6 +487,7 @@ class GeminiAPI(AsyncAPI):
         )
         response_list = []
         safety_attributes_list = []
+        thinking_list = []
         try:
             for message_index, message in enumerate(prompt):
                 # send the messages sequentially
@@ -484,10 +497,12 @@ class GeminiAPI(AsyncAPI):
                     config=generation_config,
                 )
                 response_text = process_response(response)
+                thinking_text = process_thoughts(response)
                 safety_attributes = process_safety_attributes(response)
 
                 response_list.append(response_text)
                 safety_attributes_list.append(safety_attributes)
+                thinking_list.append(thinking_text)
 
                 log_success_response_chat(
                     index=index,
@@ -504,6 +519,7 @@ class GeminiAPI(AsyncAPI):
             )
 
             prompt_dict["response"] = response_list
+            prompt_dict["thinking_text"] = thinking_list
             prompt_dict["safety_attributes"] = safety_attributes_list
             return prompt_dict
         except IndexError as err:
@@ -528,6 +544,7 @@ class GeminiAPI(AsyncAPI):
                     log_file=self.log_file, log_message=log_message, log=True
                 )
             response_text = response_list + [""]
+            thinking_text = thinking_list + [[]]
             try:
                 if len(response.candidates) == 0:
                     safety_attributes = BLOCKED_SAFETY_ATTRIBUTES
@@ -537,6 +554,7 @@ class GeminiAPI(AsyncAPI):
                 safety_attributes = BLOCKED_SAFETY_ATTRIBUTES
 
             prompt_dict["response"] = response_text
+            prompt_dict["thinking_text"] = thinking_text
             prompt_dict["safety_attributes"] = safety_attributes
             return prompt_dict
         except Exception as err:
@@ -613,6 +631,7 @@ class GeminiAPI(AsyncAPI):
             response = await chat.send_message(message=msg_to_send)
 
             response_text = process_response(response)
+            thinking_text = process_thoughts(response)
             safety_attributes = process_safety_attributes(response)
 
             log_success_response_query(
@@ -624,6 +643,7 @@ class GeminiAPI(AsyncAPI):
             )
 
             prompt_dict["response"] = response_text
+            prompt_dict["thinking_text"] = thinking_text
             prompt_dict["safety_attributes"] = safety_attributes
             return prompt_dict
         except IndexError as err:
@@ -645,6 +665,7 @@ class GeminiAPI(AsyncAPI):
                     log_file=self.log_file, log_message=log_message, log=True
                 )
             response_text = ""
+            thinking_text = []
             try:
                 if len(response.candidates) == 0:
                     safety_attributes = BLOCKED_SAFETY_ATTRIBUTES
@@ -654,6 +675,7 @@ class GeminiAPI(AsyncAPI):
                 safety_attributes = BLOCKED_SAFETY_ATTRIBUTES
 
             prompt_dict["response"] = response_text
+            prompt_dict["thinking_text"] = thinking_text
             prompt_dict["safety_attributes"] = safety_attributes
             return prompt_dict
         except Exception as err:

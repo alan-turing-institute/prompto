@@ -10,6 +10,7 @@ from google.genai.types import Content, GenerateContentConfig, Part
 from prompto.apis.gemini import GeminiAPI
 from prompto.settings import Settings
 
+from .test_gemini import non_thinking_response  # nopa: F401
 from .test_gemini import prompt_dict_history  # nopa: F401
 from .test_gemini import prompt_dict_history_no_system  # nopa: F401
 from .test_gemini import DEFAULT_SAFETY_SETTINGS
@@ -43,14 +44,13 @@ async def test_gemini_query_history_no_env_var(
     "send_message",
     new_callable=AsyncMock,
 )
-@patch("prompto.apis.gemini.gemini.process_response", new_callable=Mock)
 @patch("prompto.apis.gemini.gemini.process_safety_attributes", new_callable=Mock)
 async def test_gemini_query_history(
     mock_process_safety_attr,
-    mock_process_response,
     mock_gemini_call,
     prompt_dict_history,
     temporary_data_folders,
+    non_thinking_response,
     monkeypatch,
     caplog,
 ):
@@ -61,14 +61,7 @@ async def test_gemini_query_history(
     gemini_api = GeminiAPI(settings=settings, log_file=log_file)
 
     # Mock the response from the API
-    # NOTE: The actual response from the API is a
-    # `google.genai.types.GenerateContentResponse`` object
-    # not a string value, but for the purpose of this test, we are using a string value
-    # and testing that this is the input to the process_response function
-    mock_gemini_call.return_value = "response Messages object"
-
-    # mock the process_response function
-    mock_process_response.return_value = "response text"
+    mock_gemini_call.return_value = non_thinking_response
 
     # make sure that the input prompt_dict does not have a response key
     assert "response" not in prompt_dict_history.keys()
@@ -76,8 +69,14 @@ async def test_gemini_query_history(
     # call the _query_history method
     prompt_dict = await gemini_api._query_history(prompt_dict_history, index=0)
 
+    expected_answer = "A spontaneous answer"
+
     # assert that the response key is added to the prompt_dict
     assert "response" in prompt_dict.keys()
+    # assert "thinking_text" is in prompt_dict
+    assert "thinking_text" in prompt_dict.keys()
+    assert isinstance(prompt_dict["thinking_text"], list)
+    assert prompt_dict["thinking_text"] == []
 
     mock_gemini_call.assert_called_once()
     mock_gemini_call.assert_awaited_once()
@@ -86,17 +85,16 @@ async def test_gemini_query_history(
         message=Part(text=prompt_dict_history["prompt"][1]["parts"]),
     )
 
-    mock_process_response.assert_called_once_with(mock_gemini_call.return_value)
     mock_process_safety_attr.assert_called_once_with(mock_gemini_call.return_value)
 
     # assert that the response value is the return value of the process_response function
-    assert prompt_dict["response"] == mock_process_response.return_value
+    assert prompt_dict["response"] == expected_answer
 
     expected_log_message = (
         f"Response received for model Gemini ({prompt_dict_history['model_name']}) "
         "(i=0, id=gemini_id)\n"
         f"Prompt: {prompt_dict_history['prompt'][:50]}...\n"
-        f"Response: {mock_process_response.return_value[:50]}...\n"
+        f"Response: {expected_answer[:50]}...\n"
     )
     assert expected_log_message in caplog.text
 
@@ -244,14 +242,13 @@ async def test_gemini_query_history_check_chat_init(
     "send_message",
     new_callable=AsyncMock,
 )
-@patch("prompto.apis.gemini.gemini.process_response", new_callable=Mock)
 @patch("prompto.apis.gemini.gemini.process_safety_attributes", new_callable=Mock)
 async def test_gemini_query_history_no_system(
     mock_process_safety_attr,
-    mock_process_response,
     mock_gemini_call,
     prompt_dict_history_no_system,
     temporary_data_folders,
+    non_thinking_response,
     monkeypatch,
     caplog,
 ):
@@ -265,10 +262,11 @@ async def test_gemini_query_history_no_system(
     # NOTE: The actual response from the API is a gemini.types.message.Message object
     # not a string value, but for the purpose of this test, we are using a string value
     # and testing that this is the input to the process_response function
-    mock_gemini_call.return_value = "response Messages object"
+    mock_gemini_call.return_value = non_thinking_response
 
     # mock the process_response function
-    mock_process_response.return_value = "response text"
+    # mock_process_response.return_value = "response text"
+    expected_answer = "A spontaneous answer"
 
     # make sure that the input prompt_dict does not have a response key
     assert "response" not in prompt_dict_history_no_system.keys()
@@ -288,17 +286,16 @@ async def test_gemini_query_history_no_system(
         message=Part(text=prompt_dict_history_no_system["prompt"][2]["parts"])
     )
 
-    mock_process_response.assert_called_once_with(mock_gemini_call.return_value)
     mock_process_safety_attr.assert_called_once_with(mock_gemini_call.return_value)
 
     # assert that the response value is the return value of the process_response function
-    assert prompt_dict["response"] == mock_process_response.return_value
+    assert prompt_dict["response"] == expected_answer
 
     expected_log_message = (
         f"Response received for model Gemini ({prompt_dict_history_no_system['model_name']}) "
         "(i=0, id=gemini_id)\n"
         f"Prompt: {prompt_dict_history_no_system['prompt'][:50]}...\n"
-        f"Response: {mock_process_response.return_value[:50]}...\n"
+        f"Response: {expected_answer[:50]}...\n"
     )
     assert expected_log_message in caplog.text
 

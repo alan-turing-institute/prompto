@@ -4,9 +4,14 @@ import pytest
 import regex as re
 from google.genai.client import AsyncClient, Client
 from google.genai.types import (
+    Candidate,
+    Content,
+    FinishReason,
     GenerateContentConfig,
+    GenerateContentResponse,
     HarmBlockThreshold,
     HarmCategory,
+    Part,
     SafetySetting,
     ThinkingConfig,
 )
@@ -66,6 +71,89 @@ def prompt_dict_history_no_system():
         ],
         "parameters": {"temperature": 1, "max_output_tokens": 100},
     }
+
+
+@pytest.fixture
+def non_thinking_response():
+
+    # Some example responses, with and without thinking included.
+    return GenerateContentResponse(
+        candidates=[
+            Candidate(
+                content=Content(
+                    parts=[
+                        Part(
+                            video_metadata=None,
+                            thought=None,
+                            inline_data=None,
+                            code_execution_result=None,
+                            executable_code=None,
+                            file_data=None,
+                            function_call=None,
+                            function_response=None,
+                            text="A spontaneous answer",
+                        ),
+                    ],
+                    role="model",
+                ),
+                citation_metadata=None,
+                finish_message=None,
+                token_count=None,
+                finish_reason=FinishReason.STOP,
+                avg_logprobs=None,
+                grounding_metadata=None,
+                index=0,
+                logprobs_result=None,
+                safety_ratings=None,
+            )
+        ]
+    )
+
+
+@pytest.fixture
+def thinking_response():
+    return GenerateContentResponse(
+        candidates=[
+            Candidate(
+                content=Content(
+                    parts=[
+                        Part(
+                            video_metadata=None,
+                            thought=True,
+                            inline_data=None,
+                            code_execution_result=None,
+                            executable_code=None,
+                            file_data=None,
+                            function_call=None,
+                            function_response=None,
+                            text="Some thinking",
+                        ),
+                        Part(
+                            video_metadata=None,
+                            thought=None,
+                            inline_data=None,
+                            code_execution_result=None,
+                            executable_code=None,
+                            file_data=None,
+                            function_call=None,
+                            function_response=None,
+                            text="A thought out answer",
+                        ),
+                    ],
+                    role="model",
+                ),
+                citation_metadata=None,
+                finish_message=None,
+                token_count=None,
+                finish_reason=FinishReason.STOP,
+                avg_logprobs=None,
+                grounding_metadata=None,
+                index=0,
+                logprobs_result=None,
+                safety_ratings=None,
+            )
+        ]
+    )
 
 
 DEFAULT_SAFETY_SETTINGS = [

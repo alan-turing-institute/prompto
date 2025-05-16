@@ -13,7 +13,7 @@ from prompto.apis.gemini.gemini_utils import (
     process_thoughts,
 )
 
-from .test_gemini import prompt_dict_history
+from .test_gemini import non_thinking_response, prompt_dict_history, thinking_response
 
 
 def test_convert_history_dict_to_content(prompt_dict_history):
@@ -39,96 +39,17 @@ def test_convert_history_dict_to_content(prompt_dict_history):
         ), f"Expected {expected_result}, but got {actual_result}"
 
 
-def test_process_response():
+def test_process_response(thinking_response, non_thinking_response):
     """
     Test the process_response function.
     """
-    # Some example responses, with and without thinking included.
-    non_thinking_candidates = [
-        Candidate(
-            content=Content(
-                parts=[
-                    Part(
-                        video_metadata=None,
-                        thought=None,
-                        inline_data=None,
-                        code_execution_result=None,
-                        executable_code=None,
-                        file_data=None,
-                        function_call=None,
-                        function_response=None,
-                        text="A spontaneous answer...",
-                    ),
-                ],
-                role="model",
-            ),
-            citation_metadata=None,
-            finish_message=None,
-            token_count=None,
-            finish_reason=FinishReason.STOP,
-            avg_logprobs=None,
-            grounding_metadata=None,
-            index=0,
-            logprobs_result=None,
-            safety_ratings=None,
-        )
-    ]
-
-    thinking_candidates = [
-        Candidate(
-            content=Content(
-                parts=[
-                    Part(
-                        video_metadata=None,
-                        thought=True,
-                        inline_data=None,
-                        code_execution_result=None,
-                        executable_code=None,
-                        file_data=None,
-                        function_call=None,
-                        function_response=None,
-                        text="Some thinking...",
-                    ),
-                    Part(
-                        video_metadata=None,
-                        thought=None,
-                        inline_data=None,
-                        code_execution_result=None,
-                        executable_code=None,
-                        file_data=None,
-                        function_call=None,
-                        function_response=None,
-                        text="A thought out answer...",
-                    ),
-                ],
-                role="model",
-            ),
-            citation_metadata=None,
-            finish_message=None,
-            token_count=None,
-            finish_reason=FinishReason.STOP,
-            avg_logprobs=None,
-            grounding_metadata=None,
-            index=0,
-            logprobs_result=None,
-            safety_ratings=None,
-        )
-    ]
-
-    # Each test case is a tuple of (candidates, expected_answer, expected_thoughts)
+    # Each test case is a tuple of (response, expected_answer, expected_thoughts)
     test_cases = [
-        (non_thinking_candidates, "A spontaneous answer...", []),
-        (thinking_candidates, "A thought out answer...", ["Some thinking..."]),
+        (non_thinking_response, "A spontaneous answer", []),
+        (thinking_response, "A thought out answer", ["Some thinking"]),
     ]
 
-    for candidates, expected_answer, expected_thoughts in test_cases:
-
-        # Create a mock response - the candidates key is the only one used in the
-        # process_response function.
-        response = GenerateContentResponse(
-            candidates=candidates,
-        )
-
+    for response, expected_answer, expected_thoughts in test_cases:
         # Call the function with the test case
         actual_answer = process_response(response)
         actual_thoughts = process_thoughts(response)
