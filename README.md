@@ -214,7 +214,7 @@ When a new model is added, you must add it to the [`API`](https://github.com/ala
 ```
 @inproceedings{chan-etal-2025-prompto,
   title={Prompto: An open source library for asynchronous querying of {LLM} endpoints},
-  author={Chan, Ryan Sze-Yin and Nanni, Federico and Brown, Edwin and Chapman, Ed and Williams, Angus Redlarski and Bright, Jonathan and Gabasova, Evelina},
+  author={Chan, Ryan Sze-Yin and Nanni, Federico and Williams, Angus Redlarski and Brown, Edwin and Burke-Moore, Liam and Chapman, Ed and Onslow, Kate and Sippy, Tvesha and Bright, Jonathan and Gabasova, Evelina},
   editor={Dziri, Nouha and Ren, Sean (Xiang) and Diao, Shizhe},
   booktitle={Proceedings of the 2025 Conference of the Nations of the Americas Chapter of the Association for Computational Linguistics: Human Language Technologies (System Demonstrations)},
   publisher={Association for Computational Linguistics},
