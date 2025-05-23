@@ -1,0 +1,1 @@
+29-10-2024, 11:57: Completed experiment: openai-multimodal-example.jsonl! Experiment processing time: 10.815 seconds, Average time per query: 2.704 seconds

@@ -1,0 +1,1 @@
+21-10-2024, 11:57: Completed experiment: vertexai-multimodal-example.jsonl! Experiment processing time: 11.011 seconds, Average time per query: 3.67 seconds
