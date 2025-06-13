@@ -2,6 +2,10 @@ import logging
 from unittest.mock import AsyncMock, Mock, patch
 
 import pytest
+from google.genai.chats import AsyncChat
+from google.genai.client import AsyncClient
+from google.genai.models import AsyncModels
+from google.genai.types import GenerateContentConfig
 
 from prompto.apis.gemini import GeminiAPI
 from prompto.settings import Settings
@@ -13,12 +17,11 @@ pytest_plugins = ("pytest_asyncio",)
 
 @pytest.mark.asyncio
 async def test_gemini_query_string_no_env_var(
-    prompt_dict_string, temporary_data_folders, caplog
+    prompt_dict_string, temporary_data_folders, caplog, monkeypatch
 ):
     caplog.set_level(logging.INFO)
     settings = Settings(data_folder="data")
     log_file = "log.txt"
-    gemini_api = GeminiAPI(settings=settings, log_file=log_file)
 
     # raise error if no environment variable is set
     with pytest.raises(
@@ -28,12 +31,15 @@ async def test_gemini_query_string_no_env_var(
             "environment variable is set."
         ),
     ):
+        gemini_api = GeminiAPI(settings=settings, log_file=log_file)
         await gemini_api._query_string(prompt_dict_string, index=0)
 
 
 @pytest.mark.asyncio
-@patch(
-    "google.generativeai.GenerativeModel.generate_content_async", new_callable=AsyncMock
+@patch.object(
+    AsyncModels,
+    "generate_content",
+    new_callable=AsyncMock,
 )
 @patch("prompto.apis.gemini.gemini.process_response", new_callable=Mock)
 @patch("prompto.apis.gemini.gemini.process_safety_attributes", new_callable=Mock)
@@ -52,9 +58,9 @@ async def test_gemini_query_string(
     monkeypatch.setenv("GEMINI_API_KEY", "DUMMY")
     gemini_api = GeminiAPI(settings=settings, log_file=log_file)
 
-    # mock the response from the API
-    # NOTE: The actual response from the API is a
-    # google.generativeai.types.AsyncGenerateContentResponse object
+    # Mock the response from the API
+    # NOTE: The actual response from the API is a (probably)
+    # google.genai.types.GenerateContentResponse object (or a promise of it),
     # not a string value, but for the purpose of this test, we are using a string value
     # and testing that this is the input to the process_response function
     mock_gemini_call.return_value = "response Messages object"
@@ -74,10 +80,13 @@ async def test_gemini_query_string(
     mock_gemini_call.assert_called_once()
     mock_gemini_call.assert_awaited_once()
     mock_gemini_call.assert_awaited_once_with(
-        contents=prompt_dict_string["prompt"],
-        generation_config=prompt_dict_string["parameters"],
-        safety_settings=DEFAULT_SAFETY_SETTINGS,
-        stream=False,
+        model="gemini_model_name",
+        contents="test prompt",
+        config=GenerateContentConfig(
+            temperature=1.0,
+            max_output_tokens=100,
+            safety_settings=DEFAULT_SAFETY_SETTINGS,
+        ),
     )
 
     mock_process_response.assert_called_once_with(mock_gemini_call.return_value)
@@ -96,8 +105,10 @@ async def test_gemini_query_string(
 
 
 @pytest.mark.asyncio
-@patch(
-    "google.generativeai.GenerativeModel.generate_content_async", new_callable=AsyncMock
+@patch.object(
+    AsyncModels,
+    "generate_content",
+    new_callable=AsyncMock,
 )
 async def test_gemini_query_string__index_error(
     mock_gemini_call, prompt_dict_string, temporary_data_folders, monkeypatch, caplog
@@ -123,10 +134,13 @@ async def test_gemini_query_string__index_error(
     mock_gemini_call.assert_called_once()
     mock_gemini_call.assert_awaited_once()
     mock_gemini_call.assert_awaited_once_with(
-        contents=prompt_dict_string["prompt"],
-        generation_config=prompt_dict_string["parameters"],
-        safety_settings=DEFAULT_SAFETY_SETTINGS,
-        stream=False,
+        model="gemini_model_name",
+        contents="test prompt",
+        config=GenerateContentConfig(
+            temperature=1.0,
+            max_output_tokens=100,
+            safety_settings=DEFAULT_SAFETY_SETTINGS,
+        ),
     )
 
     expected_log_message = (
@@ -142,8 +156,10 @@ async def test_gemini_query_string__index_error(
 
 
 @pytest.mark.asyncio
-@patch(
-    "google.generativeai.GenerativeModel.generate_content_async", new_callable=AsyncMock
+@patch.object(
+    AsyncModels,
+    "generate_content",
+    new_callable=AsyncMock,
 )
 async def test_gemini_query_string_error(
     mock_gemini_call, prompt_dict_string, temporary_data_folders, monkeypatch, caplog
@@ -164,10 +180,13 @@ async def test_gemini_query_string_error(
     mock_gemini_call.assert_called_once()
     mock_gemini_call.assert_awaited_once()
     mock_gemini_call.assert_awaited_once_with(
-        contents=prompt_dict_string["prompt"],
-        generation_config=prompt_dict_string["parameters"],
-        safety_settings=DEFAULT_SAFETY_SETTINGS,
-        stream=False,
+        model="gemini_model_name",
+        contents="test prompt",
+        config=GenerateContentConfig(
+            temperature=1.0,
+            max_output_tokens=100,
+            safety_settings=DEFAULT_SAFETY_SETTINGS,
+        ),
     )
 
     expected_log_message = (
