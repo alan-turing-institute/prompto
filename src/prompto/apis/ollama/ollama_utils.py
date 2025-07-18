@@ -1,5 +1,7 @@
 ollama_chat_roles = set(["system", "user", "assistant"])
 
+from ollama import ChatResponse, GenerateResponse
+
 
 def process_response(response: dict) -> str:
     """
@@ -25,5 +27,9 @@ def process_response(response: dict) -> str:
                 "Unsupported response format. "
                 f"No 'response' or 'message' key found in response: {response}"
             )
+    elif isinstance(response, ChatResponse):
+        return response.message.content if response.message else ""
+    elif isinstance(response, GenerateResponse):
+        return response.response if response.response else ""
     else:
         raise ValueError(f"Unsupported response type: {type(response)}")
